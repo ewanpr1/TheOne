@@ -23,7 +23,7 @@
   .ach-scroll::-webkit-scrollbar-track{background:transparent}
   .ach-scroll::-webkit-scrollbar-thumb{background:rgba(245,200,66,0.4);border-radius:3px}
   .ach-scroll::-webkit-scrollbar-thumb:hover{background:rgba(245,200,66,0.6)}
-  .gw svg{width:100%;height:100%;touch-action:none;display:block;cursor:none}
+  .gw svg{width:100%;height:100%;display:block;cursor:none}
 </style>
 </head>
 <body>
@@ -1103,7 +1103,7 @@ function Game(){
       onMouseDown={onTS} onMouseMove={onTM} onMouseUp={onTE}
       onTouchStart={onTS} onTouchEnd={onTE}
     >
-      <svg ref={svgRef} viewBox={`${-ox} ${-oy} ${vbW} ${vbH}`} preserveAspectRatio="none">
+      <svg ref={svgRef} viewBox={`${-ox} ${-oy} ${vbW} ${vbH}`} preserveAspectRatio="none" style={{touchAction:screen==='playing'?'none':'auto'}}>
         <defs>
           <linearGradient id="bgG" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={bgl}/><stop offset="100%" stopColor={bgd}/>

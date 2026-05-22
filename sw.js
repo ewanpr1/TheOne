@@ -1,4 +1,4 @@
-const CACHE = 'theone-v7';
+const CACHE = 'theone-v8';
 const PRECACHE = [
   './TheOne_V5.html',
   './manifest.json',

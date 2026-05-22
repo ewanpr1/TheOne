@@ -650,7 +650,7 @@ function Game(){
     };
   }
   const onTS=e=>{touch.current=true;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
-  const onTM=e=>{e.preventDefault();if(!touch.current)return;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
+  const onTM=e=>{if(gs.current.phase==='playing')e.preventDefault();if(!touch.current)return;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
   const onTE=()=>touch.current=false;
 
   function startGame(infinite){
@@ -906,7 +906,7 @@ function Game(){
 
   React.useEffect(()=>{
     const el=divRef.current;if(!el)return;
-    const h=e=>{e.preventDefault();if(!touch.current)return;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
+    const h=e=>{if(gs.current.phase==='playing')e.preventDefault();if(!touch.current)return;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
     el.addEventListener('touchmove',h,{passive:false});
     return()=>el.removeEventListener('touchmove',h);
   },[]);
@@ -1679,7 +1679,7 @@ function Game(){
 
             {/* Scrollable list (rendered all) — group by tier */}
             <foreignObject x="10" y={GH*0.26} width={GW-20} height={GH*0.72}>
-              <div xmlns="http://www.w3.org/1999/xhtml" className="ach-scroll" style={{height:'100%',overflowY:'auto',padding:'0 14px 0 8px',color:'white',fontFamily:'Helvetica Neue,Arial'}}>
+              <div xmlns="http://www.w3.org/1999/xhtml" className="ach-scroll" style={{height:'100%',overflowY:'auto',padding:'0 14px 0 8px',color:'white',fontFamily:'Helvetica Neue,Arial',touchAction:'pan-y',WebkitOverflowScrolling:'touch'}}>
                 {['easy','medium','hard','extreme'].map(tier=>(
                   <div key={tier} style={{marginBottom:'10px'}}>
                     <div style={{fontSize:'10px',letterSpacing:'2px',fontWeight:'700',color:TIERS[tier].color,padding:'8px 4px 4px'}}>{TIERS[tier].label.toUpperCase()}</div>
@@ -1892,7 +1892,7 @@ function Game(){
             <div style={{fontSize:20,fontWeight:800,color:P.rose,marginTop:2}}>{mL.toLocaleString('fr')} mL</div>
           </div>
           <div style={{fontSize:11,letterSpacing:2,color:'rgba(220,180,150,0.55)',textAlign:'center',marginBottom:8}}>SKINS — {owned.size}/{SKINS.length}</div>
-          <div className="ach-scroll" onClick={e=>e.stopPropagation()} style={{flex:1,overflowY:'auto',padding:'0 4px 30px'}}>
+          <div className="ach-scroll" onClick={e=>e.stopPropagation()} style={{flex:1,overflowY:'auto',padding:'0 4px 30px',touchAction:'pan-y',WebkitOverflowScrolling:'touch'}}>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
               {SKINS.map(s=>{
                 const isOwned=owned.has(s.id);

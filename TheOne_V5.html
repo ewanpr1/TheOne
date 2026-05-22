@@ -17,7 +17,8 @@
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;background:#080208;overflow:hidden;font-family:'Helvetica Neue',Arial,sans-serif}
   #root{width:100%;height:100%}
-  .gw{position:fixed;inset:0;overflow:hidden;background:#080208}
+  :root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+  .gw{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;background:#080208;padding-top:env(safe-area-inset-top,0);padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0)}
   .ach-scroll{scrollbar-width:thin;scrollbar-color:rgba(245,200,66,0.35) transparent}
   .ach-scroll::-webkit-scrollbar{width:5px}
   .ach-scroll::-webkit-scrollbar-track{background:transparent}
@@ -32,8 +33,8 @@
 <script type="text/babel">
 const GW=window.innerWidth,GH=window.innerHeight,LANES=6;
 const PW=Math.min(GW,430),POX=(GW-PW)/2,LW=PW/LANES,PR=22;
-const SAB=(()=>{const d=document.createElement('div');d.style.cssText='position:fixed;bottom:0;padding-bottom:env(safe-area-inset-bottom,0px);height:0;visibility:hidden';document.body.appendChild(d);const v=parseFloat(getComputedStyle(d).paddingBottom)||0;document.body.removeChild(d);return v;})();
-const SAT=(()=>{const d=document.createElement('div');d.style.cssText='position:fixed;top:0;padding-top:env(safe-area-inset-top,0px);height:0;visibility:hidden';document.body.appendChild(d);const v=parseFloat(getComputedStyle(d).paddingTop)||0;document.body.removeChild(d);return v;})();
+const SAB=(()=>{const s=getComputedStyle(document.documentElement).getPropertyValue('--sab').trim();return parseFloat(s)||0;})();
+const SAT=(()=>{const s=getComputedStyle(document.documentElement).getPropertyValue('--sat').trim();return parseFloat(s)||0;})();
 const lerp=(a,b,t)=>a+(b-a)*t;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const d2=(ax,ay,bx,by)=>Math.sqrt((ax-bx)**2+(ay-by)**2);
@@ -1165,10 +1166,10 @@ function Game(){
 
         {/* ── HUD ── */}
         {screen==='playing'&&(<>
-          <rect x="0" y="0" width={GW} height={54+SAT} fill="rgba(8,0,6,0.6)"/>
+          <rect x="0" y="0" width={GW} height="54" fill="rgba(8,0,6,0.6)"/>
           {/* Lives */}
           {[0,1,2].map(i=>(
-            <g key={i} transform={`translate(${16+i*32},${27+SAT})`} opacity={i<g.lives?1:0.18}>
+            <g key={i} transform={`translate(${16+i*32},27)`} opacity={i<g.lives?1:0.18}>
               <circle cx="0" cy="0" r="11" fill="white"/>
               <circle cx="0" cy="0" r="11" fill="url(#hg)"/>
               <circle cx="-3.5" cy="-1" r="3" fill="#5b9bd5"/>
@@ -1177,12 +1178,12 @@ function Game(){
             </g>
           ))}
           {/* Zone pill */}
-          <rect x={GW/2-62} y={15+SAT} width="124" height="26" rx="13" fill="rgba(0,0,0,0.4)"/>
-          <rect x={GW/2-62} y={15+SAT} width="124" height="26" rx="13" fill="none" stroke={z.acc} strokeWidth="1.2" opacity="0.5"/>
-          <text x={GW/2} y={32.5+SAT} textAnchor="middle" fill="white" fontSize="12.5" fontWeight="600" fontFamily="Helvetica Neue,Arial">{g.infinite&&g.zone===4?'∞ Mode Infini':z.emoji+' '+z.name}</text>
+          <rect x={GW/2-62} y="15" width="124" height="26" rx="13" fill="rgba(0,0,0,0.4)"/>
+          <rect x={GW/2-62} y="15" width="124" height="26" rx="13" fill="none" stroke={z.acc} strokeWidth="1.2" opacity="0.5"/>
+          <text x={GW/2} y="32.5" textAnchor="middle" fill="white" fontSize="12.5" fontWeight="600" fontFamily="Helvetica Neue,Arial">{g.infinite&&g.zone===4?'∞ Mode Infini':z.emoji+' '+z.name}</text>
           {/* Score */}
-          <text x={GW-14} y={33+SAT} textAnchor="end" fill={P.skin1} fontSize="20" fontWeight="bold" fontFamily="Helvetica Neue,Arial" filter="url(#gw2)">{g.infinite?fmtTime(g.playT):g.score}</text>
-          <text x={GW-14} y={46+SAT} textAnchor="end" fill="rgba(220,175,135,0.5)" fontSize="9" fontFamily="Helvetica Neue,Arial">{g.infinite?'temps':'rivaux'}</text>
+          <text x={GW-14} y="33" textAnchor="end" fill={P.skin1} fontSize="20" fontWeight="bold" fontFamily="Helvetica Neue,Arial" filter="url(#gw2)">{g.infinite?fmtTime(g.playT):g.score}</text>
+          <text x={GW-14} y="46" textAnchor="end" fill="rgba(220,175,135,0.5)" fontSize="9" fontFamily="Helvetica Neue,Arial">{g.infinite?'temps':'rivaux'}</text>
           {/* Mucus + Helmet badges side-by-side at bottom */}
           {(g.slowed>0||g.shield)&&(()=>{
             const both=g.slowed>0&&g.shield;
@@ -1265,13 +1266,13 @@ function Game(){
 
             {/* Info button top-right */}
             <g onClick={()=>setShowInfo(true)} style={{cursor:'pointer'}}>
-              <circle cx={GW-26} cy={30+SAT} r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(220,170,140,0.35)" strokeWidth="1.2"/>
-              <text x={GW-26} y={35.5+SAT} textAnchor="middle" fill="rgba(230,190,160,0.85)" fontSize="16" fontWeight="700" fontFamily="Georgia, serif" fontStyle="italic">i</text>
+              <circle cx={GW-26} cy="30" r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(220,170,140,0.35)" strokeWidth="1.2"/>
+              <text x={GW-26} y="35.5" textAnchor="middle" fill="rgba(230,190,160,0.85)" fontSize="16" fontWeight="700" fontFamily="Georgia, serif" fontStyle="italic">i</text>
             </g>
             {/* Stats button top-left */}
             <g onClick={()=>setShowStats(true)} style={{cursor:'pointer'}}>
-              <circle cx="26" cy={30+SAT} r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(220,170,140,0.35)" strokeWidth="1.2"/>
-              <g transform={`translate(20,${23+SAT})`}>
+              <circle cx="26" cy="30" r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(220,170,140,0.35)" strokeWidth="1.2"/>
+              <g transform="translate(20,23)">
                 <rect x="0" y="8" width="2.5" height="6" rx="1" fill="rgba(230,190,160,0.85)"/>
                 <rect x="5" y="4" width="2.5" height="10" rx="1" fill="rgba(230,190,160,0.85)"/>
                 <rect x="10" y="0" width="2.5" height="14" rx="1" fill="rgba(230,190,160,0.85)"/>
@@ -1279,32 +1280,32 @@ function Game(){
             </g>
             {/* Achievements button below stats */}
             <g onClick={()=>setShowAch(true)} style={{cursor:'pointer'}}>
-              <circle cx="26" cy={65+SAT} r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(245,200,66,0.35)" strokeWidth="1.2"/>
-              <path d={`M 20 ${60+SAT} L 32 ${60+SAT} L 30 ${70+SAT} L 22 ${70+SAT} Z`} fill="rgba(245,200,100,0.85)"/>
-              <rect x="22" y={71+SAT} width="8" height="1.5" fill="rgba(245,200,100,0.85)"/>
-              <path d={`M 20 ${60+SAT} Q 16 ${62+SAT} 18 ${65+SAT}`} stroke="rgba(245,200,100,0.85)" strokeWidth="1.2" fill="none"/>
-              <path d={`M 32 ${60+SAT} Q 36 ${62+SAT} 34 ${65+SAT}`} stroke="rgba(245,200,100,0.85)" strokeWidth="1.2" fill="none"/>
+              <circle cx="26" cy="65" r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(245,200,66,0.35)" strokeWidth="1.2"/>
+              <path d="M 20 60 L 32 60 L 30 70 L 22 70 Z" fill="rgba(245,200,100,0.85)"/>
+              <rect x="22" y="71" width="8" height="1.5" fill="rgba(245,200,100,0.85)"/>
+              <path d="M 20 60 Q 16 62 18 65" stroke="rgba(245,200,100,0.85)" strokeWidth="1.2" fill="none"/>
+              <path d="M 32 60 Q 36 62 34 65" stroke="rgba(245,200,100,0.85)" strokeWidth="1.2" fill="none"/>
             </g>
             {/* Daily button below achievements */}
             <g onClick={()=>setShowDaily(true)} style={{cursor:'pointer'}}>
-              <circle cx="26" cy={100+SAT} r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(126,200,138,0.4)" strokeWidth="1.2"/>
-              <rect x="18" y={93+SAT} width="16" height="15" rx="2" fill="none" stroke="rgba(150,210,160,0.85)" strokeWidth="1.4"/>
-              <line x1="18" y1={97+SAT} x2="34" y2={97+SAT} stroke="rgba(150,210,160,0.85)" strokeWidth="1.4"/>
-              <line x1="21" y1={91+SAT} x2="21" y2={95+SAT} stroke="rgba(150,210,160,0.85)" strokeWidth="1.4" strokeLinecap="round"/>
-              <line x1="31" y1={91+SAT} x2="31" y2={95+SAT} stroke="rgba(150,210,160,0.85)" strokeWidth="1.4" strokeLinecap="round"/>
+              <circle cx="26" cy="100" r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(126,200,138,0.4)" strokeWidth="1.2"/>
+              <rect x="18" y="93" width="16" height="15" rx="2" fill="none" stroke="rgba(150,210,160,0.85)" strokeWidth="1.4"/>
+              <line x1="18" y1="97" x2="34" y2="97" stroke="rgba(150,210,160,0.85)" strokeWidth="1.4"/>
+              <line x1="21" y1="91" x2="21" y2="95" stroke="rgba(150,210,160,0.85)" strokeWidth="1.4" strokeLinecap="round"/>
+              <line x1="31" y1="91" x2="31" y2="95" stroke="rgba(150,210,160,0.85)" strokeWidth="1.4" strokeLinecap="round"/>
               {daily.ch.filter(c=>!c.completed).length>0&&(
-                <circle cx="37" cy={89+SAT} r="6" fill="#e8718a"/>
+                <circle cx="37" cy="89" r="6" fill="#e8718a"/>
               )}
               {daily.ch.filter(c=>!c.completed).length>0&&(
-                <text x="37" y={92.5+SAT} textAnchor="middle" fill="white" fontSize="9" fontWeight="800" fontFamily="Helvetica Neue,Arial">{daily.ch.filter(c=>!c.completed).length}</text>
+                <text x="37" y="92.5" textAnchor="middle" fill="white" fontSize="9" fontWeight="800" fontFamily="Helvetica Neue,Arial">{daily.ch.filter(c=>!c.completed).length}</text>
               )}
             </g>
             {/* Shop button below daily (top-left) */}
             <g onClick={()=>setShowShop(true)} style={{cursor:'pointer'}}>
-              <circle cx="26" cy={135+SAT} r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(232,113,138,0.4)" strokeWidth="1.2"/>
-              <path d={`M 18 ${131+SAT} L 21 ${131+SAT} L 23 ${140+SAT} L 32 ${140+SAT} L 34 ${134+SAT} L 22 ${134+SAT}`} stroke="rgba(232,140,160,0.9)" strokeWidth="1.4" fill="none" strokeLinejoin="round" strokeLinecap="round"/>
-              <circle cx="24" cy={143+SAT} r="1.6" fill="rgba(232,140,160,0.9)"/>
-              <circle cx="32" cy={143+SAT} r="1.6" fill="rgba(232,140,160,0.9)"/>
+              <circle cx="26" cy="135" r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(232,113,138,0.4)" strokeWidth="1.2"/>
+              <path d="M 18 131 L 21 131 L 23 140 L 32 140 L 34 134 L 22 134" stroke="rgba(232,140,160,0.9)" strokeWidth="1.4" fill="none" strokeLinejoin="round" strokeLinecap="round"/>
+              <circle cx="24" cy="143" r="1.6" fill="rgba(232,140,160,0.9)"/>
+              <circle cx="32" cy="143" r="1.6" fill="rgba(232,140,160,0.9)"/>
             </g>
 
             <text x={GW/2} y={GH*0.48} textAnchor="middle" fill="rgba(200,155,130,0.55)" fontSize="12.5" fontFamily="Helvetica Neue,Arial">Glisse pour naviguer — évite, percute, survie</text>

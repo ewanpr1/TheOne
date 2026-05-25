@@ -1412,7 +1412,7 @@ function Game(){
               </g>
             )}
             {/* Version */}
-            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v35</text>
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v36</text>
           </g>
         )}
 
@@ -1647,15 +1647,15 @@ function Game(){
           </g>
         )}
       </svg>
-      {/* Progress bar — HTML overlay anchored to actual screen bottom, bypasses SVG coordinate system */}
+      {/* Progress bar — HTML overlay, toujours collé au bas absolu de l'écran */}
       {screen==='playing'&&(
-        <div style={{position:'absolute',bottom:0,left:0,right:0,height:'calc(9px + env(safe-area-inset-bottom,0px))',background:'rgba(0,0,0,0.55)',pointerEvents:'none'}}>
-          <div style={{position:'absolute',bottom:'env(safe-area-inset-bottom,0px)',left:0,width:`${totalProg*100}%`,height:'9px',background:z.acc,opacity:0.8}}/>
+        <div style={{position:'absolute',bottom:0,left:0,right:0,height:'9px',background:'rgba(0,0,0,0.55)',pointerEvents:'none'}}>
+          <div style={{position:'absolute',bottom:0,left:0,width:`${totalProg*100}%`,height:'9px',background:z.acc,opacity:0.8}}/>
           {[1,2,3,4].map(i=>(
-            <div key={i} style={{position:'absolute',bottom:'env(safe-area-inset-bottom,0px)',left:`${i*20}%`,width:'1.5px',height:'9px',background:'rgba(255,255,255,0.25)'}}/>
+            <div key={i} style={{position:'absolute',bottom:0,left:`${i*20}%`,width:'1.5px',height:'9px',background:'rgba(255,255,255,0.25)'}}/>
           ))}
           {ZONES.map((zo,i)=>(
-            <div key={i} style={{position:'absolute',bottom:'calc(9px + env(safe-area-inset-bottom,0px))',left:`${i*20+10}%`,transform:'translateX(-50%)',fontSize:'9px',lineHeight:'12px',opacity:g.zone>=i?0.9:0.3,color:'white',fontFamily:'Helvetica Neue,Arial'}}>{zo.emoji}</div>
+            <div key={i} style={{position:'absolute',bottom:'9px',left:`${i*20+10}%`,transform:'translateX(-50%)',fontSize:'9px',lineHeight:'12px',opacity:g.zone>=i?0.9:0.3,color:'white',fontFamily:'Helvetica Neue,Arial'}}>{zo.emoji}</div>
           ))}
         </div>
       )}

@@ -25,7 +25,7 @@
   .ach-scroll::-webkit-scrollbar-thumb{background:rgba(245,200,66,0.4);border-radius:3px}
   .ach-scroll::-webkit-scrollbar-thumb:hover{background:rgba(245,200,66,0.6)}
   .gw svg{width:100%;height:100%;display:block;cursor:none}
-  .modal-wrap{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:700px;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;padding:calc(24px + env(safe-area-inset-top,0px)) 8px calc(8px + env(safe-area-inset-bottom,0px))}
+  .modal-wrap{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:700px;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;padding:24px 8px 8px}
 </style>
 </head>
 <body>
@@ -48,7 +48,7 @@ const P={skin1:'#f2c4a0',skin2:'#e89870',skin3:'#c96a48',skin4:'#8b2a2a',skin5:'
 const ZONES=[
   {id:1,name:"Col de l'Utérus",emoji:"🌸",
    bg1:'#3a0818',bg2:'#180308',acc:P.rose,dur:32,
-   types:['sperm','sperm','sperm','mucus'],
+   types:['sperm','sperm','sperm','sperm','mucus'],
    spd:[1.19,1.94],ms:[527,332],scr:[2.0,3.0],minGaps:2},
   {id:2,name:"Utérus",emoji:"💗",
    bg1:'#2e0e14',bg2:'#160608',acc:P.skin3,dur:38,
@@ -65,7 +65,7 @@ const ZONES=[
   {id:5,name:"L'Ovule",emoji:"✨",
    bg1:'#1a1508',bg2:'#080600',acc:P.gold,dur:999,
    types:['antibody','wbc','wbc','sperm'],
-   spd:[2.38,3.67],ms:[357,247],scr:[4.6,3.7],minGaps:1,spermSpd:0.7},
+   spd:[2.38,3.67],ms:[357,247],scr:[5.55,4.47],minGaps:1,spermSpd:0.7},
 ];
 
 /* ── High scores ─────────────────────────────────────────── */
@@ -133,21 +133,21 @@ const ACHIEVEMENTS=[
   {id:'warmup',tier:'easy',name:'Échauffement',desc:'5 minutes de jeu cumulé',ml:25,get:s=>(s.timeNorm+s.timeInf),target:300000,fmt:'time'},
   // Moyens
   {id:'the_one',tier:'medium',name:'The One',desc:'Première victoire',ml:50,get:s=>s.wins,target:1,fmt:'count'},
-  {id:'tactical',tier:'medium',name:'Tactique',desc:'Ramasser 10 casques',ml:75,get:s=>s.helmets,target:10,fmt:'count'},
-  {id:'butcher',tier:'medium',name:'Bourreau',desc:'250 rivaux éliminés',ml:100,get:s=>s.rivals,target:250,fmt:'count'},
-  {id:'inf1',tier:'medium',name:'Apprenti infini',desc:'1 min en mode infini',ml:100,get:s=>s.bestInfTime,target:60000,fmt:'time'},
+  {id:'tactical',tier:'medium',name:'Tactique',desc:'Ramasser 25 casques',ml:75,get:s=>s.helmets,target:25,fmt:'count'},
+  {id:'butcher',tier:'medium',name:'Bourreau',desc:'1000 rivaux éliminés',ml:100,get:s=>s.rivals,target:1000,fmt:'count'},
+  {id:'inf1',tier:'medium',name:'Apprenti infini',desc:'2 min en mode infini',ml:100,get:s=>s.bestInfTime,target:120000,fmt:'time'},
   {id:'marathon',tier:'medium',name:'Marathonien',desc:'30 min de jeu cumulé',ml:150,get:s=>(s.timeNorm+s.timeInf),target:1800000,fmt:'time'},
   // Difficiles
   {id:'legend',tier:'hard',name:'Légende',desc:'10 victoires',ml:250,get:s=>s.wins,target:10,fmt:'count'},
-  {id:'priority',tier:'hard',name:'Cible privilégiée',desc:'1000 rivaux éliminés',ml:300,get:s=>s.rivals,target:1000,fmt:'count'},
+  {id:'priority',tier:'hard',name:'Cible privilégiée',desc:'2500 rivaux éliminés',ml:300,get:s=>s.rivals,target:2500,fmt:'count'},
   {id:'endurance',tier:'hard',name:'Endurance',desc:'1 h de jeu cumulé',ml:200,get:s=>(s.timeNorm+s.timeInf),target:3600000,fmt:'time'},
   {id:'inf3',tier:'hard',name:'Maître infini',desc:'3 min en mode infini',ml:400,get:s=>s.bestInfTime,target:180000,fmt:'time'},
-  {id:'streak3',tier:'hard',name:'Streak',desc:'3 victoires d\'affilée',ml:500,get:s=>s.bestStreak,target:3,fmt:'count'},
+  {id:'speedrun',tier:'hard',name:'Speedrun',desc:'Gagner en moins de 2:50',ml:500,get:s=>(s.bestWinTime&&s.bestWinTime<=170000)?170000:(s.bestWinTime||0),target:170000,fmt:'speed'},
   // Extrêmes
-  {id:'chosen',tier:'extreme',name:"L'Élu",desc:'50 victoires',ml:1500,get:s=>s.wins,target:50,fmt:'count'},
-  {id:'massacre',tier:'extreme',name:'Massacre',desc:'5000 rivaux éliminés',ml:2000,get:s=>s.rivals,target:5000,fmt:'count'},
-  {id:'inf5',tier:'extreme',name:'Légende infinie',desc:'5 min en mode infini',ml:1500,get:s=>s.bestInfTime,target:300000,fmt:'time'},
-  {id:'speedrun',tier:'extreme',name:'Speedrun',desc:'Gagner en moins de 2:30',ml:2500,get:s=>(s.bestWinTime&&s.bestWinTime<=150000)?150000:(s.bestWinTime||0),target:150000,fmt:'speed'},
+  {id:'massacre',tier:'extreme',name:'Massacre',desc:'10000 rivaux éliminés',ml:1500,get:s=>s.rivals,target:10000,fmt:'count'},
+  {id:'chosen',tier:'extreme',name:"L'Élu",desc:'50 victoires',ml:1750,get:s=>s.wins,target:50,fmt:'count'},
+  {id:'inf5',tier:'extreme',name:'Légende infinie',desc:'5 min en mode infini',ml:2000,get:s=>s.bestInfTime,target:300000,fmt:'time'},
+  {id:'streak3',tier:'extreme',name:'Streak',desc:'3 victoires d\'affilée',ml:2500,get:s=>s.bestStreak,target:3,fmt:'count'},
 ];
 // All achievements complete when get(s) >= target (or fmt:'speed' has special meaning)
 function achComplete(a,s){
@@ -245,13 +245,13 @@ function weekId(){
   return Math.floor((d.getTime()-tz)/(7*86400000));
 }
 const WK_TEMPLATES=[
-  {id:'wk_kill',ml:300,pool:[200,300,500],fmt:n=>`Éliminer ${n} rivaux cette semaine`,key:'killsWeek',mode:'gte'},
-  {id:'wk_helm',ml:200,pool:[15,25,40],fmt:n=>`Ramasser ${n} casques cette semaine`,key:'helmetsWeek',mode:'gte'},
-  {id:'wk_time',ml:250,pool:[30,45,60],fmt:n=>`Jouer ${n} min cette semaine`,key:'timeWeek',mode:'gte',scale:60000},
-  {id:'wk_wins',ml:500,pool:[3,5,8],fmt:n=>`Gagner ${n} parties cette semaine`,key:'winsWeek',mode:'gte'},
+  {id:'wk_kill',ml:300,pool:[1000,1600,2400],fmt:n=>`Éliminer ${n} rivaux cette semaine`,key:'killsWeek',mode:'gte'},
+  {id:'wk_helm',ml:200,pool:[50,80,130],fmt:n=>`Ramasser ${n} casques cette semaine`,key:'helmetsWeek',mode:'gte'},
+  {id:'wk_time',ml:250,pool:[60,90,140],fmt:n=>`Jouer ${n} min cette semaine`,key:'timeWeek',mode:'gte',scale:60000},
+  {id:'wk_wins',ml:500,pool:[5,8,13],fmt:n=>`Gagner ${n} parties cette semaine`,key:'winsWeek',mode:'gte'},
   {id:'wk_inf',ml:600,pool:[180,240,300],fmt:n=>`Survivre ${Math.floor(n/60)} min en mode infini`,key:'bestInfInGame',mode:'gte',scale:1000},
   {id:'wk_speed',ml:800,pool:[300,240],fmt:n=>`Gagner en moins de ${Math.floor(n/60)}:${(n%60).toString().padStart(2,'0')}`,key:'bestWinInGame',mode:'lte',scale:1000},
-  {id:'wk_zone',ml:400,pool:[5,10,15],fmt:n=>`Atteindre la zone 5 ${n} fois`,key:'zone5Week',mode:'gte'},
+  {id:'wk_zone',ml:400,pool:[5,10,18],fmt:n=>`Atteindre la zone 5 ${n} fois`,key:'zone5Week',mode:'gte'},
 ];
 function generateWeekly(){
   const id=weekId(),seed=strHash('w'+id),rand=mulberry32(seed);
@@ -327,9 +327,10 @@ function checkDaily(d,gameStats){
 function effZD(g){
   if(g.infinite&&g.zone===4){
     const base=ZONES[3];const m=1+0.05*Math.floor(g.playT/30000);
+    const msm=1+0.025*Math.floor(g.playT/30000);
     return{...base,dur:999,
-      spd:[base.spd[0]*m,base.spd[1]*m],
-      ms:[base.ms[0]/m,base.ms[1]/m],
+      spd:[base.spd[0]*msm,base.spd[1]*msm],
+      ms:[base.ms[0]/msm,base.ms[1]/msm],
       scr:[base.scr[0]*m,base.scr[1]*m]};
   }
   return ZONES[g.zone];
@@ -603,7 +604,7 @@ function initState(){
     zone:0,tiz:0,zoneBlend:0,  // zoneBlend: 0=current zone fully, 1=transitioned
     prevZone:0,
     waveOn:true,waveT:0,waveDur:7000,restDur:2200,
-    spawnT:0,playT:0,infinite:false,helmetsPicked:0,
+    spawnT:0,playT:0,infinite:false,helmetsPicked:0,lastHelmT:11000,
     mucus:[],wbcs:[],abs:[],sperms:[],helmets:[],ptcl:[],trail:[],
     ovuleY:-160,ovuleAngle:0,
     phase:'start',
@@ -984,8 +985,12 @@ function Game(){
 
       // Wave/rest — shorter rests
       g.waveT+=dt;
-      if(g.waveOn&&g.waveT>=g.waveDur){g.waveOn=false;g.waveT=0;g.restDur=800+Math.random()*1200;}
-      else if(!g.waveOn&&g.waveT>=g.restDur){g.waveOn=true;g.waveT=0;g.waveDur=4000+Math.random()*3500;}
+      if(g.waveOn&&g.waveT>=g.waveDur){
+        g.waveT=0;
+        if(g.zone===0){g.waveDur=4000+Math.random()*3500;} // zone 1 : pas de pause
+        else{g.waveOn=false;g.restDur=g.zone>=3?(300+Math.random()*500):(800+Math.random()*1200);}
+      }
+      else if(!g.waveOn&&g.waveT>=g.restDur){g.waveOn=true;g.waveT=0;g.waveDur=g.zone>=3?(5500+Math.random()*3000):(4000+Math.random()*3500);}
 
       // Individual enemy spawn
       if(g.waveOn){
@@ -993,8 +998,11 @@ function Game(){
         const ms=lerp(zd.ms[0],zd.ms[1],fz);
         while(g.spawnT>=ms){g.spawnT-=ms;spawnOne(g,zd,fz);}
       }
-      if(!g.shield&&g.helmets.length<2&&Math.random()<0.00007*dt)
-        g.helmets.push({x:POX+30+Math.random()*(PW-60),y:-45,pulse:0,id:uid(),hspd:1.035});
+      g.lastHelmT+=dt;
+      if(!g.shield&&g.helmets.length<1&&g.lastHelmT>11000&&g.zone>=1&&Math.random()<0.00007*dt){
+        g.helmets.push({x:POX+30+Math.random()*(PW-60),y:-45,pulse:0,id:uid(),hspd:1.172});
+        g.lastHelmT=0;
+      }
 
       // Move top→bottom enemies
       g.mucus=g.mucus.filter(m=>m.y<GH+70).map(m=>{m.y+=m.spd*(dt/16);m.x=clamp(m.x,POX+28,POX+PW-28);m.pulse+=dt*0.07;return m;});
@@ -1098,7 +1106,7 @@ function Game(){
             if(g.lives<=0){g.phase='dead';setScreenBoth('dead');try{if(g.infinite){const hs=saveHSInf(g.playT);setHighScoresInf(hs);}else{const hs=saveHS(g.score,g.zone,false);setHighScores(hs);}const newStats=recordGame({won:false,rivals:g.score,playT:g.playT,infinite:g.infinite,helmets:g.helmetsPicked});setStats(newStats);const bestInf=loadHSInf()[0]?.time||0;const ac=checkAchievements(newStats,bestInf);setAchSet(ac.ach);setML(ac.ml);if(ac.earned.length)setAchToast(ac.earned);const gSt={killsInGame:g.score,helmetsInGame:g.helmetsPicked,bestInfInGame:g.infinite?g.playT:0,bestZoneInGame:g.zone+1,playT:g.playT,won:false,infinite:g.infinite};const dr=checkDaily(loadDaily(),gSt);setDaily(dr.d);setML(dr.ml);const wr=checkWeekly(loadWeekly(),gSt);setWeekly(wr.w);setML(wr.ml);const allEarned=[...dr.earned,...wr.earned];if(allEarned.length)setDailyToast(allEarned);}catch(e){console.log(e);}return;}
           }
           {const bx=GW/2+Math.cos(g.ovuleAngle)*58,by=g.ovuleY+Math.sin(g.ovuleAngle)*58;
-          if(inEntry&&d2(g.px,g.py,bx,by)<PR+14){
+          if(d2(g.px,g.py,bx,by)<PR+20){
             burst(g,GW/2,g.ovuleY,'#ffd700',40);
             g.phase='win';setScreenBoth('win');try{localStorage.setItem('theone_won','1');setInfiniteUnlocked(true);const hs=saveHS(g.score,4,true);setHighScores(hs);const newStats=recordGame({won:true,rivals:g.score,playT:g.playT,infinite:false,helmets:g.helmetsPicked});setStats(newStats);const bestInf=loadHSInf()[0]?.time||0;const ac=checkAchievements(newStats,bestInf);setAchSet(ac.ach);setML(ac.ml);if(ac.earned.length)setAchToast(ac.earned);const gSt={killsInGame:g.score,helmetsInGame:g.helmetsPicked,bestZoneInGame:5,playT:g.playT,won:true,infinite:false,perfectWin:g.lives===3,noHelmetWin:g.helmetsPicked===0,bestWinInGame:g.playT};const dr=checkDaily(loadDaily(),gSt);setDaily(dr.d);setML(dr.ml);const wr=checkWeekly(loadWeekly(),gSt);setWeekly(wr.w);setML(wr.ml);const allEarned=[...dr.earned,...wr.earned];if(allEarned.length)setDailyToast(allEarned);}catch(e){console.log(e);}return;
           }}
@@ -1228,7 +1236,6 @@ function Game(){
                     <ellipse cx="0" cy="2" rx="11" ry="9" fill="#a0d028" stroke="#7a9a18" strokeWidth="1"/>
                     <ellipse cx="-2" cy="0" rx="5" ry="3.5" fill="rgba(200,235,80,0.5)"/>
                     <ellipse cx="3" cy="4" rx="3" ry="2" fill="rgba(170,220,40,0.7)"/>
-                    <text x="0" y="42" textAnchor="middle" fill="#aae030" fontSize="12" fontWeight="800" fontFamily="Helvetica Neue,Arial">Lent</text>
                   </g>
                 );
               })()}
@@ -1246,7 +1253,6 @@ function Game(){
                       <path d="M -8 0 Q -7 5 0 5 Q 7 5 8 0" fill="rgba(200,230,255,0.45)"/>
                       <ellipse cx="-3" cy="-9" rx="2" ry="1.2" fill="rgba(255,255,255,0.6)"/>
                     </g>
-                    <text x="0" y="42" textAnchor="middle" fill={P.gold} fontSize="13" fontWeight="800" fontFamily="Helvetica Neue,Arial">{Math.ceil(g.shieldT/1000)}s</text>
                   </g>
                 );
               })()}
@@ -1508,7 +1514,9 @@ function Game(){
               })}
               {/* Golden glow halo */}
               <circle cx="0" cy="0" r="50" fill="rgba(245,200,66,0.15)"/>
-              {/* Crown on head */}
+              {/* Player */}
+              <SpermPlayer x={0} y={0} wob={g.wob} hit={false} shield={false} tilt={0} skin={getSkin(equipped)}/>
+              {/* Crown on head — drawn after player to appear in front */}
               <g transform="translate(0,-22)">
                 <path d="M -18 0 L -14 -14 L -8 -4 L 0 -16 L 8 -4 L 14 -14 L 18 0 Z" fill={P.gold} stroke="#a06808" strokeWidth="1.2" strokeLinejoin="round"/>
                 <rect x="-18" y="-1" width="36" height="5" rx="1" fill="#d4920a" stroke="#a06808" strokeWidth="1"/>
@@ -1521,8 +1529,6 @@ function Game(){
                 {/* Shine */}
                 <ellipse cx="-3" cy="-14" rx="3" ry="1.5" fill="rgba(255,255,255,0.55)" transform="rotate(-20,-3,-14)"/>
               </g>
-              {/* Player */}
-              <SpermPlayer x={0} y={0} wob={g.wob} hit={false} shield={false} tilt={0} skin={getSkin(equipped)}/>
             </g>
             <text x={GW/2} y={GH*0.44} textAnchor="middle" fill={P.gold} fontSize="44" fontWeight="800"
               fontFamily="Helvetica Neue,Arial" letterSpacing="-1" filter="url(#sg)">Victoire</text>
@@ -1558,48 +1564,55 @@ function Game(){
         )}
         {/* Daily challenges modal — HTML overlay (outside SVG, see below) */}
 
-        {/* Daily toast */}
-        {dailyToast&&(
-          <g onClick={()=>setDailyToast(null)} style={{cursor:'pointer'}}>
-            <rect x="0" y="0" width={GW} height={GH} fill="rgba(8,2,8,0.9)"/>
-            <text x={GW/2} y={GH*0.22} textAnchor="middle" fill="#7ec88a" fontSize="14" letterSpacing="2.5" fontWeight="700" fontFamily="Helvetica Neue,Arial">📅 DÉFI DU JOUR RÉUSSI</text>
-            {dailyToast.map((c,i)=>{
-              const tier=TIERS[c.t];
-              return(
-                <g key={c.id} transform={`translate(${GW/2-115},${GH*0.3+i*72})`}>
-                  <rect x="0" y="0" width="230" height="62" rx="14" fill={`${tier.color}26`} stroke={`${tier.color}aa`} strokeWidth="1.5"/>
-                  <circle cx="30" cy="31" r="17" fill={tier.color}/>
-                  <text x="30" y="36" textAnchor="middle" fontSize="15" fill="white" fontWeight="800" fontFamily="Helvetica Neue,Arial">✓</text>
-                  <text x="55" y="25" fill={tier.color} fontSize="9" letterSpacing="1.5" fontWeight="700" fontFamily="Helvetica Neue,Arial">{tier.label.toUpperCase()}</text>
-                  <text x="220" y="25" textAnchor="end" fill={P.rose} fontSize="12" fontWeight="800" fontFamily="Helvetica Neue,Arial">+{c.ml} mL</text>
-                  <text x="55" y="46" fill="rgba(245,225,200,0.95)" fontSize="12" fontWeight="600" fontFamily="Helvetica Neue,Arial">{c.fmt.length>26?c.fmt.slice(0,26)+'…':c.fmt}</text>
-                </g>
-              );
-            })}
-            <text x={GW/2} y={GH*0.85} textAnchor="middle" fill="rgba(220,180,150,0.55)" fontSize="12" fontFamily="Helvetica Neue,Arial">tap pour continuer</text>
-          </g>
-        )}
+        {/* Combined rewards toast (achievements + daily/weekly) */}
+        {(dailyToast||achToast)&&(()=>{
+          const aList=achToast||[];
+          const dList=dailyToast||[];
+          const hasBoth=aList.length>0&&dList.length>0;
+          let y=SAT+36;
+          const el=[];
+          if(aList.length>0){
+            el.push(<text key="ath" x={GW/2} y={y} textAnchor="middle" fill={P.gold} fontSize="13" letterSpacing="2" fontWeight="700" fontFamily="Helvetica Neue,Arial">🏆 {aList.length>1?'NOUVELLES RÉCOMPENSES':'NOUVELLE RÉCOMPENSE'}</text>);
+            y+=30;
+            for(const a of aList){
+              el.push(<g key={a.id} transform={`translate(${GW/2-110},${y})`}>
+                <rect x="0" y="0" width="220" height="56" rx="13" fill={`${TIERS[a.tier].color}22`} stroke={`${TIERS[a.tier].color}88`} strokeWidth="1.5"/>
+                <circle cx="28" cy="28" r="15" fill={TIERS[a.tier].color}/>
+                <text x="28" y="33" textAnchor="middle" fontSize="13" fill="white" fontWeight="800" fontFamily="Helvetica Neue,Arial">✓</text>
+                <text x="51" y="21" fill="rgba(245,225,200,0.95)" fontSize="12" fontWeight="700" fontFamily="Helvetica Neue,Arial">{a.name}</text>
+                <text x="210" y="21" textAnchor="end" fill={P.rose} fontSize="11" fontWeight="800" fontFamily="Helvetica Neue,Arial">+{a.ml} mL</text>
+                <text x="51" y="39" fill="rgba(220,190,170,0.65)" fontSize="9.5" fontFamily="Helvetica Neue,Arial">{a.desc}</text>
+              </g>);
+              y+=64;
+            }
+          }
+          if(dList.length>0){
+            if(hasBoth)y+=14;
+            el.push(<text key="dth" x={GW/2} y={y} textAnchor="middle" fill="#7ec88a" fontSize="13" letterSpacing="2" fontWeight="700" fontFamily="Helvetica Neue,Arial">📅 {dList.length>1?'DÉFIS RÉUSSIS':'DÉFI RÉUSSI'}</text>);
+            y+=30;
+            for(const c of dList){
+              const tier=TIERS[c.t]||TIERS.medium;
+              el.push(<g key={c.id} transform={`translate(${GW/2-115},${y})`}>
+                <rect x="0" y="0" width="230" height="60" rx="13" fill={`${tier.color}26`} stroke={`${tier.color}aa`} strokeWidth="1.5"/>
+                <circle cx="30" cy="30" r="16" fill={tier.color}/>
+                <text x="30" y="35" textAnchor="middle" fontSize="14" fill="white" fontWeight="800" fontFamily="Helvetica Neue,Arial">✓</text>
+                <text x="54" y="23" fill={tier.color} fontSize="9" letterSpacing="1.5" fontWeight="700" fontFamily="Helvetica Neue,Arial">{tier.label.toUpperCase()}</text>
+                <text x="220" y="23" textAnchor="end" fill={P.rose} fontSize="11" fontWeight="800" fontFamily="Helvetica Neue,Arial">+{c.ml} mL</text>
+                <text x="54" y="44" fill="rgba(245,225,200,0.95)" fontSize="11" fontWeight="600" fontFamily="Helvetica Neue,Arial">{c.fmt.length>28?c.fmt.slice(0,28)+'…':c.fmt}</text>
+              </g>);
+              y+=68;
+            }
+          }
+          return(
+            <g onClick={()=>{setDailyToast(null);setAchToast(null);}} style={{cursor:'pointer'}}>
+              <rect x="0" y="0" width={GW} height={GH} fill="rgba(8,2,8,0.9)"/>
+              {el}
+              <text x={GW/2} y={GH-SAB-18} textAnchor="middle" fill="rgba(220,180,150,0.55)" fontSize="12" fontFamily="Helvetica Neue,Arial">tap pour continuer</text>
+            </g>
+          );
+        })()}
 
         {/* Achievements modal — HTML overlay (outside SVG, see below) */}
-
-        {/* Achievement toast */}
-        {achToast&&(
-          <g onClick={()=>setAchToast(null)} style={{cursor:'pointer'}}>
-            <rect x="0" y="0" width={GW} height={GH} fill="rgba(8,2,8,0.9)"/>
-            <text x={GW/2} y={GH*0.2} textAnchor="middle" fill={P.gold} fontSize="14" letterSpacing="2.5" fontWeight="700" fontFamily="Helvetica Neue,Arial">🏆 NOUVELLE RÉCOMPENSE</text>
-            {achToast.map((a,i)=>(
-              <g key={a.id} transform={`translate(${GW/2-110},${GH*0.28+i*70})`}>
-                <rect x="0" y="0" width="220" height="58" rx="14" fill={`${TIERS[a.tier].color}22`} stroke={`${TIERS[a.tier].color}88`} strokeWidth="1.5"/>
-                <circle cx="28" cy="29" r="16" fill={TIERS[a.tier].color}/>
-                <text x="28" y="34" textAnchor="middle" fontSize="14" fill="white" fontWeight="800" fontFamily="Helvetica Neue,Arial">✓</text>
-                <text x="52" y="22" fill="rgba(245,225,200,0.95)" fontSize="13" fontWeight="700" fontFamily="Helvetica Neue,Arial">{a.name}</text>
-                <text x="210" y="22" textAnchor="end" fill={P.rose} fontSize="12" fontWeight="800" fontFamily="Helvetica Neue,Arial">+{a.ml} mL</text>
-                <text x="52" y="40" fill="rgba(220,190,170,0.65)" fontSize="10" fontFamily="Helvetica Neue,Arial">{a.desc}</text>
-              </g>
-            ))}
-            <text x={GW/2} y={GH*0.85} textAnchor="middle" fill="rgba(220,180,150,0.55)" fontSize="12" fontFamily="Helvetica Neue,Arial">tap pour continuer</text>
-          </g>
-        )}
 
         {/* Shop modal rendered outside SVG (see below) */}
 
@@ -1618,7 +1631,7 @@ function Game(){
       {/* Shop overlay (HTML — outside SVG for clean grid) */}
       {showShop&&(
         <div onClick={()=>setShowShop(false)} style={{position:'absolute',inset:0,background:'rgba(8,2,8,0.97)',zIndex:10}}>
-          <div className="modal-wrap" style={{color:'white',fontFamily:'Helvetica Neue,Arial'}}>
+          <div className="modal-wrap" style={{color:'white',fontFamily:'Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
           <div style={{fontSize:'26px',fontWeight:800,color:P.skin1,textAlign:'center'}}>Boutique</div>
           <div style={{fontSize:'10.5px',letterSpacing:'2px',color:'rgba(210,170,140,0.5)',textAlign:'center',marginTop:'4px'}}>TAP N'IMPORTE OÙ POUR FERMER</div>
           <div style={{margin:'12px auto 6px',background:'rgba(232,113,138,0.08)',border:'1px solid rgba(232,113,138,0.3)',borderRadius:14,padding:'6px 24px',textAlign:'center'}}>
@@ -1688,7 +1701,7 @@ function Game(){
       {/* Daily challenges overlay — HTML outside SVG */}
       {showDaily&&(
         <div onClick={()=>setShowDaily(false)} style={{position:'absolute',inset:0,background:'rgba(8,2,8,0.96)',zIndex:10}}>
-          <div className="modal-wrap" style={{color:'white',fontFamily:'Helvetica Neue,Arial'}}>
+          <div className="modal-wrap" style={{color:'white',fontFamily:'Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
             <div style={{textAlign:'center'}}>
               <div style={{fontSize:26,fontWeight:800,color:P.skin1}}>Défis temporaires</div>
               <div style={{fontSize:9,letterSpacing:1.5,color:'rgba(210,170,140,0.5)',marginTop:3}}>SE RENOUVELLENT</div>
@@ -1737,7 +1750,7 @@ function Game(){
                     <div style={{width:20,height:20,borderRadius:'50%',background:c.completed?'#7ec88a':P.gold,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'white',flexShrink:0,marginRight:10,marginTop:2}}>{c.completed?'✓':'★'}</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:9,fontWeight:700,letterSpacing:1.5,color:P.gold}}>HEBDO</div>
-                      <div style={{fontSize:13,fontWeight:600,color:c.completed?'rgba(180,220,180,0.75)':'rgba(230,200,180,0.92)',marginTop:2}}>{c.fmt}</div>
+                      <div style={{fontSize:13,fontWeight:600,color:c.completed?'rgba(180,220,180,0.75)':'rgba(230,200,180,0.92)',textDecoration:c.completed?'line-through':'none',marginTop:2}}>{c.fmt}</div>
                       {(()=>{
                         const tpl=WK_TEMPLATES.find(t=>t.id===c.tplId);
                         if(!tpl||c.completed)return c.completed?<div style={{fontSize:11,color:'rgba(150,210,160,0.75)',marginTop:2}}>Récompense obtenue</div>:null;
@@ -1764,7 +1777,7 @@ function Game(){
       {/* Stats overlay — HTML outside SVG */}
       {showStats&&(
         <div onClick={()=>setShowStats(false)} style={{position:'absolute',inset:0,background:'rgba(8,2,8,0.95)',zIndex:10}}>
-          <div className="modal-wrap" style={{color:'white',fontFamily:'Helvetica Neue,Arial'}}>
+          <div className="modal-wrap" style={{color:'white',fontFamily:'Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
             <div style={{textAlign:'center'}}>
               <div style={{fontSize:28,fontWeight:800,color:P.skin1}}>Statistiques</div>
               <div style={{fontSize:11,letterSpacing:2,color:'rgba(210,170,140,0.5)',marginTop:4}}>TAP N'IMPORTE OÙ POUR FERMER</div>
@@ -1818,7 +1831,7 @@ function Game(){
       {/* Info overlay — HTML outside SVG */}
       {showInfo&&(
         <div onClick={()=>setShowInfo(false)} style={{position:'absolute',inset:0,background:'rgba(8,2,8,0.94)',zIndex:10}}>
-          <div className="modal-wrap" style={{color:'white',fontFamily:'Helvetica Neue,Arial'}}>
+          <div className="modal-wrap" style={{color:'white',fontFamily:'Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
             <div style={{textAlign:'center'}}>
               <div style={{fontSize:28,fontWeight:800,color:P.skin1}}>Règles du jeu</div>
               <div style={{fontSize:11,letterSpacing:2,color:'rgba(210,170,140,0.5)',marginTop:4}}>TAP N'IMPORTE OÙ POUR FERMER</div>
@@ -1903,7 +1916,7 @@ function Game(){
       {/* Achievements overlay — HTML outside SVG, même pattern que le shop */}
       {showAch&&(
         <div onClick={()=>setShowAch(false)} style={{position:'absolute',inset:0,background:'rgba(8,2,8,0.96)',zIndex:10}}>
-          <div className="modal-wrap" style={{color:'white',fontFamily:'Helvetica Neue,Arial'}}>
+          <div className="modal-wrap" style={{color:'white',fontFamily:'Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
           <div style={{fontSize:'26px',fontWeight:800,color:P.skin1,textAlign:'center'}}>Récompenses</div>
           <div style={{fontSize:'10.5px',letterSpacing:'2px',color:'rgba(210,170,140,0.5)',textAlign:'center',marginTop:'4px'}}>TAP N'IMPORTE OÙ POUR FERMER</div>
           <div style={{margin:'8px auto 6px',background:'rgba(232,113,138,0.08)',border:'1px solid rgba(232,113,138,0.3)',borderRadius:14,padding:'6px 24px',textAlign:'center'}}>

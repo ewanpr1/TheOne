@@ -675,7 +675,7 @@ function Game(){
     const {ox,oy,vbW,vbH}=vpRef.current;
     return{
       x:clamp(-ox+(s.clientX-r.left)*(vbW/r.width),POX+22,POX+PW-22),
-      y:clamp(-oy+(s.clientY-r.top)*(vbH/r.height),47+safeAreaRef.current.sat,GH-31-safeAreaRef.current.sab),
+      y:clamp(-oy+(s.clientY-r.top)*(vbH/r.height),47+safeAreaRef.current.sat,GH-31),
     };
   }
   const onTS=e=>{touch.current=true;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
@@ -1412,7 +1412,7 @@ function Game(){
               </g>
             )}
             {/* Version */}
-            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v36</text>
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v37</text>
           </g>
         )}
 
@@ -1499,7 +1499,7 @@ function Game(){
               <text x={GW/2} y={GH*0.81+33} textAnchor="middle" fill="white" fontSize="21" fontWeight="700"
                 fontFamily="Helvetica Neue,Arial">Réessayer</text>
             </g>
-            <g onClick={()=>shareScore()} style={{cursor:'pointer'}}>
+            <g onClick={()=>shareScore()} style={{cursor:'pointer'}} transform={`translate(0,${SAT})`}>
               <circle cx={GW-26} cy="30" r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(220,170,140,0.4)" strokeWidth="1.2"/>
               <circle cx={GW-32} cy="33" r="2.5" fill="rgba(230,190,160,0.9)"/>
               <circle cx={GW-20} cy="25" r="2.5" fill="rgba(230,190,160,0.9)"/>
@@ -1563,7 +1563,7 @@ function Game(){
               <text x={GW/2} y={GH*0.71+33} textAnchor="middle" fill={P.skin5} fontSize="21" fontWeight="800"
                 fontFamily="Helvetica Neue,Arial">Rejouer</text>
             </g>
-            <g onClick={()=>shareScore()} style={{cursor:'pointer'}}>
+            <g onClick={()=>shareScore()} style={{cursor:'pointer'}} transform={`translate(0,${SAT})`}>
               <circle cx={GW-26} cy="30" r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(245,200,66,0.4)" strokeWidth="1.2"/>
               <circle cx={GW-32} cy="33" r="2.5" fill={P.gold}/>
               <circle cx={GW-20} cy="25" r="2.5" fill={P.gold}/>

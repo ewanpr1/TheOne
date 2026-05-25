@@ -1282,13 +1282,6 @@ function Game(){
               })()}
             </g>);
           })()}
-          {/* Progress bar */}
-          <rect x="0" y={GH-9-SAB} width={GW} height={9+SAB} fill="rgba(0,0,0,0.55)"/>
-          <rect x="0" y={GH-9-SAB} width={GW*totalProg} height="9" fill={z.acc} opacity="0.8"/>
-          {[1,2,3,4].map(i=><line key={i} x1={GW*(i/5)} y1={GH-9-SAB} x2={GW*(i/5)} y2={GH-SAB} stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>)}
-          {ZONES.map((zo,i)=>(
-            <text key={i} x={GW*(i/5)+GW/10} y={GH-12-SAB} textAnchor="middle" fontSize="9" opacity={g.zone>=i?0.9:0.3}>{zo.emoji}</text>
-          ))}
         </>)}
 
         {/* Zone banner (seamless — game continues underneath) */}
@@ -1419,7 +1412,7 @@ function Game(){
               </g>
             )}
             {/* Version */}
-            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v34</text>
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v35</text>
           </g>
         )}
 
@@ -1654,6 +1647,18 @@ function Game(){
           </g>
         )}
       </svg>
+      {/* Progress bar — HTML overlay anchored to actual screen bottom, bypasses SVG coordinate system */}
+      {screen==='playing'&&(
+        <div style={{position:'absolute',bottom:0,left:0,right:0,height:'calc(9px + env(safe-area-inset-bottom,0px))',background:'rgba(0,0,0,0.55)',pointerEvents:'none'}}>
+          <div style={{position:'absolute',bottom:'env(safe-area-inset-bottom,0px)',left:0,width:`${totalProg*100}%`,height:'9px',background:z.acc,opacity:0.8}}/>
+          {[1,2,3,4].map(i=>(
+            <div key={i} style={{position:'absolute',bottom:'env(safe-area-inset-bottom,0px)',left:`${i*20}%`,width:'1.5px',height:'9px',background:'rgba(255,255,255,0.25)'}}/>
+          ))}
+          {ZONES.map((zo,i)=>(
+            <div key={i} style={{position:'absolute',bottom:'calc(9px + env(safe-area-inset-bottom,0px))',left:`${i*20+10}%`,transform:'translateX(-50%)',fontSize:'9px',lineHeight:'12px',opacity:g.zone>=i?0.9:0.3,color:'white',fontFamily:'Helvetica Neue,Arial'}}>{zo.emoji}</div>
+          ))}
+        </div>
+      )}
       {/* Shop overlay (HTML — outside SVG for clean grid) */}
       {showShop&&(
         <div onClick={()=>setShowShop(false)} style={{position:'absolute',inset:0,background:'rgba(8,2,8,0.97)',zIndex:10}}>

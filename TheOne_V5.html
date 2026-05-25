@@ -612,6 +612,7 @@ function initState(){
 
 function Game(){
   const [safeArea,setSafeArea]=React.useState({sat:0,sab:0});
+  const safeAreaRef=React.useRef({sat:0,sab:0});
   React.useEffect(()=>{
     const el=document.createElement('div');
     el.style.cssText='position:fixed;top:0;left:0;width:0;height:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden';
@@ -620,7 +621,7 @@ function Game(){
     const sat=parseFloat(cs.paddingTop)||0;
     const sab=parseFloat(cs.paddingBottom)||0;
     document.body.removeChild(el);
-    if(sat||sab)setSafeArea({sat,sab});
+    if(sat||sab){setSafeArea({sat,sab});safeAreaRef.current={sat,sab};}
     // Retry après 200ms au cas où le viewport iOS n'est pas encore stabilisé
     const t=setTimeout(()=>{
       const el2=document.createElement('div');
@@ -630,7 +631,7 @@ function Game(){
       const sat2=parseFloat(cs2.paddingTop)||0;
       const sab2=parseFloat(cs2.paddingBottom)||0;
       document.body.removeChild(el2);
-      setSafeArea({sat:sat2,sab:sab2});
+      setSafeArea({sat:sat2,sab:sab2});safeAreaRef.current={sat:sat2,sab:sab2};
     },200);
     return()=>clearTimeout(t);
   },[]);
@@ -674,7 +675,7 @@ function Game(){
     const {ox,oy,vbW,vbH}=vpRef.current;
     return{
       x:clamp(-ox+(s.clientX-r.left)*(vbW/r.width),POX+22,POX+PW-22),
-      y:clamp(-oy+(s.clientY-r.top)*(vbH/r.height),47+SAT,GH-48-SAB),
+      y:clamp(-oy+(s.clientY-r.top)*(vbH/r.height),47+safeAreaRef.current.sat,GH-48-safeAreaRef.current.sab),
     };
   }
   const onTS=e=>{touch.current=true;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
@@ -1284,7 +1285,7 @@ function Game(){
           {/* Progress bar */}
           <rect x="0" y={GH-9-SAB} width={GW} height="9" fill="rgba(0,0,0,0.55)"/>
           <rect x="0" y={GH-9-SAB} width={GW*totalProg} height="9" fill={z.acc} opacity="0.8"/>
-          {[1,2,3,4].map(i=><line key={i} x1={GW*(i/5)} y1={GH-9-SAB} x2={GW*(i/5)} y2={GH} stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>)}
+          {[1,2,3,4].map(i=><line key={i} x1={GW*(i/5)} y1={GH-9-SAB} x2={GW*(i/5)} y2={GH-SAB} stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>)}
           {ZONES.map((zo,i)=>(
             <text key={i} x={GW*(i/5)+GW/10} y={GH-12-SAB} textAnchor="middle" fontSize="9" opacity={g.zone>=i?0.9:0.3}>{zo.emoji}</text>
           ))}
@@ -1418,7 +1419,7 @@ function Game(){
               </g>
             )}
             {/* Version */}
-            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v32</text>
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v33</text>
           </g>
         )}
 

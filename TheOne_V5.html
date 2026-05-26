@@ -214,10 +214,11 @@ const CH_TEMPLATES=[
 
 function generateDaily(){
   const id=dayId(),seed=strHash(id),rand=mulberry32(seed);
+  const infUnlocked=localStorage.getItem('theone_won')==='1';
   const tiers=['easy','medium','hard'];
   const picked=[];
   for(const t of tiers){
-    const opts=CH_TEMPLATES.filter(c=>c.t===t);
+    const opts=CH_TEMPLATES.filter(c=>c.t===t&&(infUnlocked||c.id!=='inf_h'));
     const tpl=opts[Math.floor(rand()*opts.length)];
     const target=tpl.pool[Math.floor(rand()*tpl.pool.length)];
     picked.push({id:tpl.id+'_'+t,tplId:tpl.id,t,target,ml:tpl.ml,fmt:tpl.fmt(target),completed:false});
@@ -253,7 +254,8 @@ const WK_TEMPLATES=[
 ];
 function generateWeekly(){
   const id=weekId(),seed=strHash('w'+id),rand=mulberry32(seed);
-  const pool=[...WK_TEMPLATES];
+  const infUnlocked=localStorage.getItem('theone_won')==='1';
+  const pool=WK_TEMPLATES.filter(c=>infUnlocked||c.id!=='wk_inf');
   const picked=[];
   for(let i=0;i<2;i++){
     const idx=Math.floor(rand()*pool.length);
@@ -1252,7 +1254,7 @@ function Game(){
                 const pct=Math.max(0,Math.min(1,g.slowed/1400));
                 const C=2*Math.PI*20;
                 return(
-                  <g transform={`translate(${mx},${GH-58-SAB})`}>
+                  <g transform={`translate(${mx},${GH-58})`}>
                     <circle cx="0" cy="0" r="22" fill="rgba(0,0,0,0.55)"/>
                     <circle cx="0" cy="0" r="20" fill="none" stroke="rgba(160,210,35,0.18)" strokeWidth="3"/>
                     <circle cx="0" cy="0" r="20" fill="none" stroke="#aae030" strokeWidth="3" strokeLinecap="round" strokeDasharray={`${C*pct} ${C}`} transform="rotate(-90)"/>
@@ -1267,7 +1269,7 @@ function Game(){
                 const pct=g.shieldT/8000;
                 const C=2*Math.PI*20;
                 return(
-                  <g transform={`translate(${hx},${GH-58-SAB})`}>
+                  <g transform={`translate(${hx},${GH-58})`}>
                     <circle cx="0" cy="0" r="22" fill="rgba(0,0,0,0.55)"/>
                     <circle cx="0" cy="0" r="20" fill="none" stroke="rgba(245,200,66,0.18)" strokeWidth="3"/>
                     <circle cx="0" cy="0" r="20" fill="none" stroke={P.gold} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${C*pct} ${C}`} transform="rotate(-90)"/>
@@ -1412,7 +1414,7 @@ function Game(){
               </g>
             )}
             {/* Version */}
-            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v37</text>
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v38</text>
           </g>
         )}
 

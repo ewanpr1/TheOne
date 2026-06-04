@@ -85,18 +85,21 @@ const _sfxVol={
 const _sfxEl={};
 let _ambientEl=null;
 
+let _lastKillSnd=0;
 function _initAudio(){
   if(_audioUnlocked)return;_audioUnlocked=true;
-  // Unlock SFX via play/pause immédiat (requis iOS)
   for(const[k,src]of Object.entries(_sfxSrc)){
-    const a=new Audio(src);a.preload='auto';_sfxEl[k]=a;
+    const a=new Audio(src);a.preload='auto';
+    a.volume=0; // Silencieux pendant le déblocage iOS
+    _sfxEl[k]=a;
     a.play().then(()=>{a.pause();a.currentTime=0;}).catch(()=>{});
   }
-  // Ambient : juste créer, pas de play ici pour éviter la race condition
   _ambientEl=new Audio('./son_ambiance.mp3');_ambientEl.loop=true;_ambientEl.volume=_sfxVol.ambient;
 }
 function playSound(type){
   if(_muted||!_sfxEl[type])return;
+  // Rate-limit le son de kill pour éviter le lag iOS sur kills rapides
+  if(type==='kill'){const now=Date.now();if(now-_lastKillSnd<80)return;_lastKillSnd=now;}
   try{
     const a=_sfxEl[type].cloneNode();
     a.volume=_sfxVol[type]??0.7;
@@ -1525,7 +1528,7 @@ function Game(){
               </g>
             )}
             {/* Version */}
-            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v64</text>
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v65</text>
           </g>
         )}
 

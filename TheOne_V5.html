@@ -69,6 +69,44 @@ const ZONES=[
 /* ── Discrete mode — module-level flag updated each React render ── */
 let DISCRETE_MODE=false;
 
+/* ── Audio & Vibration ─────────────────────────────────────────── */
+let _ac=null;
+function getAC(){
+  try{if(!_ac)_ac=new(window.AudioContext||window.webkitAudioContext)();if(_ac.state==='suspended')_ac.resume();return _ac;}catch(e){return null;}
+}
+function playSound(type){
+  const ctx=getAC();if(!ctx)return;
+  const now=ctx.currentTime;
+  try{
+    if(type==='hit'){
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sawtooth';
+      o.frequency.setValueAtTime(300,now);o.frequency.exponentialRampToValueAtTime(60,now+0.18);
+      g.gain.setValueAtTime(0.45,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.18);
+      o.start(now);o.stop(now+0.2);
+    }else if(type==='win'){
+      [[523,0],[659,0.13],[784,0.26],[1047,0.39]].forEach(([freq,delay])=>{
+        const o=ctx.createOscillator(),gn=ctx.createGain();
+        o.connect(gn);gn.connect(ctx.destination);
+        o.type='sine';o.frequency.value=freq;const t=now+delay;
+        gn.gain.setValueAtTime(0,t);gn.gain.linearRampToValueAtTime(0.35,t+0.05);gn.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+        o.start(t);o.stop(t+0.3);
+      });
+    }else if(type==='dead'){
+      [[330,0],[262,0.22],[196,0.44]].forEach(([freq,delay])=>{
+        const o=ctx.createOscillator(),gn=ctx.createGain();
+        o.connect(gn);gn.connect(ctx.destination);
+        o.type='sawtooth';const t=now+delay;
+        o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(freq*0.65,t+0.32);
+        gn.gain.setValueAtTime(0.32,t);gn.gain.exponentialRampToValueAtTime(0.001,t+0.36);
+        o.start(t);o.stop(t+0.4);
+      });
+    }
+  }catch(e){}
+}
+function vibrate(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}}
+
 /* ── High scores ─────────────────────────────────────────── */
 const HS_KEY='theone_hs';
 const HS_INF_KEY='theone_hs_inf';
@@ -1073,10 +1111,11 @@ function Game(){
         if(e.y<-65){
           // escaped — penalise
           g.hitFlash=25;g.lives--;g.inv=900;
+          if(g.lives<=0)playSound('dead');else playSound('hit');vibrate(60);
           burst(g,clamp(e.x,POX+20,POX+PW-20),15,P.rose,8);
           if(g.lives<=0){g.phase='dead';setScreenBoth('dead');try{if(g.infinite){const hs=saveHSInf(g.playT);setHighScoresInf(hs);}else{const hs=saveHS(g.score,g.zone,false);setHighScores(hs);}const newStats=recordGame({won:false,rivals:g.score,playT:g.playT,infinite:g.infinite,helmets:g.helmetsPicked});setStats(newStats);const bestInf=loadHSInf()[0]?.time||0;const ac=checkAchievements(newStats,bestInf);setAchSet(ac.ach);setML(ac.ml);if(ac.earned.length)setAchToast(ac.earned);const gSt={killsInGame:g.score,helmetsInGame:g.helmetsPicked,bestInfInGame:g.infinite?g.playT:0,bestZoneInGame:g.zone+1,playT:g.playT,won:false,infinite:g.infinite};const dr=checkDaily(loadDaily(),gSt);setDaily(dr.d);setML(dr.ml);const wr=checkWeekly(loadWeekly(),gSt);setWeekly(wr.w);setML(wr.ml);const allEarned=[...dr.earned,...wr.earned];if(allEarned.length)setDailyToast(allEarned);}catch(e2){console.log(e2);}return;}
         } else if(d2(g.px,g.py,e.x,e.y)<PR+15){
-          burst(g,e.x,e.y,'#e89870',10);g.score++;
+          burst(g,e.x,e.y,'#e89870',10);g.score++;vibrate(15);
         } else {
           nextSperms.push(e);
         }
@@ -1106,6 +1145,7 @@ function Game(){
               else g.abs=g.abs.filter(a=>a.id!==e.id);
             }else{
               g.hitFlash=30;g.lives--;g.inv=1800;
+              if(g.lives<=0)playSound('dead');else playSound('hit');vibrate(60);
               burst(g,e.x,e.y,e._t==='wbc'?'#88ccff':'#6090e0',12);
               if(e._t==='wbc')g.wbcs=g.wbcs.filter(w=>w.id!==e.id);
               else g.abs=g.abs.filter(a=>a.id!==e.id);
@@ -1148,12 +1188,13 @@ function Game(){
             g.tx=g.px+nx*28;g.ty=g.py+ny*28;
             g.px+=nx*5;g.py+=ny*5;
             g.hitFlash=30;g.lives--;g.inv=1800;
+            if(g.lives<=0)playSound('dead');else playSound('hit');vibrate(60);
             if(g.lives<=0){g.phase='dead';setScreenBoth('dead');try{if(g.infinite){const hs=saveHSInf(g.playT);setHighScoresInf(hs);}else{const hs=saveHS(g.score,g.zone,false);setHighScores(hs);}const newStats=recordGame({won:false,rivals:g.score,playT:g.playT,infinite:g.infinite,helmets:g.helmetsPicked});setStats(newStats);const bestInf=loadHSInf()[0]?.time||0;const ac=checkAchievements(newStats,bestInf);setAchSet(ac.ach);setML(ac.ml);if(ac.earned.length)setAchToast(ac.earned);const gSt={killsInGame:g.score,helmetsInGame:g.helmetsPicked,bestInfInGame:g.infinite?g.playT:0,bestZoneInGame:g.zone+1,playT:g.playT,won:false,infinite:g.infinite};const dr=checkDaily(loadDaily(),gSt);setDaily(dr.d);setML(dr.ml);const wr=checkWeekly(loadWeekly(),gSt);setWeekly(wr.w);setML(wr.ml);const allEarned=[...dr.earned,...wr.earned];if(allEarned.length)setDailyToast(allEarned);}catch(e){console.log(e);}return;}
           }
           {const bx=GW/2+Math.cos(g.ovuleAngle)*58,by=g.ovuleY+Math.sin(g.ovuleAngle)*58;
           if(d2(g.px,g.py,bx,by)<PR+20){
             burst(g,GW/2,g.ovuleY,'#ffd700',40);
-            g.phase='win';setScreenBoth('win');try{localStorage.setItem('theone_won','1');setInfiniteUnlocked(true);const hs=saveHS(g.score,4,true);setHighScores(hs);const newStats=recordGame({won:true,rivals:g.score,playT:g.playT,infinite:false,helmets:g.helmetsPicked});setStats(newStats);const bestInf=loadHSInf()[0]?.time||0;const ac=checkAchievements(newStats,bestInf,{perfectWin:g.lives===3,noHelmetWin:g.helmetsPicked===0});setAchSet(ac.ach);setML(ac.ml);if(ac.earned.length)setAchToast(ac.earned);const gSt={killsInGame:g.score,helmetsInGame:g.helmetsPicked,bestZoneInGame:5,playT:g.playT,won:true,infinite:false,perfectWin:g.hardcore?(g.lives===1):g.lives===3,noHelmetWin:!g.hardcore&&g.helmetsPicked===0,bestWinInGame:g.playT};const dr=checkDaily(loadDaily(),gSt);setDaily(dr.d);setML(dr.ml);const wr=checkWeekly(loadWeekly(),gSt);setWeekly(wr.w);setML(wr.ml);const allEarned=[...dr.earned,...wr.earned];if(allEarned.length)setDailyToast(allEarned);}catch(e){console.log(e);}return;
+            g.phase='win';playSound('win');setScreenBoth('win');try{localStorage.setItem('theone_won','1');setInfiniteUnlocked(true);const hs=saveHS(g.score,4,true);setHighScores(hs);const newStats=recordGame({won:true,rivals:g.score,playT:g.playT,infinite:false,helmets:g.helmetsPicked});setStats(newStats);const bestInf=loadHSInf()[0]?.time||0;const ac=checkAchievements(newStats,bestInf,{perfectWin:g.lives===3,noHelmetWin:g.helmetsPicked===0});setAchSet(ac.ach);setML(ac.ml);if(ac.earned.length)setAchToast(ac.earned);const gSt={killsInGame:g.score,helmetsInGame:g.helmetsPicked,bestZoneInGame:5,playT:g.playT,won:true,infinite:false,perfectWin:g.hardcore?(g.lives===1):g.lives===3,noHelmetWin:!g.hardcore&&g.helmetsPicked===0,bestWinInGame:g.playT};const dr=checkDaily(loadDaily(),gSt);setDaily(dr.d);setML(dr.ml);const wr=checkWeekly(loadWeekly(),gSt);setWeekly(wr.w);setML(wr.ml);const allEarned=[...dr.earned,...wr.earned];if(allEarned.length)setDailyToast(allEarned);}catch(e){console.log(e);}return;
           }}
         }
       }
@@ -1460,7 +1501,7 @@ function Game(){
               </g>
             )}
             {/* Version */}
-            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v48</text>
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v49</text>
           </g>
         )}
 

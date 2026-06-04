@@ -1,9 +1,15 @@
-const CACHE = 'theone-v50';
+const CACHE = 'theone-v64';
 const PRECACHE = [
   './TheOne_V5.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './son_hit.wav',
+  './son_victoire.wav',
+  './son_defaite.mp3',
+  './son_mucus.mp3',
+  './son_kill.mp3',
+  './son_ambiance.mp3',
   'https://unpkg.com/react@18.3.1/umd/react.development.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js',
   'https://unpkg.com/@babel/standalone@7.29.0/babel.min.js',

@@ -46,8 +46,8 @@ const P={skin1:'#f2c4a0',skin2:'#e89870',skin3:'#c96a48',skin4:'#8b2a2a',skin5:'
 const ZONES=[
   {id:1,name:"Col de l'Utérus",dname:"Couloir 1",emoji:"🌸",demoji:"🌀",
    bg1:'#3a0818',bg2:'#180308',acc:P.rose,dur:32,
-   types:['sperm','sperm','sperm','sperm','mucus'],
-   spd:[1.19,1.94],ms:[527,332],scr:[2.0,3.0],minGaps:2},
+   types:['sperm','sperm','sperm','sperm','mucus','sperm','sperm','sperm','sperm','mucus','wbc'],
+   spd:[1.19,1.94],ms:[527,332],scr:[2.0,3.0],minGaps:2,wbcSpd:0.95},
   {id:2,name:"Utérus",dname:"Couloir 2",emoji:"💗",demoji:"🌊",
    bg1:'#2e0e14',bg2:'#160608',acc:P.skin3,dur:38,
    types:['sperm','sperm','wbc','wbc','mucus'],
@@ -70,40 +70,45 @@ const ZONES=[
 let DISCRETE_MODE=false;
 
 /* ── Audio & Vibration ─────────────────────────────────────────── */
-let _ac=null;
-function getAC(){
-  try{if(!_ac)_ac=new(window.AudioContext||window.webkitAudioContext)();if(_ac.state==='suspended')_ac.resume();return _ac;}catch(e){return null;}
+let _muted=localStorage.getItem('theone_muted')==='1';
+let _audioUnlocked=false;
+const _sfxSrc={hit:'./son_hit.wav',dead:'./son_defaite.mp3',win:'./son_victoire.wav',slow:'./son_mucus.mp3',kill:'./son_kill.mp3'};
+// ── Volumes (0.0 → 1.0) ─────────────────────────────────────────
+const _sfxVol={
+  hit:  0.40,  // coup reçu / perte de vie
+  dead: 0.65,  // défaite
+  win:  0.90,  // victoire
+  slow: 0.40,  // impact mucus
+  kill: 0.10,  // rival éliminé
+  ambient: 0.80, // musique d'ambiance
+};
+const _sfxEl={};
+let _ambientEl=null;
+
+function _initAudio(){
+  if(_audioUnlocked)return;_audioUnlocked=true;
+  // Unlock SFX via play/pause immédiat (requis iOS)
+  for(const[k,src]of Object.entries(_sfxSrc)){
+    const a=new Audio(src);a.preload='auto';_sfxEl[k]=a;
+    a.play().then(()=>{a.pause();a.currentTime=0;}).catch(()=>{});
+  }
+  // Ambient : juste créer, pas de play ici pour éviter la race condition
+  _ambientEl=new Audio('./son_ambiance.mp3');_ambientEl.loop=true;_ambientEl.volume=_sfxVol.ambient;
 }
 function playSound(type){
-  const ctx=getAC();if(!ctx)return;
-  const now=ctx.currentTime;
+  if(_muted||!_sfxEl[type])return;
   try{
-    if(type==='hit'){
-      const o=ctx.createOscillator(),g=ctx.createGain();
-      o.connect(g);g.connect(ctx.destination);
-      o.type='sawtooth';
-      o.frequency.setValueAtTime(300,now);o.frequency.exponentialRampToValueAtTime(60,now+0.18);
-      g.gain.setValueAtTime(0.45,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.18);
-      o.start(now);o.stop(now+0.2);
-    }else if(type==='win'){
-      [[523,0],[659,0.13],[784,0.26],[1047,0.39]].forEach(([freq,delay])=>{
-        const o=ctx.createOscillator(),gn=ctx.createGain();
-        o.connect(gn);gn.connect(ctx.destination);
-        o.type='sine';o.frequency.value=freq;const t=now+delay;
-        gn.gain.setValueAtTime(0,t);gn.gain.linearRampToValueAtTime(0.35,t+0.05);gn.gain.exponentialRampToValueAtTime(0.001,t+0.28);
-        o.start(t);o.stop(t+0.3);
-      });
-    }else if(type==='dead'){
-      [[330,0],[262,0.22],[196,0.44]].forEach(([freq,delay])=>{
-        const o=ctx.createOscillator(),gn=ctx.createGain();
-        o.connect(gn);gn.connect(ctx.destination);
-        o.type='sawtooth';const t=now+delay;
-        o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(freq*0.65,t+0.32);
-        gn.gain.setValueAtTime(0.32,t);gn.gain.exponentialRampToValueAtTime(0.001,t+0.36);
-        o.start(t);o.stop(t+0.4);
-      });
-    }
+    const a=_sfxEl[type].cloneNode();
+    a.volume=_sfxVol[type]??0.7;
+    a.play().catch(()=>{});
   }catch(e){}
+}
+function startAmbient(){
+  if(!_ambientEl||_muted)return;
+  _ambientEl.currentTime=0;_ambientEl.play().catch(()=>{});
+}
+function stopAmbient(){
+  if(!_ambientEl)return;_ambientEl.pause();_ambientEl.currentTime=0;
 }
 function vibrate(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}}
 
@@ -692,6 +697,7 @@ function Game(){
   const [infiniteUnlocked,setInfiniteUnlocked]=React.useState(()=>localStorage.getItem('theone_won')==='1');
   const [discreteMode,setDiscreteMode]=React.useState(()=>localStorage.getItem('theone_discrete')==='1');
   DISCRETE_MODE=discreteMode;
+  const [muted,setMuted]=React.useState(()=>localStorage.getItem('theone_muted')==='1');
   const [shareImg,setShareImg]=React.useState(null);
   const [showInfo,setShowInfo]=React.useState(false);
   const [showStats,setShowStats]=React.useState(false);
@@ -717,7 +723,7 @@ function Game(){
   const touch=React.useRef(false);
   const gs=React.useRef(initState());
 
-  function setScreenBoth(s){screenRef.current=s;setScreen(s);}
+  function setScreenBoth(s){screenRef.current=s;setScreen(s);if(s==='win'||s==='dead'||s==='start')stopAmbient();}
 
   function getPos(e){
     const el=svgRef.current;if(!el)return null;
@@ -728,7 +734,7 @@ function Game(){
       y:clamp(-oy+(s.clientY-r.top)*(vbH/r.height),47+safeAreaRef.current.sat,GH-31),
     };
   }
-  const onTS=e=>{getAC();touch.current=true;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
+  const onTS=e=>{_initAudio();touch.current=true;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
   const onTM=e=>{if(gs.current.phase==='playing')e.preventDefault();if(!touch.current)return;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
   const onTE=()=>touch.current=false;
 
@@ -736,6 +742,7 @@ function Game(){
     const s=initState();s.phase='playing';s.infinite=!!infinite;
     s.hardcore=!!hardcore;if(hardcore)s.lives=1;
     gs.current=s;setShareImg(null);setScreenBoth('playing');
+    startAmbient();
   }
 
   async function shareScore(){
@@ -1011,7 +1018,7 @@ function Game(){
     if(type==='mucus')
       g.mucus.push({x:lx,y:yOff,spd:spd*0.5,r:20+Math.random()*10,pulse:Math.random()*100,id:uid()});
     else if(type==='wbc')
-      g.wbcs.push({x:lx,y:yOff,spd:spd*0.85+0.35,pulse:Math.random()*100,id:uid(),hom:0.004});
+      g.wbcs.push({x:lx,y:yOff,spd:(spd*0.85+0.35)*(zd.wbcSpd||1),pulse:Math.random()*100,id:uid(),hom:0.004});
     else if(type==='antibody')
       g.abs.push({x:lx,y:yOff,spd:spd*1.1,angle:0,pulse:Math.random()*100,id:uid(),hom:0.013});
   }
@@ -1115,7 +1122,7 @@ function Game(){
           burst(g,clamp(e.x,POX+20,POX+PW-20),15,P.rose,8);
           if(g.lives<=0){g.phase='dead';setScreenBoth('dead');try{if(g.infinite){const hs=saveHSInf(g.playT);setHighScoresInf(hs);}else{const hs=saveHS(g.score,g.zone,false);setHighScores(hs);}const newStats=recordGame({won:false,rivals:g.score,playT:g.playT,infinite:g.infinite,helmets:g.helmetsPicked});setStats(newStats);const bestInf=loadHSInf()[0]?.time||0;const ac=checkAchievements(newStats,bestInf);setAchSet(ac.ach);setML(ac.ml);if(ac.earned.length)setAchToast(ac.earned);const gSt={killsInGame:g.score,helmetsInGame:g.helmetsPicked,bestInfInGame:g.infinite?g.playT:0,bestZoneInGame:g.zone+1,playT:g.playT,won:false,infinite:g.infinite};const dr=checkDaily(loadDaily(),gSt);setDaily(dr.d);setML(dr.ml);const wr=checkWeekly(loadWeekly(),gSt);setWeekly(wr.w);setML(wr.ml);const allEarned=[...dr.earned,...wr.earned];if(allEarned.length)setDailyToast(allEarned);}catch(e2){console.log(e2);}return;}
         } else if(d2(g.px,g.py,e.x,e.y)<PR+15){
-          burst(g,e.x,e.y,'#e89870',10);g.score++;vibrate(15);
+          burst(g,e.x,e.y,'#e89870',10);g.score++;vibrate(15);playSound('kill');
         } else {
           nextSperms.push(e);
         }
@@ -1130,6 +1137,7 @@ function Game(){
       for(let i=g.mucus.length-1;i>=0;i--){
         if(d2(g.px,g.py,g.mucus[i].x,g.mucus[i].y)<PR+g.mucus[i].r-5){
           if(g.slowed<=0)burst(g,g.mucus[i].x,g.mucus[i].y,'#aae030',7);
+          playSound('slow');
           g.slowed=1400;g.mucus.splice(i,1);break;
         }
       }
@@ -1187,9 +1195,12 @@ function Game(){
             const nx=(g.px-GW/2)/(dd||1),ny=(g.py-g.ovuleY)/(dd||1);
             g.tx=g.px+nx*28;g.ty=g.py+ny*28;
             g.px+=nx*5;g.py+=ny*5;
+            if(g.shield){g.shield=false;burst(g,GW/2,g.ovuleY,'#f5c842',14);g.inv=500;}
+            else{
             g.hitFlash=30;g.lives--;g.inv=1800;
             if(g.lives<=0)playSound('dead');else playSound('hit');vibrate(60);
             if(g.lives<=0){g.phase='dead';setScreenBoth('dead');try{if(g.infinite){const hs=saveHSInf(g.playT);setHighScoresInf(hs);}else{const hs=saveHS(g.score,g.zone,false);setHighScores(hs);}const newStats=recordGame({won:false,rivals:g.score,playT:g.playT,infinite:g.infinite,helmets:g.helmetsPicked});setStats(newStats);const bestInf=loadHSInf()[0]?.time||0;const ac=checkAchievements(newStats,bestInf);setAchSet(ac.ach);setML(ac.ml);if(ac.earned.length)setAchToast(ac.earned);const gSt={killsInGame:g.score,helmetsInGame:g.helmetsPicked,bestInfInGame:g.infinite?g.playT:0,bestZoneInGame:g.zone+1,playT:g.playT,won:false,infinite:g.infinite};const dr=checkDaily(loadDaily(),gSt);setDaily(dr.d);setML(dr.ml);const wr=checkWeekly(loadWeekly(),gSt);setWeekly(wr.w);setML(wr.ml);const allEarned=[...dr.earned,...wr.earned];if(allEarned.length)setDailyToast(allEarned);}catch(e){console.log(e);}return;}
+            }
           }
           {const bx=GW/2+Math.cos(g.ovuleAngle)*58,by=g.ovuleY+Math.sin(g.ovuleAngle)*58;
           if(d2(g.px,g.py,bx,by)<PR+20){
@@ -1387,6 +1398,19 @@ function Game(){
               <circle cx={GW-26} cy={30+SAT} r="15" fill="rgba(255,255,255,0.07)" stroke="rgba(220,170,140,0.35)" strokeWidth="1.2"/>
               <text x={GW-26} y={35.5+SAT} textAnchor="middle" fill="rgba(230,190,160,0.85)" fontSize="16" fontWeight="700" fontFamily="Georgia, serif" fontStyle="italic">i</text>
             </g>
+            {/* Mute toggle — below discrete button */}
+            <g onClick={()=>{_muted=!_muted;localStorage.setItem('theone_muted',_muted?'1':'0');if(_ambientEl&&_muted)_ambientEl.pause();setMuted(_muted);}} style={{cursor:'pointer'}}>
+              <circle cx={GW-26} cy={100+SAT} r="15" fill={muted?'rgba(255,80,80,0.15)':'rgba(255,255,255,0.07)'} stroke={muted?'rgba(255,100,100,0.55)':'rgba(220,170,140,0.35)'} strokeWidth="1.2"/>
+              {muted?(
+                <g transform={`translate(${GW-26},${100+SAT})`}>
+                  <text x="0" y="5" textAnchor="middle" fontSize="14">🔇</text>
+                </g>
+              ):(
+                <g transform={`translate(${GW-26},${100+SAT})`}>
+                  <text x="0" y="5" textAnchor="middle" fontSize="14">🔊</text>
+                </g>
+              )}
+            </g>
             {/* Discrete mode toggle — below info button */}
             <g onClick={()=>{const d=!discreteMode;setDiscreteMode(d);localStorage.setItem('theone_discrete',d?'1':'0');}} style={{cursor:'pointer'}}>
               <circle cx={GW-26} cy={65+SAT} r="15" fill={discreteMode?'rgba(100,180,255,0.15)':'rgba(255,255,255,0.07)'} stroke={discreteMode?'rgba(100,180,255,0.55)':'rgba(220,170,140,0.35)'} strokeWidth="1.2"/>
@@ -1501,7 +1525,7 @@ function Game(){
               </g>
             )}
             {/* Version */}
-            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v50</text>
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v64</text>
           </g>
         )}
 

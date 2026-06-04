@@ -728,7 +728,7 @@ function Game(){
       y:clamp(-oy+(s.clientY-r.top)*(vbH/r.height),47+safeAreaRef.current.sat,GH-31),
     };
   }
-  const onTS=e=>{touch.current=true;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
+  const onTS=e=>{getAC();touch.current=true;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
   const onTM=e=>{if(gs.current.phase==='playing')e.preventDefault();if(!touch.current)return;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
   const onTE=()=>touch.current=false;
 
@@ -1501,7 +1501,7 @@ function Game(){
               </g>
             )}
             {/* Version */}
-            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v49</text>
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v50</text>
           </g>
         )}
 

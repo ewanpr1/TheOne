@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TheOne">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
@@ -69,49 +70,34 @@ const ZONES=[
 /* ── Discrete mode — module-level flag updated each React render ── */
 let DISCRETE_MODE=false;
 
-/* ── Audio & Vibration ─────────────────────────────────────────── */
+/* ── Audio & Vibration (Howler.js) ─────────────────────────────── */
 let _muted=localStorage.getItem('theone_muted')==='1';
-let _audioUnlocked=false;
-const _sfxSrc={hit:'./son_hit.wav',dead:'./son_defaite.mp3',win:'./son_victoire.wav',slow:'./son_mucus.mp3',kill:'./son_kill.mp3'};
-// ── Volumes (0.0 → 1.0) ─────────────────────────────────────────
-const _sfxVol={
-  hit:  0.40,  // coup reçu / perte de vie
-  dead: 0.65,  // défaite
-  win:  0.90,  // victoire
-  slow: 0.40,  // impact mucus
-  kill: 0.10,  // rival éliminé
-  ambient: 0.80, // musique d'ambiance
-};
-const _sfxEl={};
-let _ambientEl=null;
+let _audioReady=false;
+const _sfxVol={hit:0.40,dead:0.65,win:0.90,slow:0.40,kill:0.10,ambient:0.80};
+const _sounds={};
+let _ambient=null;
 
-let _lastKillSnd=0;
 function _initAudio(){
-  if(_audioUnlocked)return;_audioUnlocked=true;
-  for(const[k,src]of Object.entries(_sfxSrc)){
-    const a=new Audio(src);a.preload='auto';
-    a.volume=0; // Silencieux pendant le déblocage iOS
-    _sfxEl[k]=a;
-    a.play().then(()=>{a.pause();a.currentTime=0;}).catch(()=>{});
-  }
-  _ambientEl=new Audio('./son_ambiance.mp3');_ambientEl.loop=true;_ambientEl.volume=_sfxVol.ambient;
+  if(_audioReady)return;_audioReady=true;
+  _sounds.hit  =new Howl({src:['./son_hit.wav'],  volume:_sfxVol.hit});
+  _sounds.dead =new Howl({src:['./son_defaite.mp3'],volume:_sfxVol.dead});
+  _sounds.win  =new Howl({src:['./son_victoire.wav'],volume:_sfxVol.win});
+  _sounds.slow =new Howl({src:['./son_mucus.mp3'], volume:_sfxVol.slow});
+  _sounds.kill =new Howl({src:['./son_kill.mp3'],  volume:_sfxVol.kill});
+  _ambient     =new Howl({src:['./son_ambiance.mp3'],volume:_sfxVol.ambient,loop:true});
+  if(_muted)Howler.mute(true);
 }
 function playSound(type){
-  if(_muted||!_sfxEl[type])return;
-  // Rate-limit le son de kill pour éviter le lag iOS sur kills rapides
-  if(type==='kill'){const now=Date.now();if(now-_lastKillSnd<80)return;_lastKillSnd=now;}
-  try{
-    const a=_sfxEl[type].cloneNode();
-    a.volume=_sfxVol[type]??0.7;
-    a.play().catch(()=>{});
-  }catch(e){}
+  if(!_sounds[type])return;
+  _sounds[type].play();
 }
 function startAmbient(){
-  if(!_ambientEl||_muted)return;
-  _ambientEl.currentTime=0;_ambientEl.play().catch(()=>{});
+  if(!_ambient)return;
+  _ambient.stop();_ambient.play();
 }
 function stopAmbient(){
-  if(!_ambientEl)return;_ambientEl.pause();_ambientEl.currentTime=0;
+  if(!_ambient)return;
+  _ambient.stop();
 }
 function vibrate(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}}
 
@@ -1402,7 +1388,7 @@ function Game(){
               <text x={GW-26} y={35.5+SAT} textAnchor="middle" fill="rgba(230,190,160,0.85)" fontSize="16" fontWeight="700" fontFamily="Georgia, serif" fontStyle="italic">i</text>
             </g>
             {/* Mute toggle — below discrete button */}
-            <g onClick={()=>{_muted=!_muted;localStorage.setItem('theone_muted',_muted?'1':'0');if(_ambientEl&&_muted)_ambientEl.pause();setMuted(_muted);}} style={{cursor:'pointer'}}>
+            <g onClick={()=>{_muted=!_muted;localStorage.setItem('theone_muted',_muted?'1':'0');Howler.mute(_muted);setMuted(_muted);}} style={{cursor:'pointer'}}>
               <circle cx={GW-26} cy={100+SAT} r="15" fill={muted?'rgba(255,80,80,0.15)':'rgba(255,255,255,0.07)'} stroke={muted?'rgba(255,100,100,0.55)':'rgba(220,170,140,0.35)'} strokeWidth="1.2"/>
               {muted?(
                 <g transform={`translate(${GW-26},${100+SAT})`}>
@@ -1528,7 +1514,7 @@ function Game(){
               </g>
             )}
             {/* Version */}
-            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v65</text>
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(180,140,110,0.3)" fontSize="10" fontFamily="Helvetica Neue,Arial">v66</text>
           </g>
         )}
 

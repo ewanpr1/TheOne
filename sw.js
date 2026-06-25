@@ -1,4 +1,4 @@
-const CACHE = 'theone-v65';
+const CACHE = 'theone-v66';
 const PRECACHE = [
   './TheOne_V5.html',
   './manifest.json',
@@ -10,6 +10,7 @@ const PRECACHE = [
   './son_mucus.mp3',
   './son_kill.mp3',
   './son_ambiance.mp3',
+  'https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js',
   'https://unpkg.com/react@18.3.1/umd/react.development.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js',
   'https://unpkg.com/@babel/standalone@7.29.0/babel.min.js',

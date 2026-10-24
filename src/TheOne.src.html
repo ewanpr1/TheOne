@@ -1,0 +1,2338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>TheOne</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0108">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TheOne">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;background:#080208;overflow:hidden;font-family:Sora,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit}
+  #root{width:100%;height:100%}
+  :root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+  .gw{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;background:#080208}
+  .ach-scroll{scrollbar-width:thin;scrollbar-color:rgba(245,200,66,0.35) transparent}
+  .ach-scroll::-webkit-scrollbar{width:5px}
+  .ach-scroll::-webkit-scrollbar-track{background:transparent}
+  .ach-scroll::-webkit-scrollbar-thumb{background:rgba(245,200,66,0.4);border-radius:3px}
+  .ach-scroll::-webkit-scrollbar-thumb:hover{background:rgba(245,200,66,0.6)}
+  .gw svg{width:100%;height:100%;display:block;cursor:none}
+  .modal-wrap{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:700px;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;padding:24px 8px 8px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const GW=window.innerWidth,GH=window.innerHeight,LANES=6;
+const PW=Math.min(GW,430),POX=(GW-PW)/2,LW=PW/LANES,PR=22;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const d2=(ax,ay,bx,by)=>Math.sqrt((ax-bx)**2+(ay-by)**2);
+const hex2rgb=h=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return[r,g,b];};
+const lerpHex=(a,b,t)=>{const [ar,ag,ab]=hex2rgb(a);const [br,bg,bb]=hex2rgb(b);return`rgb(${Math.round(lerp(ar,br,t))},${Math.round(lerp(ag,bg,t))},${Math.round(lerp(ab,bb,t))})`;};
+
+const P={skin1:'#f2c4a0',skin2:'#e89870',skin3:'#c96a48',skin4:'#8b2a2a',skin5:'#4a0f18',
+  cream:'#fdebd8',rose:'#e8718a',roseD:'#b03050',gold:'#f5c842',abB:'#6090e0'};
+
+/* ── Zones — spermW controls % of rival sperms (decreasing), others fill the rest ─── */
+const ZONES=[
+  {id:1,name:"Col de l'Utérus",dname:"Couloir 1",emoji:"🌸",demoji:"🌀",
+   bg1:'#4a0a28',bg2:'#120209',acc:'#ff6f91',dur:32,
+   types:['sperm','sperm','sperm','sperm','mucus','sperm','sperm','sperm','sperm','mucus','wbc'],
+   spd:[1.19,1.94],ms:[527,332],scr:[2.0,3.0],minGaps:2,wbcSpd:0.95},
+  {id:2,name:"Utérus",dname:"Couloir 2",emoji:"💗",demoji:"🌊",
+   bg1:'#40101e',bg2:'#110306',acc:'#ff8a65',dur:38,
+   types:['sperm','sperm','wbc','wbc','mucus'],
+   spd:[1.62,2.59],ms:[459,289],scr:[3.0,4.2],minGaps:1},
+  {id:3,name:"Trompes",dname:"Couloir 3",emoji:"🧬",demoji:"🔵",
+   bg1:'#0d2148',bg2:'#030714',acc:'#5aa9ff',dur:35,
+   types:['sperm','antibody','antibody','wbc'],
+   spd:[2.19,3.23],ms:[382,239],scr:[4.2,5.5],minGaps:2},
+  {id:4,name:"Approche Finale",dname:"Approche",emoji:"⚡",demoji:"⚡",
+   bg1:'#2c0c48',bg2:'#08020f',acc:'#b77bff',dur:45,
+   types:['antibody','wbc','antibody','wbc','sperm'],
+   spd:[3.23,4.86],ms:[285,166],scr:[5.5,7.5],spermSpd:0.765,minGaps:2},
+  {id:5,name:"L'Ovule",dname:"La Cible",emoji:"✨",demoji:"🎯",
+   bg1:'#3a2808',bg2:'#0a0602',acc:'#ffd06b',dur:999,
+   types:['antibody','wbc','wbc','sperm'],
+   spd:[2.38,3.67],ms:[357,247],scr:[5.55,4.47],minGaps:1,spermSpd:0.7},
+];
+
+const TUTO_KEY='theone_tuto',TUTO_STEPS=3;
+
+/* ── Discrete mode — module-level flag updated each React render ── */
+let DISCRETE_MODE=false;
+
+/* ── Audio & Vibration (Howler.js) ─────────────────────────────── */
+let _muted=localStorage.getItem('theone_muted')==='1';
+let _audioReady=false;
+const _sfxVol={hit:0.40,dead:0.65,win:0.90,slow:0.40,kill:0.10,ambient:0.80};
+const _sounds={};
+let _ambient=null;
+
+function _initAudio(){
+  if(_audioReady)return;_audioReady=true;
+  _sounds.hit  =new Howl({src:['./son_hit.wav'],  volume:_sfxVol.hit});
+  _sounds.dead =new Howl({src:['./son_defaite.mp3'],volume:_sfxVol.dead});
+  _sounds.win  =new Howl({src:['./son_victoire.wav'],volume:_sfxVol.win});
+  _sounds.slow =new Howl({src:['./son_mucus.mp3'], volume:_sfxVol.slow});
+  _sounds.kill =new Howl({src:['./son_kill.mp3'],  volume:_sfxVol.kill});
+  _ambient     =new Howl({src:['./son_ambiance.m4a','./son_ambiance.mp3'],volume:_sfxVol.ambient,loop:true});
+  if(_muted)Howler.mute(true);
+}
+function playSound(type){
+  if(!_sounds[type])return;
+  _sounds[type].play();
+}
+function startAmbient(){
+  if(!_ambient)return;
+  _ambient.stop();_ambient.play();
+}
+function stopAmbient(){
+  if(!_ambient)return;
+  _ambient.stop();
+}
+function vibrate(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}}
+
+/* ── High scores ─────────────────────────────────────────── */
+const HS_KEY='theone_hs';
+const HS_INF_KEY='theone_hs_inf';
+function loadHS(){try{return JSON.parse(localStorage.getItem(HS_KEY)||'[]');}catch{return[];}}
+function loadHSInf(){try{return JSON.parse(localStorage.getItem(HS_INF_KEY)||'[]');}catch{return[];}}
+function saveHS(score,zone,won){
+  const hs=loadHS();
+  hs.push({score,zone,won:!!won,d:new Date().toLocaleDateString('fr')});
+  // wins always win over deaths; tie-broken by score
+  hs.sort((a,b)=>(b.won?1:0)-(a.won?1:0)||b.score-a.score);
+  localStorage.setItem(HS_KEY,JSON.stringify(hs.slice(0,5)));
+  return hs;
+}
+function saveHSInf(time){
+  const hs=loadHSInf();
+  hs.push({time,d:new Date().toLocaleDateString('fr')});
+  hs.sort((a,b)=>b.time-a.time);
+  localStorage.setItem(HS_INF_KEY,JSON.stringify(hs.slice(0,5)));
+  return hs;
+}function fmtTime(ms){const s=Math.floor(ms/1000),m=Math.floor(s/60),r=s%60;return m+':'+(r<10?'0':'')+r;}
+function fmtDuration(ms){
+  const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),r=s%60;
+  if(h>0)return h+'h '+m+'m';
+  if(m>0)return m+'m '+r+'s';
+  return r+'s';
+}
+
+/* ── Stats ───────────────────────────────────── */
+const STATS_KEY='theone_stats';
+function loadStats(){
+  try{return Object.assign({games:0,wins:0,rivals:0,timeNorm:0,timeInf:0},JSON.parse(localStorage.getItem(STATS_KEY)||'{}'));}
+  catch{return{games:0,wins:0,rivals:0,timeNorm:0,timeInf:0};}
+}
+function saveStats(p){localStorage.setItem(STATS_KEY,JSON.stringify(p));return p;}
+function recordGame({won,rivals,playT,infinite,helmets}){
+  const s=loadStats();
+  s.games++;if(won)s.wins++;s.rivals+=rivals||0;
+  if(infinite)s.timeInf+=playT||0;else s.timeNorm+=playT||0;
+  s.helmets=(s.helmets||0)+(helmets||0);
+  // streak
+  if(won){s.streak=(s.streak||0)+1;s.bestStreak=Math.max(s.bestStreak||0,s.streak);}
+  else s.streak=0;
+  // best win time
+  if(won&&!infinite){if(!s.bestWinTime||playT<s.bestWinTime)s.bestWinTime=playT;}
+  return saveStats(s);
+}
+
+/* ── Achievements ──────────────────────────── */
+const ACH_KEY='theone_ach';
+const ML_KEY='theone_ml';
+function loadAch(){try{return new Set(JSON.parse(localStorage.getItem(ACH_KEY)||'[]'));}catch{return new Set();}}
+function saveAch(set){localStorage.setItem(ACH_KEY,JSON.stringify([...set]));return set;}
+function loadML(){return Number(localStorage.getItem(ML_KEY)||'0');}
+function saveML(v){localStorage.setItem(ML_KEY,String(v));return v;}
+
+const ACHIEVEMENTS=[
+  // Faciles
+  {id:'first_game',tier:'easy',name:'Premier pas',desc:'Jouer 1 partie',ml:5,get:s=>s.games,target:1,fmt:'count'},
+  {id:'first_blood',tier:'easy',name:'Première victime',desc:'Éliminer 10 rivaux au total',ml:10,get:s=>s.rivals,target:10,fmt:'count'},
+  {id:'crashtest',tier:'easy',name:'Crash test',desc:'Mourir 5 fois',ml:10,get:s=>(s.games-s.wins),target:5,fmt:'count'},
+  {id:'helmet1',tier:'easy',name:'Casqué',desc:'Ramasser un casque',ml:15,get:s=>s.helmets,target:1,fmt:'count'},
+  {id:'persistant',tier:'easy',name:'Persistant',desc:'Jouer 10 parties',ml:20,get:s=>s.games,target:10,fmt:'count'},
+  {id:'warmup',tier:'easy',name:'Échauffement',desc:'5 minutes de jeu cumulé',ml:25,get:s=>(s.timeNorm+s.timeInf),target:300000,fmt:'time'},
+  // Moyens
+  {id:'the_one',tier:'medium',name:'The One',desc:'Première victoire',ml:50,get:s=>s.wins,target:1,fmt:'count'},
+  {id:'tactical',tier:'medium',name:'Tactique',desc:'Ramasser 25 casques',ml:75,get:s=>s.helmets,target:25,fmt:'count'},
+  {id:'butcher',tier:'medium',name:'Bourreau',desc:'1000 rivaux éliminés',ml:100,get:s=>s.rivals,target:1000,fmt:'count'},
+  {id:'inf1',tier:'medium',name:'Apprenti infini',desc:'2 min en mode infini',ml:100,get:s=>s.bestInfTime,target:120000,fmt:'time'},
+  {id:'marathon',tier:'medium',name:'Marathonien',desc:'30 min de jeu cumulé',ml:150,get:s=>(s.timeNorm+s.timeInf),target:1800000,fmt:'time'},
+  // Difficiles
+  {id:'legend',tier:'hard',name:'Légende',desc:'10 victoires',ml:250,get:s=>s.wins,target:10,fmt:'count'},
+  {id:'priority',tier:'hard',name:'Cible privilégiée',desc:'2500 rivaux éliminés',ml:300,get:s=>s.rivals,target:2500,fmt:'count'},
+  {id:'endurance',tier:'hard',name:'Endurance',desc:'1 h de jeu cumulé',ml:200,get:s=>(s.timeNorm+s.timeInf),target:3600000,fmt:'time'},
+  {id:'inf3',tier:'hard',name:'Maître infini',desc:'3 min en mode infini',ml:400,get:s=>s.bestInfTime,target:180000,fmt:'time'},
+  {id:'speedrun',tier:'hard',name:'Speedrun',desc:'Gagner en moins de 2:50',ml:500,get:s=>(s.bestWinTime&&s.bestWinTime<=170000)?170000:(s.bestWinTime||0),target:170000,fmt:'speed'},
+  {id:'bare_hands',tier:'hard',name:'À mains nues',desc:'Gagner sans ramasser de casque (hors mode hardcore)',ml:600,get:s=>s.noHelmetWin?1:0,target:1,fmt:'count'},
+  // Extrêmes
+  {id:'flawless',tier:'extreme',name:'Sans égratignure',desc:'Gagner sans perdre de vie',ml:800,get:s=>s.perfectWin?1:0,target:1,fmt:'count'},
+  {id:'massacre',tier:'extreme',name:'Massacre',desc:'10000 rivaux éliminés',ml:1500,get:s=>s.rivals,target:10000,fmt:'count'},
+  {id:'chosen',tier:'extreme',name:"L'Élu",desc:'50 victoires',ml:1750,get:s=>s.wins,target:50,fmt:'count'},
+  {id:'inf5',tier:'extreme',name:'Légende infinie',desc:'5 min en mode infini',ml:2000,get:s=>s.bestInfTime,target:300000,fmt:'time'},
+  {id:'streak3',tier:'extreme',name:'Streak',desc:'3 victoires d\'affilée',ml:2500,get:s=>s.bestStreak,target:3,fmt:'count'},
+];
+// All achievements complete when get(s) >= target (or fmt:'speed' has special meaning)
+function achComplete(a,s){
+  const v=a.get(s)||0;
+  if(a.fmt==='speed')return s.bestWinTime>0&&s.bestWinTime<=a.target;
+  return v>=a.target;
+}
+const TIERS={easy:{label:'Facile',color:'#7ec88a'},medium:{label:'Moyen',color:'#e8b65a'},hard:{label:'Difficile',color:'#e07050'},extreme:{label:'Extrême',color:'#c050d0'}};
+
+function checkAchievements(stats,bestInfTime,perGame={}){
+  const s={...stats,bestInfTime:bestInfTime||0,...perGame};
+  const ach=loadAch();let ml=loadML();let earned=[];
+  for(const a of ACHIEVEMENTS){
+    if(!ach.has(a.id)&&achComplete(a,s)){ach.add(a.id);ml+=a.ml;earned.push(a);}
+  }
+  if(earned.length){saveAch(ach);saveML(ml);}
+  return{ach,ml,earned};
+}
+
+/* ── Shop / Skins ────────────────────────────── */
+const SKINS=[
+  {id:'classic',name:'Classique',cost:0,body:'#ffffff',bodyGrad:true,eye:'#5b9bd5',pupil:'#1a2535',tail:'rgba(245,225,215,0.9)',cheek:'rgba(232,145,130,0.5)',mouth:'#b06050',shine:0.55},
+  {id:'rose',name:'Rosé',cost:150,body:'#f7c5d4',bodyGrad:true,eye:'#5b9bd5',pupil:'#3a1a2a',tail:'rgba(245,200,210,0.9)',cheek:'rgba(220,80,110,0.5)',mouth:'#a04060',shine:0.5},
+  {id:'mint',name:'Menthe',cost:200,body:'#b6e7c8',bodyGrad:true,eye:'#3a8068',pupil:'#0a2a18',tail:'rgba(190,235,210,0.9)',cheek:'rgba(120,200,140,0.45)',mouth:'#406040',shine:0.5},
+  {id:'gold',name:'Doré',cost:350,body:'#f5d870',bodyGrad:true,eye:'#7a4810',pupil:'#2a1a05',tail:'rgba(245,215,90,0.9)',cheek:'rgba(180,100,30,0.5)',mouth:'#7a4810',shine:0.7},
+  {id:'ninja',name:'Ninja',cost:500,body:'#1d1f24',bodyGrad:false,eye:'#e8253a',pupil:'#5a0a14',tail:'rgba(60,60,70,0.9)',cheek:'rgba(120,20,30,0.45)',mouth:'#a02030',shine:0.2,headStroke:'#2a2c32'},
+  {id:'ghost',name:'Fantôme',cost:750,body:'rgba(220,230,240,0.55)',bodyGrad:false,eye:'#9aaad6',pupil:'#3a4a6a',tail:'rgba(210,225,240,0.45)',cheek:'rgba(180,200,220,0.25)',mouth:'#6a7a9a',shine:0.6,ghost:true},
+  {id:'neon',name:'Néon',cost:1000,body:'#22f8d6',bodyGrad:true,eye:'#0a3a8c',pupil:'#1a0030',tail:'rgba(60,255,220,0.9)',cheek:'rgba(180,0,150,0.45)',mouth:'#1a0040',shine:0.6,glow:'#22f8d6',trail:'neon'},
+  {id:'rainbow',name:'Arc-en-ciel',cost:1500,body:'url(#rbGrad)',bodyGrad:false,eye:'#ffffff',pupil:'#1a1a2a',tail:'#ff8e9a',cheek:'rgba(255,255,255,0.4)',mouth:'#1a1a2a',shine:0.7,glow:'#ff66cc',rainbow:true,trail:'rainbow'},
+  {id:'ice',name:'Glace',cost:2000,body:'#bfe6ff',bodyGrad:true,eye:'#0a4a8c',pupil:'#001028',tail:'rgba(200,235,255,0.9)',cheek:'rgba(80,170,230,0.45)',mouth:'#1a4a7a',shine:0.65,glow:'#bfe6ff',trail:'ice'},
+  {id:'fire',name:'Feu',cost:2500,body:'#ff7028',bodyGrad:true,eye:'#fff0a8',pupil:'#2a0a00',tail:'rgba(255,140,40,0.9)',cheek:'rgba(220,40,0,0.55)',mouth:'#a02000',shine:0.7,glow:'#ff7028',trail:'fire'},
+  {id:'diamond',name:'Diamant',cost:5000,body:'#e0f0ff',bodyGrad:true,eye:'#a8d8ff',pupil:'#0a1a3a',tail:'rgba(230,240,255,0.95)',cheek:'rgba(180,210,255,0.5)',mouth:'#3a5a8a',shine:0.85,glow:'#e0f0ff',sparkle:true,trail:'diamond'},
+  {id:'pearl',name:'Perle',cost:600,body:'#fbf1f4',bodyGrad:true,eye:'#c27ba0',pupil:'#3a1428',tail:'rgba(255,235,242,0.92)',cheek:'rgba(255,170,200,0.45)',mouth:'#a0587a',shine:0.8,pearl:true},
+  {id:'toxic',name:'Toxique',cost:900,body:'#b6f23a',bodyGrad:true,eye:'#3a6a00',pupil:'#0f1f00',tail:'rgba(190,250,80,0.9)',cheek:'rgba(90,170,20,0.45)',mouth:'#2f5a00',shine:0.6,glow:'#b6f23a',trail:'toxic'},
+  {id:'chrome',name:'Chrome',cost:1200,body:'url(#chromeGrad)',bodyGrad:false,eye:'#1d2a3a',pupil:'#05080d',tail:'url(#chromeGradV)',cheek:'rgba(120,140,170,0.35)',mouth:'#2a3546',shine:0.95,chrome:true},
+  {id:'aurora',name:'Aurore',cost:1800,body:'url(#auroraGrad)',bodyGrad:true,eye:'#ffffff',pupil:'#14123a',tail:'url(#auroraGradV)',cheek:'rgba(255,255,255,0.3)',mouth:'#1c2a5a',shine:0.7,glow:'#6af5d0',spin:true,trail:'aurora'},
+  {id:'galaxy',name:'Galaxie',cost:3000,body:'url(#galaxyGrad)',bodyGrad:false,eye:'#c9a8ff',pupil:'#0a0420',tail:'url(#galaxyGradV)',cheek:'rgba(200,120,255,0.3)',mouth:'#d8c4ff',shine:0.55,glow:'#8a5cff',galaxy:true,trail:'stars'},
+  {id:'royal',name:'Royal',cost:4000,body:'url(#royalGold)',bodyGrad:true,eye:'#b0123c',pupil:'#2a0008',tail:'url(#royalGoldV)',cheek:'rgba(255,130,80,0.4)',mouth:'#7a3a05',shine:0.85,glow:'#ffc94d',crown:true,chrome:true,trail:'gold'},
+  {id:'holo',name:'Holographique',cost:7500,body:'url(#holoGrad)',bodyGrad:true,eye:'#ffffff',pupil:'#1a1030',tail:'url(#holoGradV)',cheek:'rgba(255,255,255,0.35)',mouth:'#3a2a6a',shine:0.9,glow:'#d6b8ff',spin:true,pearl:true,sparkle:true,trail:'holo'},
+];
+const OWNED_KEY='theone_owned';
+const SKIN_KEY='theone_skin';
+function loadOwned(){try{return new Set(JSON.parse(localStorage.getItem(OWNED_KEY)||'["classic"]'));}catch{return new Set(['classic']);}}
+function saveOwned(set){localStorage.setItem(OWNED_KEY,JSON.stringify([...set]));return set;}
+function loadSkin(){return localStorage.getItem(SKIN_KEY)||'classic';}
+function saveSkin(id){localStorage.setItem(SKIN_KEY,id);return id;}
+function getSkin(id){return SKINS.find(s=>s.id===id)||SKINS[0];}
+
+/* ── Daily challenges ─────────────────────────────────────── */
+const DAILY_KEY='theone_daily';
+function dayId(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function strHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mulberry32(seed){let s=seed;return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+const CH_TEMPLATES=[
+  // Easy
+  {id:'k_g_e',t:'easy',ml:30,pool:[5,8,10,12],fmt:n=>`Éliminer ${n} rivaux en une partie`,key:'killsInGame',mode:'gte'},
+  {id:'helm_d',t:'easy',ml:25,pool:[2,3,4],fmt:n=>`Ramasser ${n} casques aujourd'hui`,key:'helmetsToday',mode:'gte'},
+  {id:'time_d',t:'easy',ml:30,pool:[5,10,15],fmt:n=>`Jouer ${n} min aujourd'hui`,key:'timeToday',mode:'gte',scale:60000},
+  {id:'k_d_e',t:'easy',ml:35,pool:[25,40,60],fmt:n=>`Éliminer ${n} rivaux aujourd'hui`,key:'killsToday',mode:'gte'},
+  {id:'zone_e',t:'easy',ml:40,pool:[3,4],fmt:n=>`Atteindre la zone ${n} en une partie`,key:'bestZoneInGame',mode:'gte'},
+  // Medium
+  {id:'k_g_m',t:'medium',ml:100,pool:[20,25,30],fmt:n=>`Éliminer ${n} rivaux en une partie`,key:'killsInGame',mode:'gte'},
+  {id:'wins_d',t:'medium',ml:120,pool:[1,2],fmt:n=>`Gagner ${n} partie${n>1?'s':''} aujourd'hui`,key:'winsToday',mode:'gte'},
+  {id:'inf_m',t:'medium',ml:120,pool:[60,90,120],fmt:n=>`Survivre ${n}s en mode infini`,key:'bestInfInGame',mode:'gte',scale:1000},
+  {id:'k_d_m',t:'medium',ml:130,pool:[100,150],fmt:n=>`Éliminer ${n} rivaux aujourd'hui`,key:'killsToday',mode:'gte'},
+  // Hard
+  {id:'no_hit',t:'hard',ml:400,pool:[1],fmt:()=>`Gagner sans perdre de vie`,key:'perfectWin',mode:'eq'},
+  {id:'inf_h',t:'hard',ml:300,pool:[180,240],fmt:n=>`Survivre ${Math.floor(n/60)} min en mode infini`,key:'bestInfInGame',mode:'gte',scale:1000},
+  {id:'speed',t:'hard',ml:350,pool:[240,210],fmt:n=>`Gagner en moins de ${Math.floor(n/60)}:${(n%60).toString().padStart(2,'0')}`,key:'bestWinInGame',mode:'lte',scale:1000},
+  {id:'no_helm',t:'hard',ml:300,pool:[1],fmt:()=>`Gagner sans utiliser de casque`,key:'noHelmetWin',mode:'eq'},
+];
+
+function generateDaily(){
+  const id=dayId(),seed=strHash(id),rand=mulberry32(seed);
+  const infUnlocked=localStorage.getItem('theone_won')==='1';
+  const tiers=['easy','medium','hard'];
+  const picked=[];
+  for(const t of tiers){
+    const opts=CH_TEMPLATES.filter(c=>c.t===t&&(infUnlocked||c.id!=='inf_h'));
+    const tpl=opts[Math.floor(rand()*opts.length)];
+    const target=tpl.pool[Math.floor(rand()*tpl.pool.length)];
+    picked.push({id:tpl.id+'_'+t,tplId:tpl.id,t,target,ml:tpl.ml,fmt:tpl.fmt(target),completed:false});
+  }
+  return picked;
+}
+
+function loadDaily(){
+  try{
+    const d=JSON.parse(localStorage.getItem(DAILY_KEY)||'null');
+    if(d&&d.date===dayId())return d;
+  }catch{}
+  const fresh={date:dayId(),ch:generateDaily(),ds:{killsToday:0,helmetsToday:0,timeToday:0,winsToday:0}};
+  localStorage.setItem(DAILY_KEY,JSON.stringify(fresh));
+  return fresh;
+}
+function saveDaily(d){localStorage.setItem(DAILY_KEY,JSON.stringify(d));return d;}
+
+/* ── Weekly challenges ─────────────────────────────────── */
+const WEEKLY_KEY='theone_weekly';
+function weekId(){
+  const d=new Date();
+  d.setHours(0,0,0,0); // minuit heure locale
+  const daysFromMon=(d.getDay()+6)%7; // lundi=0 … dimanche=6
+  d.setDate(d.getDate()-daysFromMon); // reculer au lundi de cette semaine
+  return Math.floor(d.getTime()/86400000); // numéro du jour = ID stable
+}
+const WK_TEMPLATES=[
+  {id:'wk_kill',ml:300,pool:[1000,1600,2400],fmt:n=>`Éliminer ${n} rivaux cette semaine`,key:'killsWeek',mode:'gte'},
+  {id:'wk_helm',ml:200,pool:[50,80,130],fmt:n=>`Ramasser ${n} casques cette semaine`,key:'helmetsWeek',mode:'gte'},
+  {id:'wk_time',ml:250,pool:[60,90,140],fmt:n=>`Jouer ${n} min cette semaine`,key:'timeWeek',mode:'gte',scale:60000},
+  {id:'wk_wins',ml:500,pool:[5,8,13],fmt:n=>`Gagner ${n} parties cette semaine`,key:'winsWeek',mode:'gte'},
+  {id:'wk_inf',ml:600,pool:[180,240,300],fmt:n=>`Survivre ${Math.floor(n/60)} min en mode infini`,key:'bestInfInGame',mode:'gte',scale:1000},
+  {id:'wk_speed',ml:800,pool:[300,240],fmt:n=>`Gagner en moins de ${Math.floor(n/60)}:${(n%60).toString().padStart(2,'0')}`,key:'bestWinInGame',mode:'lte',scale:1000},
+  {id:'wk_zone',ml:400,pool:[5,10,18],fmt:n=>`Atteindre ${n} fois la zone 5`,key:'zone5Week',mode:'gte'},
+];
+function generateWeekly(){
+  const id=weekId(),seed=strHash('w'+id),rand=mulberry32(seed);
+  const infUnlocked=localStorage.getItem('theone_won')==='1';
+  const pool=WK_TEMPLATES.filter(c=>infUnlocked||c.id!=='wk_inf');
+  const picked=[];
+  for(let i=0;i<2;i++){
+    const idx=Math.floor(rand()*pool.length);
+    const tpl=pool.splice(idx,1)[0];
+    const target=tpl.pool[Math.floor(rand()*tpl.pool.length)];
+    picked.push({id:tpl.id+'_'+i,tplId:tpl.id,target,ml:tpl.ml,fmt:tpl.fmt(target),completed:false});
+  }
+  return picked;
+}
+function loadWeekly(){
+  try{
+    const w=JSON.parse(localStorage.getItem(WEEKLY_KEY)||'null');
+    if(w&&w.wid===weekId())return w;
+  }catch{}
+  const fresh={wid:weekId(),ch:generateWeekly(),ws:{killsWeek:0,helmetsWeek:0,timeWeek:0,winsWeek:0,zone5Week:0}};
+  localStorage.setItem(WEEKLY_KEY,JSON.stringify(fresh));
+  return fresh;
+}
+function saveWeekly(w){localStorage.setItem(WEEKLY_KEY,JSON.stringify(w));return w;}
+function checkWeekly(w,gameStats){
+  w.ws.killsWeek=(w.ws.killsWeek||0)+(gameStats.killsInGame||0);
+  w.ws.helmetsWeek=(w.ws.helmetsWeek||0)+(gameStats.helmetsInGame||0);
+  w.ws.timeWeek=(w.ws.timeWeek||0)+(gameStats.playT||0);
+  if(gameStats.won&&!gameStats.infinite)w.ws.winsWeek=(w.ws.winsWeek||0)+1;
+  if((gameStats.bestZoneInGame||0)>=5)w.ws.zone5Week=(w.ws.zone5Week||0)+1;
+  const earned=[];let ml=loadML();
+  for(const c of w.ch){
+    if(c.completed)continue;
+    const tpl=WK_TEMPLATES.find(t=>t.id===c.tplId);if(!tpl)continue;
+    let val;
+    if(tpl.key in w.ws)val=w.ws[tpl.key];
+    else val=gameStats[tpl.key]||0;
+    const cmp=tpl.scale?c.target*tpl.scale:c.target;
+    let ok=false;
+    if(tpl.mode==='gte')ok=val>=cmp;
+    else if(tpl.mode==='lte')ok=val>0&&val<=cmp;
+    if(ok){c.completed=true;ml+=c.ml;earned.push(c);}
+  }
+  if(earned.length)saveML(ml);
+  saveWeekly(w);
+  return{w,earned,ml};
+}
+
+function checkDaily(d,gameStats){
+  // gameStats: {killsInGame, helmetsInGame, perfectWin, noHelmetWin, bestInfInGame, bestWinInGame, bestZoneInGame, won, infinite, playT}
+  // Update daily cumulative
+  d.ds.killsToday=(d.ds.killsToday||0)+(gameStats.killsInGame||0);
+  d.ds.helmetsToday=(d.ds.helmetsToday||0)+(gameStats.helmetsInGame||0);
+  d.ds.timeToday=(d.ds.timeToday||0)+(gameStats.playT||0);
+  if(gameStats.won&&!gameStats.infinite)d.ds.winsToday=(d.ds.winsToday||0)+1;
+  const earned=[];let ml=loadML();
+  for(const c of d.ch){
+    if(c.completed)continue;
+    const tpl=CH_TEMPLATES.find(t=>t.id===c.tplId);if(!tpl)continue;
+    let val;
+    if(tpl.key in d.ds)val=d.ds[tpl.key];
+    else val=gameStats[tpl.key]||0;
+    const cmp=tpl.scale?c.target*tpl.scale:c.target;
+    let ok=false;
+    if(tpl.mode==='gte')ok=val>=cmp;
+    else if(tpl.mode==='lte')ok=val>0&&val<=cmp;
+    else if(tpl.mode==='eq')ok=val===cmp||val===true;
+    if(ok){c.completed=true;ml+=c.ml;earned.push(c);}
+  }
+  if(earned.length)saveML(ml);
+  saveDaily(d);
+  return{d,earned,ml};
+}
+function effZD(g){
+  if(g.infinite&&g.zone===4){
+    const base=ZONES[3];const m=1+0.05*Math.floor(g.playT/30000);
+    const msm=1+0.025*Math.floor(g.playT/30000);
+    return{...base,dur:999,
+      spd:[base.spd[0]*msm,base.spd[1]*msm],
+      ms:[base.ms[0]/msm,base.ms[1]/msm],
+      scr:[base.scr[0]*m,base.scr[1]*m]};
+  }
+  return ZONES[g.zone];
+}
+
+/* ── SVG Components ─────────────────────────────────────── */
+const f1=v=>Math.round(v*10)/10;
+const hrnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);};
+// Closed smooth path through points (quadratic curves via midpoints)
+function smoothClosed(pts){
+  const n=pts.length;const pl=pts[n-1],p0=pts[0];
+  let d=`M${f1((pl[0]+p0[0])/2)} ${f1((pl[1]+p0[1])/2)}`;
+  for(let i=0;i<n;i++){const p=pts[i],q=pts[(i+1)%n];d+=`Q${f1(p[0])} ${f1(p[1])} ${f1((p[0]+q[0])/2)} ${f1((p[1]+q[1])/2)}`;}
+  return d+'Z';
+}
+function smoothOpen(pts){
+  let d=`M${f1(pts[0][0])} ${f1(pts[0][1])}`;
+  for(let i=1;i<pts.length-1;i++){const p=pts[i],q=pts[i+1];d+=`Q${f1(p[0])} ${f1(p[1])} ${f1((p[0]+q[0])/2)} ${f1((p[1]+q[1])/2)}`;}
+  const l=pts[pts.length-1];return d+`L${f1(l[0])} ${f1(l[1])}`;
+}
+function blobPts(cx,cy,n,rf){const a=[];for(let i=0;i<n;i++){const t=i/n*Math.PI*2,r=rf(i,t);a.push([cx+Math.cos(t)*r,cy+Math.sin(t)*r]);}return a;}
+// Tapered ribbon along a polyline (tails)
+function ribbon(pts,w0,w1){
+  const n=pts.length,L=[],R=[];
+  for(let i=0;i<n;i++){
+    const a=pts[Math.max(0,i-1)],b=pts[Math.min(n-1,i+1)];
+    let tx=b[0]-a[0],ty=b[1]-a[1];const l=Math.hypot(tx,ty)||1;tx/=l;ty/=l;
+    const w=lerp(w0,w1,i/(n-1))/2;
+    L.push(`${f1(pts[i][0]-ty*w)} ${f1(pts[i][1]+tx*w)}`);
+    R.push(`${f1(pts[i][0]+ty*w)} ${f1(pts[i][1]-tx*w)}`);
+  }
+  return'M'+L.join('L')+'L'+R.reverse().join('L')+'Z';
+}
+const polyD=pts=>'M'+pts.map(p=>f1(p[0])+' '+f1(p[1])).join('L');
+
+/* Shared gradients — rendered once in the main <svg> defs, referenced by id everywhere (shop previews included) */
+function FxDefs({acc}){
+  const rg=(id,stops,o={})=>(
+    <radialGradient key={id} id={id} cx={o.cx||'50%'} cy={o.cy||'50%'} r={o.r||'50%'} fx={o.fx} fy={o.fy}>
+      {stops.map(([off,c,op],i)=><stop key={i} offset={off} stopColor={c} stopOpacity={op===undefined?1:op}/>)}
+    </radialGradient>);
+  const lg=(id,stops,v=true)=>(
+    <linearGradient key={id} id={id} x1="0" y1="0" x2={v?0:1} y2={v?1:0}>
+      {stops.map(([off,c,op],i)=><stop key={i} offset={off} stopColor={c} stopOpacity={op===undefined?1:op}/>)}
+    </linearGradient>);
+  const glow=(id,c)=>rg(id,[['0%',c,0.6],['35%',c,0.24],['100%',c,0]]);
+  const RB=['#ff5a7a','#ffa45c','#ffd95e','#7ee0a0','#5fb4ff','#8a7bff','#d77bff'];
+  return(<>
+    {glow('glowGold','#ffc94d')}{glow('glowRose','#ff6f91')}{glow('glowBlue','#5b8cff')}
+    {glow('glowWhite','#ffffff')}{glow('glowLime','#c4f24a')}{glow('glowIce','#cfe6ff')}{glow('glowAcc',acc)}
+    {SKINS.filter(s=>s.glow).map(s=>glow('sk_'+s.id,s.glow))}
+    {rg('bokeh',[['0%',acc,0.55],['50%',acc,0.2],['100%',acc,0]])}
+    {rg('headShade',[['0%','#fff',0.95],['20%','#fff',0.45],['52%','#fff',0],['82%','#000',0.06],['100%','#000',0.34]],{cx:'40%',cy:'32%',r:'70%',fx:'32%',fy:'22%'})}
+    {rg('eyeWhite',[['0%','#fff'],['70%','#f3f5fb'],['100%','#c3cde0']],{cx:'45%',cy:'35%',r:'65%'})}
+    {rg('irisShade',[['0%','#fff',0.4],['45%','#fff',0],['100%','#000',0.55]],{cx:'50%',cy:'38%',r:'55%'})}
+    {rg('wbcBody',[['0%','#ffffff',0.97],['50%','#edf5ff',0.93],['82%','#c2d7f4',0.9],['100%','#8eaee0',0.95]],{cx:'40%',cy:'35%',r:'70%'})}
+    {rg('wbcNuc',[['0%','#e2ccff',0.95],['55%','#a477e8',0.92],['100%','#5a2ea6',0.95]],{cx:'38%',cy:'32%',r:'70%'})}
+    {rg('mucusBody',[['0%','#f6ffd0',0.8],['40%','#cdf060',0.5],['82%','#92d02c',0.55],['100%','#5c9410',0.85]],{cx:'40%',cy:'35%',r:'70%'})}
+    {rg('abTip',[['0%','#ffffff'],['35%','#a8d4ff'],['100%','#2f5fe0']],{cx:'38%',cy:'32%',r:'65%'})}
+    {rg('orbFill',[['0%','#ffe9a8',0.02],['68%','#ffd25e',0.1],['100%','#ffc23d',0.42]])}
+    {rg('ovCyto',[['0%','#fffdf6'],['45%','#fff1cc'],['82%','#ffd98e'],['100%','#eeb04a']],{cx:'42%',cy:'38%',r:'65%'})}
+    {rg('ovNuc',[['0%','#ffffff',0.9],['60%','#ffe2a6',0.7],['100%','#e3a23c',0.8]],{cx:'40%',cy:'35%',r:'60%'})}
+    {rg('corona',[['0%','#fff5da'],['65%','#f6c97a'],['100%','#cf8a34']],{cx:'38%',cy:'32%',r:'68%'})}
+    {rg('vign',[['50%','#000',0],['100%','#000',0.72]],{r:'75%'})}
+    {rg('hitVign',[['45%','#ff1e46',0],['100%','#ff1e46',0.6]],{r:'75%'})}
+    {rg('slowVign',[['50%','#b6e83a',0],['100%','#b6e83a',0.3]],{r:'75%'})}
+    {lg('bannerGrad',[['0%','#06010a',0],['50%','#06010a',0.78],['100%','#06010a',0]],false)}
+    {lg('goldMetal',[['0%','#fff7cc'],['28%','#ffd650'],['62%','#e39c12'],['100%','#8a5406']])}
+    {lg('titleGrad',[['0%','#fff9f4'],['50%','#ffcdb5'],['100%','#ff6f91']])}
+    {lg('goldText',[['0%','#fff6cf'],['50%','#ffd35c'],['100%','#e39614']])}
+    {lg('roseText',[['0%','#ffe0e8'],['50%','#ff7d9c'],['100%','#d1386f']])}
+    {lg('btnPrimary',[['0%','#ff9e8a'],['50%','#ff6a8a'],['100%','#d4407f']],false)}
+    {lg('btnGold',[['0%','#ffe88f'],['55%','#ffc43f'],['100%','#e8900d']],false)}
+    {lg('btnRed',[['0%','#ff6b78'],['100%','#b81d3c']],false)}
+    {lg('btnSheen',[['0%','#fff',0.38],['48%','#fff',0.08],['50%','#fff',0],['100%','#fff',0]])}
+    {lg('glass',[['0%','#fff',0.11],['100%','#fff',0.03]])}
+    {lg('glassStroke',[['0%','#fff',0.3],['100%','#fff',0.06]])}
+    {lg('hudGrad',[['0%','#06010a',0.9],['70%','#06010a',0.55],['100%','#06010a',0]])}
+    {lg('wallL',[['0%','#000',0.5],['80%',acc,0.16],['100%',acc,0.4]],false)}
+    {lg('wallR',[['0%',acc,0.4],['20%',acc,0.16],['100%','#000',0.5]],false)}
+    <linearGradient id="rimIri" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#ffffff" stopOpacity="0.9"/><stop offset="45%" stopColor="#ffc2e0" stopOpacity="0.15"/><stop offset="75%" stopColor="#9fe6ff" stopOpacity="0.5"/><stop offset="100%" stopColor="#b9a4ff" stopOpacity="0.9"/></linearGradient>
+    <linearGradient id="royalGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#fff4c2"/><stop offset="30%" stopColor="#ffd650"/><stop offset="62%" stopColor="#e3a21a"/><stop offset="85%" stopColor="#b06d08"/><stop offset="100%" stopColor="#f2c24c"/></linearGradient>
+    {lg('royalGoldV',[['0%','#ffe58a'],['55%','#e3a21a'],['100%','#ffd650',0.5]])}
+    {lg('chromeGrad',[['0%','#ffffff'],['30%','#cfd6e0'],['50%','#6f7a8a'],['58%','#3c4552'],['78%','#dfe6ef'],['100%','#8c97a8']])}
+    {lg('chromeGradV',[['0%','#eef2f7'],['50%','#9aa5b5'],['100%','#cfd6e0',0.5]])}
+    <linearGradient id="auroraGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#6af5d0"/><stop offset="50%" stopColor="#4aa8ff"/><stop offset="100%" stopColor="#c27bff"/></linearGradient>
+    {lg('auroraGradV',[['0%','#6af5d0'],['55%','#4aa8ff'],['100%','#c27bff',0.6]])}
+    {rg('galaxyGrad',[['0%','#9a6bff'],['35%','#4b23a8'],['75%','#1a0b45'],['100%','#07020f']],{cx:'38%',cy:'35%',r:'70%'})}
+    {lg('galaxyGradV',[['0%','#7a4cff'],['60%','#3a1a8a'],['100%','#ff7ad9',0.5]])}
+    <linearGradient id="holoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#ffc6ec"/><stop offset="30%" stopColor="#c6e8ff"/><stop offset="55%" stopColor="#d8ffd6"/><stop offset="80%" stopColor="#e2c9ff"/><stop offset="100%" stopColor="#ffd9c2"/></linearGradient>
+    {lg('holoGradV',[['0%','#ffc6ec'],['35%','#c6e8ff'],['65%','#d8ffd6'],['100%','#e2c9ff',0.6]])}
+    <linearGradient id="pearlSheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#ff9ed0" stopOpacity="0.32"/><stop offset="45%" stopColor="#fff" stopOpacity="0"/><stop offset="100%" stopColor="#8fe4ff" stopOpacity="0.4"/></linearGradient>
+    <linearGradient id="chromeBand" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#fff" stopOpacity="0"/><stop offset="50%" stopColor="#fff" stopOpacity="0.85"/><stop offset="100%" stopColor="#fff" stopOpacity="0"/></linearGradient>
+    {lg('medal0',[['0%','#fff3b8'],['100%','#d99a14']])}
+    {lg('medal1',[['0%','#ffffff'],['100%','#9aa6b8']])}
+    {lg('medal2',[['0%','#ffd6b0'],['100%','#a8602a']])}
+    <linearGradient id="rbGrad" x1="0" y1="0" x2="1" y2="1">{RB.map((c,i)=><stop key={i} offset={`${i/(RB.length-1)*100}%`} stopColor={c}/>)}</linearGradient>
+    <linearGradient id="rbGradV" x1="0" y1="0" x2="0" y2="1">{RB.map((c,i)=><stop key={i} offset={`${i/(RB.length-1)*100}%`} stopColor={c}/>)}</linearGradient>
+    <filter id="sg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10"/></filter>
+  </>);
+}
+
+/* Living tunnel backdrop: parallax bokeh + undulating tissue walls + vignette */
+// wide: 0 = walls hug the play lane, 1 = walls hug the window edges (menu)
+function Backdrop({t,acc,ox,oy,vbW,vbH,wide=0}){
+  const wl=lerp(POX,-ox,wide),wr=lerp(POX+PW,GW+ox,wide);
+  const H=GH+240,X0=-ox,W=vbW;
+  const layer=(n,seed,sp,rMin,rMax,op,fill)=>Array.from({length:n},(_,i)=>{
+    const k=seed+i;
+    const yy=((hrnd(k*3+1)*H+t*sp)%H)-120;
+    const xx=X0+hrnd(k*3+2)*W+Math.sin(t*0.003+k)*14;
+    const r=rMin+hrnd(k*3)*(rMax-rMin);
+    return<circle key={k} cx={f1(xx)} cy={f1(yy)} r={f1(r)} fill={fill} opacity={op}/>;
+  });
+  const wall=(side,amp,ph,base)=>{
+    const pts=[];
+    for(let yy=-oy-40;yy<=GH+oy+40;yy+=24){
+      const w=base+Math.sin((yy-t)*0.011+ph)*amp+Math.sin((yy-t)*0.029+ph*2)*amp*0.45;
+      pts.push([side<0?wl+w:wr-w,yy]);
+    }
+    return pts;
+  };
+  const wallShape=(side,pts)=>{
+    const edgeX=side<0?X0:X0+W;
+    return smoothOpen(pts)+`L${f1(edgeX)} ${f1(pts[pts.length-1][1])}L${f1(edgeX)} ${f1(pts[0][1])}Z`;
+  };
+  const Lb=wall(-1,9,1.3,26),Lf=wall(-1,6,0,14),Rb=wall(1,9,2.1,26),Rf=wall(1,6,3.4,14);
+  return(<g>
+    {layer(6,100,0.22,55,115,0.22,'url(#bokeh)')}
+    {layer(9,200,0.55,9,22,0.38,'url(#bokeh)')}
+    <path d={wallShape(-1,Lb)} fill="url(#wallL)" opacity="0.55"/>
+    <path d={wallShape(1,Rb)} fill="url(#wallR)" opacity="0.55"/>
+    <path d={wallShape(-1,Lf)} fill="url(#wallL)"/>
+    <path d={wallShape(1,Rf)} fill="url(#wallR)"/>
+    <path d={smoothOpen(Lf)} fill="none" stroke={acc} strokeOpacity="0.14" strokeWidth="9"/>
+    <path d={smoothOpen(Rf)} fill="none" stroke={acc} strokeOpacity="0.14" strokeWidth="9"/>
+    <path d={smoothOpen(Lf)} fill="none" stroke={acc} strokeOpacity="0.6" strokeWidth="1.3"/>
+    <path d={smoothOpen(Rf)} fill="none" stroke={acc} strokeOpacity="0.6" strokeWidth="1.3"/>
+    {layer(16,300,1.25,0.8,2.2,0.5,'#ffe9e2')}
+    <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="url(#vign)"/>
+  </g>);
+}
+
+function HelmetShape(){
+  return(<g>
+    <path d="M -21 -5 C -22 -24 -12 -33 0 -33 C 12 -33 22 -24 21 -5 Q 0 -10 -21 -5 Z" fill="url(#goldMetal)" stroke="#7a4805" strokeWidth="1"/>
+    <path d="M -21.5 -5.5 Q 0 -10.5 21.5 -5.5 L 21 -1.5 Q 0 -6.5 -21 -1.5 Z" fill="#b8770a" stroke="#7a4805" strokeWidth="0.8"/>
+    <path d="M -2.6 -32.6 L 2.6 -32.6 L 2.2 -9.5 L -2.2 -9.5 Z" fill="#fff4b8" opacity="0.32"/>
+    <path d="M -15 -12 C -15.5 -23 -9 -29 -2.5 -30.5" stroke="#fff" strokeOpacity="0.8" strokeWidth="2.6" fill="none" strokeLinecap="round"/>
+    <circle cx="12" cy="-20" r="1.6" fill="#fff" opacity="0.7"/>
+  </g>);
+}
+
+function SpermPlayer({x,y,wob,hit,shield,tilt,skin}){
+  const sk=skin||SKINS[0];
+  const td=clamp(tilt*20,-35,35);
+  const pts=[];
+  for(let i=0;i<=22;i++){const f=i/22;pts.push([Math.sin(wob*0.12+f*3.8)*(f*12+1.5),14+f*86]);}
+  const bc=hit?'#ffc0c0':sk.body;
+  const tailFill=sk.rainbow?'url(#rbGradV)':(hit?'rgba(255,180,180,0.8)':sk.tail);
+  // Animation phase
+  const ph=wob*0.05;
+  const glowPulse=sk.glow?(0.6+Math.sin(ph*2)*0.25):0;
+  const flameAmt=sk.id==='fire'?(0.5+Math.sin(ph*5)*0.5):0;
+  const rbAngle=sk.rainbow?(ph*50)%360:(sk.spin?(ph*25)%360:0);
+  // Occasional blink
+  const blink=((wob*0.01)%4.3)<0.09?0.12:1;
+  const eye=cx=>(
+    <g transform={`translate(${cx},-2) scale(1,${blink})`}>
+      <ellipse rx="5.7" ry="6.7" fill="url(#eyeWhite)"/>
+      <circle cx="0.6" cy="0.9" r="4.4" fill={sk.eye}/>
+      <circle cx="0.6" cy="0.9" r="4.4" fill="url(#irisShade)"/>
+      <circle cx="0.8" cy="1.1" r="2.2" fill={sk.pupil}/>
+      <circle cx="2.3" cy="-1.5" r="1.55" fill="#fff"/>
+      <circle cx="-1.1" cy="2.8" r="0.7" fill="#fff" opacity="0.8"/>
+    </g>);
+  return(
+    <g transform={`translate(${x},${y}) rotate(${td})`}>
+      {sk.glow&&<circle cx="0" cy="0" r={PR+30+Math.sin(ph*2)*3} fill={`url(#sk_${sk.id})`} opacity={glowPulse}/>}
+      {/* Fire embers */}
+      {sk.id==='fire'&&[0,1,2,3,4,5,6].map(i=>{
+        const cyc=ph*0.16+i*0.43;
+        const tick=Math.floor(cyc);
+        const seed=tick*17.3+i*9.1;
+        const ang=(Math.sin(seed)*0.5+0.5)*Math.PI*2;
+        const dist=PR+4+(Math.cos(seed*1.7)*0.5+0.5)*8-(cyc%1)*6;
+        const fx=Math.cos(ang)*dist,fy=Math.sin(ang)*dist-(cyc%1)*10;
+        const alpha=Math.sin((cyc%1)*Math.PI);
+        return<g key={i} transform={`translate(${fx},${fy})`} opacity={alpha}>
+          <circle r="7" fill="url(#sk_fire)"/>
+          <path d="M 0 -6.5 C 2.8 -3 3.6 0 2.6 2.6 C 1.6 4.6 -1.6 4.6 -2.6 2.6 C -3.6 0 -2.6 -3 0 -6.5 Z" fill="#ff7a2a"/>
+          <path d="M 0 -3.2 C 1.4 -1.4 1.8 0.4 1.2 1.8 C 0.6 2.8 -0.6 2.8 -1.2 1.8 C -1.8 0.4 -1.4 -1.4 0 -3.2 Z" fill="#ffe27a"/>
+        </g>;
+      })}
+      {/* Ice crystals */}
+      {sk.id==='ice'&&[0,1,2,3,4,5,6].map(i=>{
+        const cyc=ph*0.22+i*0.37;
+        const tick=Math.floor(cyc);
+        const seed=tick*19.7+i*11.3;
+        const ang=(Math.sin(seed)*0.5+0.5)*Math.PI*2;
+        const dist=PR+5+(Math.cos(seed*1.9)*0.5+0.5)*10;
+        const fx=Math.cos(ang)*dist,fy=Math.sin(ang)*dist;
+        const alpha=Math.sin((cyc%1)*Math.PI);
+        const rot=seed*30%360;
+        return<g key={i} transform={`translate(${fx},${fy}) rotate(${rot})`} opacity={alpha}>
+          {[0,60,120].map(a=>(
+            <g key={a} transform={`rotate(${a})`}>
+              <line x1="0" y1="-3.8" x2="0" y2="3.8" stroke="#eef7ff" strokeWidth="1.1" strokeLinecap="round"/>
+              <path d="M -1.1 -3.4 L 0 -2.2 L 1.1 -3.4 M -1.1 3.4 L 0 2.2 L 1.1 3.4" stroke="#eef7ff" strokeWidth="0.7" fill="none" strokeLinecap="round"/>
+            </g>
+          ))}
+          <circle r="1" fill="#fff"/>
+        </g>;
+      })}
+      {/* Tail: soft glow + tapered body + specular line */}
+      {!DISCRETE_MODE&&<g>
+        <path d={ribbon(pts,16,4)} fill={tailFill} opacity="0.16"/>
+        <path d={ribbon(pts,8.5,0.9)} fill={tailFill}/>
+        <path d={polyD(pts.slice(0,12))} stroke="#fff" strokeOpacity="0.5" strokeWidth="1.3" fill="none" strokeLinecap="round"/>
+      </g>}
+      {/* Contact shadow */}
+      <ellipse cx="0" cy="4" rx={PR+1} ry={PR+2} fill="#000" opacity="0.16"/>
+      {/* Head */}
+      <g transform={sk.rainbow||sk.spin?`rotate(${rbAngle})`:undefined}>
+        <ellipse cx="0" cy="0" rx={PR} ry={PR+1.5} fill={bc} stroke={sk.headStroke||'none'} strokeWidth={sk.headStroke?1.5:0}/>
+        {sk.id==='fire'&&<ellipse cx="0" cy="0" rx={PR} ry={PR+1.5} fill={`rgba(255,210,60,${flameAmt*0.3})`}/>}
+      </g>
+      {/* Galaxy: twinkling stars inside the head */}
+      {sk.galaxy&&Array.from({length:14},(_,i)=>{
+        const a=hrnd(i+3)*Math.PI*2+ph*0.08,d=3+hrnd(i+17)*15;
+        const tw=0.35+Math.max(0,Math.sin(ph*1.6+i*2.3))*0.65;
+        return<circle key={i} cx={f1(Math.cos(a)*d)} cy={f1(Math.sin(a)*d*1.05)} r={i%4===0?1.3:0.7} fill={i%3===0?'#ffd6f5':'#fff'} opacity={tw}/>;
+      })}
+      {sk.galaxy&&<ellipse cx="4" cy="6" rx="11" ry="5" fill="#ff7ad9" opacity="0.18" transform={`rotate(${-25+Math.sin(ph*0.4)*8},4,6)`}/>}
+      <ellipse cx="0" cy="0" rx={PR} ry={PR+1.5} fill="url(#headShade)" opacity={sk.ghost?0.55:(sk.bodyGrad?1:(sk.galaxy?0.5:0.8))}/>
+      {/* Pearl / holo: iridescent sheen */}
+      {sk.pearl&&<ellipse cx="0" cy="0" rx={PR} ry={PR+1.5} fill="url(#pearlSheen)" transform={`rotate(${(ph*12)%360})`}/>}
+      {/* Chrome: reflection band sweeping across */}
+      {sk.chrome&&<g>
+        <clipPath id="chromeClip"><ellipse cx="0" cy="0" rx={PR} ry={PR+1.5}/></clipPath>
+        <g clipPath="url(#chromeClip)">
+          <rect x={-60+((ph*18)%120)} y="-30" width="14" height="60" fill="url(#chromeBand)" transform="rotate(25)"/>
+        </g>
+      </g>}
+      {/* Acrosome cap */}
+      <path d="M -16.5 -11 Q 0 -31 16.5 -11 Q 0 -19 -16.5 -11 Z" fill="#fff" opacity="0.14"/>
+      <ellipse cx="0" cy="0" rx={PR-0.8} ry={PR+0.7} fill="none" stroke="url(#rimIri)" strokeOpacity="0.75" strokeWidth="1.6"/>
+      {/* Diamond sparkles */}
+      {sk.sparkle&&[0,1,2,3,4,5,6,7].map(i=>{
+        const cyc=ph*0.55+i*0.31;
+        const tick=Math.floor(cyc);
+        const seed=tick*23.7+i*13.5;
+        const ang=(Math.sin(seed)*0.5+0.5)*Math.PI*2;
+        const dist=PR+6+(Math.cos(seed*1.9)*0.5+0.5)*10;
+        const fx=Math.cos(ang)*dist,fy=Math.sin(ang)*dist;
+        const alpha=Math.sin((cyc%1)*Math.PI);
+        const s=0.7+alpha*0.6;
+        return<g key={i} transform={`translate(${fx},${fy}) scale(${s})`} opacity={alpha}>
+          <circle r="5" fill="url(#glowWhite)"/>
+          <path d="M 0 -4.5 Q 0.5 -0.5 4.5 0 Q 0.5 0.5 0 4.5 Q -0.5 0.5 -4.5 0 Q -0.5 -0.5 0 -4.5 Z" fill="#fff"/>
+        </g>;
+      })}
+      {/* Face */}
+      <ellipse cx="-12.5" cy="8.5" rx="5.5" ry="3.4" fill={sk.cheek}/>
+      <ellipse cx="12.5" cy="8.5" rx="5.5" ry="3.4" fill={sk.cheek}/>
+      {eye(-7.5)}{eye(7.5)}
+      <path d="M -4.2 8.6 Q 0 12.2 4.2 8.6" stroke={sk.mouth} strokeWidth="1.8" fill="none" strokeLinecap="round"/>
+      <ellipse cx="-9" cy="-13.5" rx="6.6" ry="3.4" fill="#fff" opacity={sk.shine} transform="rotate(-32,-9,-13.5)"/>
+      <circle cx="-15" cy="-6" r="1.4" fill="#fff" opacity={sk.shine*0.8}/>
+      {sk.crown&&!shield&&<g transform={`translate(0,${-20.5+Math.sin(ph*1.2)*0.8}) scale(0.72)`}><Crown/></g>}
+      {shield&&(
+        <g>
+          <g transform="translate(0,-1)"><HelmetShape/></g>
+          <circle cx="0" cy="0" r={PR+16} fill="url(#orbFill)" stroke="#ffe08a" strokeOpacity="0.5" strokeWidth="1"/>
+          <circle cx="0" cy="0" r={PR+16} fill="none" stroke="#ffe08a" strokeWidth="2.2" strokeDasharray="16 34" strokeLinecap="round" transform={`rotate(${(ph*40)%360})`} opacity="0.85"/>
+        </g>
+      )}
+    </g>
+  );
+}
+
+function SpermEnemy({x,y,wob,vx,svx}){
+  const pts=[];
+  for(let i=0;i<=16;i++){const f=i/16;pts.push([Math.sin(wob*0.13+f*3)*f*8,9+f*63]);}
+  const rot=clamp((svx!==undefined?svx:vx)*8,-30,30);
+  const eye=cx=>(
+    <g transform={`translate(${cx},-2)`}>
+      <ellipse rx="3.9" ry="4.5" fill="url(#eyeWhite)"/>
+      <circle cx={cx<0?0.5:-0.5} cy="0.6" r="2.8" fill="#c2185b"/>
+      <circle cx={cx<0?0.5:-0.5} cy="0.6" r="2.8" fill="url(#irisShade)"/>
+      <circle cx={cx<0?0.6:-0.4} cy="0.8" r="1.4" fill="#2a0012"/>
+      <circle cx={cx<0?1.6:0.6} cy="-0.8" r="0.95" fill="#fff"/>
+    </g>);
+  return(
+    <g transform={`translate(${x},${y}) rotate(${rot})`}>
+      {!DISCRETE_MODE&&<g>
+        <path d={ribbon(pts,11,3)} fill="#ff8fa8" opacity="0.14"/>
+        <path d={ribbon(pts,5.8,0.8)} fill="#f7a0b4" opacity="0.92"/>
+        <path d={polyD(pts.slice(0,8))} stroke="#fff" strokeOpacity="0.4" strokeWidth="1" fill="none" strokeLinecap="round"/>
+      </g>}
+      <ellipse cx="0" cy="3.5" rx="15" ry="16" fill="#000" opacity="0.26"/>
+      <ellipse cx="0" cy="0" rx="15" ry="16" fill="#f59c7c"/>
+      <ellipse cx="0" cy="0" rx="15" ry="16" fill="url(#headShade)"/>
+      <path d="M -11.5 -8 Q 0 -22 11.5 -8 Q 0 -13.5 -11.5 -8 Z" fill="#fff" opacity="0.13"/>
+      <ellipse cx="0" cy="0" rx="14.3" ry="15.3" fill="none" stroke="#fff" strokeOpacity="0.28" strokeWidth="0.8"/>
+      {eye(-5)}{eye(5)}
+      <path d="M -9 -8.6 L -2 -5.8" stroke="#8e1840" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M 2 -5.8 L 9 -8.6" stroke="#8e1840" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M -3.2 6.2 Q 0 4.6 3.2 6.2" stroke="#8e1840" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+      <ellipse cx="-5.5" cy="-9.5" rx="4.6" ry="2.3" fill="#fff" opacity="0.7" transform="rotate(-30,-5.5,-9.5)"/>
+    </g>
+  );
+}
+
+/* Smug winner shown on the "Éliminé" screen — half-lidded side glance, raised brow, lopsided smirk */
+function RivalVictor({wob}){
+  const t=wob*0.04;
+  const bob=Math.sin(t)*2.5;
+  const tilt=-7+Math.sin(t*0.7)*3;
+  const brow=Math.max(0,Math.sin(t*0.9))*1.8;    // right brow lifts now and then
+  const look=Math.sin(t*0.5)*0.8;                  // pupils drift a little
+  const pts=[];
+  for(let i=0;i<=22;i++){const f=i/22;pts.push([Math.sin(wob*0.11+f*3.4)*f*13,-14-f*104]);}
+  const SKIN='#f59c7c',LID='#e8866a',INK='#6e0f2e';
+  // eye: lidTop = y of the eyelid edge at the outer/inner corner (local coords)
+  const eye=(cx,side,lo,li)=>{
+    const id='rvEye'+side;
+    const ox=cx+side*6.4,ix=cx-side*6.4;
+    return(<g>
+      <clipPath id={id}><ellipse cx={cx} cy="0" rx="6.6" ry="7.4"/></clipPath>
+      <ellipse cx={cx} cy="0" rx="6.6" ry="7.4" fill="url(#eyeWhite)"/>
+      <g clipPath={`url(#${id})`}>
+        <circle cx={cx-2.2+look} cy="2.6" r="4.6" fill="#c2185b"/>
+        <circle cx={cx-2.2+look} cy="2.6" r="4.6" fill="url(#irisShade)"/>
+        <circle cx={cx-2+look} cy="2.9" r="2.3" fill="#2a0012"/>
+        <circle cx={cx-0.6+look} cy="1.2" r="1.3" fill="#fff"/>
+        <path d={`M ${ox} ${lo} L ${ix} ${li} L ${ix} -9 L ${ox} -9 Z`} fill={LID}/>
+        <path d={`M ${ox} ${lo} L ${ix} ${li} L ${ix} ${li+1.6} L ${ox} ${lo+1.6} Z`} fill="#000" opacity="0.12"/>
+      </g>
+      <path d={`M ${ox+side*0.8} ${lo-0.3} L ${ix} ${li}`} stroke={INK} strokeWidth="2.1" strokeLinecap="round"/>
+      <path d={`M ${ox+side*0.8} ${lo-0.3} l ${side*2.2} ${-1.6}`} stroke={INK} strokeWidth="1.5" strokeLinecap="round"/>
+    </g>);
+  };
+  return(
+    <g transform={`translate(0,${bob}) rotate(${tilt})`}>
+      {!DISCRETE_MODE&&<g>
+        <path d={ribbon(pts,20,5)} fill="#ff8fa8" opacity="0.14"/>
+        <path d={ribbon(pts,10,1.2)} fill="#f7a0b4"/>
+        <path d={polyD(pts.slice(0,10))} stroke="#fff" strokeOpacity="0.45" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+      </g>}
+      <ellipse cx="0" cy="5" rx="25" ry="26" fill="#000" opacity="0.22"/>
+      <ellipse cx="0" cy="0" rx="24" ry="25.5" fill={SKIN}/>
+      <ellipse cx="0" cy="0" rx="24" ry="25.5" fill="url(#headShade)"/>
+      <ellipse cx="0" cy="0" rx="23" ry="24.5" fill="none" stroke="url(#rimIri)" strokeOpacity="0.6" strokeWidth="1.4"/>
+      {/* Cheeks — the right one pushed up by the smirk */}
+      <ellipse cx="-14" cy="10" rx="5.5" ry="3.2" fill="#e8506e" opacity="0.28"/>
+      <ellipse cx="14.5" cy="7.5" rx="6" ry="3.6" fill="#e8506e" opacity="0.38"/>
+      {/* Eyes: heavy lids, glancing down-left at the loser */}
+      <g transform="translate(0,-2)">
+        {eye(-9,-1,-2.2,-0.8)}
+        {eye(9,1,-3.6-brow*0.4,-2.4-brow*0.4)}
+      </g>
+      {/* Brows: left low & flat, right arched up */}
+      <path d="M -17 -12.5 Q -10 -14.5 -3.5 -11.5" stroke={INK} strokeWidth="2.3" fill="none" strokeLinecap="round"/>
+      <path d={`M 3.5 ${-14-brow} Q 10 ${-20.5-brow} 17 ${-15.5-brow*0.6}`} stroke={INK} strokeWidth="2.3" fill="none" strokeLinecap="round"/>
+      {/* Lopsided smirk */}
+      <path d="M -6.5 11 Q 1.5 13.6 9.5 7.2" stroke={INK} strokeWidth="2.3" fill="none" strokeLinecap="round"/>
+      <path d="M 8.4 5.6 Q 10.6 6.6 10.4 9" stroke={INK} strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+      {/* Specular */}
+      <ellipse cx="-6" cy="-20" rx="6" ry="2.8" fill="#fff" opacity="0.75" transform="rotate(-24,-6,-20)"/>
+      <circle cx="-18.5" cy="-4" r="1.4" fill="#fff" opacity="0.55"/>
+      {/* Victory glint */}
+      <g transform={`translate(25,-22) scale(${0.8+Math.max(0,Math.sin(t*1.3))*0.5}) rotate(${(wob*0.5)%360})`} opacity={0.5+Math.max(0,Math.sin(t*1.3))*0.5}>
+        <circle r="7" fill="url(#glowWhite)"/>
+        <path d="M 0 -5 Q 0.6 -0.6 5 0 Q 0.6 0.6 0 5 Q -0.6 0.6 -5 0 Q -0.6 -0.6 0 -5 Z" fill="#fff"/>
+      </g>
+    </g>
+  );
+}
+
+function WBC({x,y,pulse}){
+  const r=27+Math.sin(pulse*0.09)*2;
+  const mem=smoothClosed(blobPts(x,y,14,i=>r+Math.sin(pulse*0.07+i*2.1)*2.2+Math.sin(pulse*0.035+i*0.9)*1.6));
+  const nr=pulse*0.012;
+  return(
+    <g>
+      <circle cx={x} cy={y} r={r+18} fill="url(#glowIce)" opacity="0.5"/>
+      <path d={mem} transform="translate(0,4)" fill="#000" opacity="0.22"/>
+      <path d={mem} fill="url(#wbcBody)" stroke="#fff" strokeOpacity="0.85" strokeWidth="1.4"/>
+      {[0,1,2,3,4,5,6,7].map(i=>{const a=i*0.83+pulse*0.004,d=9+(i%3)*5.5;
+        return<circle key={i} cx={f1(x+Math.cos(a)*d)} cy={f1(y+Math.sin(a)*d)} r={1.1+(i%2)*0.5} fill="#8fa6d8" opacity="0.5"/>;
+      })}
+      {[0,1,2].map(i=>{const a=nr+i*2.1;
+        return<circle key={i} cx={f1(x+1+Math.cos(a)*5)} cy={f1(y+7+Math.sin(a)*3.5)} r="6.4" fill="url(#wbcNuc)"/>;
+      })}
+      <ellipse cx={x-1.5} cy={y+4.5} rx="2.8" ry="1.4" fill="#fff" opacity="0.45"/>
+      <path d={`M ${x-11.5} ${y-10.5} Q ${x-6.5} ${y-13} ${x-2.5} ${y-7.5} Q ${x-7.5} ${y-5.5} ${x-11.5} ${y-10.5} Z`} fill="#1c1442"/>
+      <path d={`M ${x+11.5} ${y-10.5} Q ${x+6.5} ${y-13} ${x+2.5} ${y-7.5} Q ${x+7.5} ${y-5.5} ${x+11.5} ${y-10.5} Z`} fill="#1c1442"/>
+      <circle cx={x-5.8} cy={y-9.6} r="0.9" fill="#fff"/>
+      <circle cx={x+7.2} cy={y-9.6} r="0.9" fill="#fff"/>
+      <ellipse cx={x-9} cy={y-16} rx="7.5" ry="3.4" fill="#fff" opacity="0.75" transform={`rotate(-30,${x-9},${y-16})`}/>
+    </g>
+  );
+}
+
+function Mucus({x,y,pulse,r}){
+  const w1=Math.sin(pulse*0.08)*3;
+  const blob=smoothClosed(blobPts(x,y,10,i=>r+Math.sin(pulse*0.05+i*1.9)*3+(i%2?w1:-w1)*0.5));
+  const drip=Math.sin(pulse*0.04)*0.5+0.5;
+  return(
+    <g>
+      <circle cx={x} cy={y} r={r+16} fill="url(#glowLime)" opacity="0.4"/>
+      <ellipse cx={x+r*0.18} cy={y+r*0.92+drip*5} rx={2.6+drip} ry={3.6+drip*2} fill="#a6dc3a" opacity="0.7"/>
+      <path d={blob} fill="url(#mucusBody)" stroke="#d8fa7a" strokeOpacity="0.75" strokeWidth="1.3"/>
+      {[[-0.34,0.2,0.2],[0.32,0.28,0.12],[0.06,-0.08,0.08],[-0.05,0.52,0.07]].map(([bx,by,br],i)=>(
+        <g key={i}>
+          <circle cx={f1(x+bx*r+Math.sin(pulse*0.03+i)*1.5)} cy={f1(y+by*r)} r={f1(br*r)} fill="#fff" fillOpacity="0.08" stroke="#fff" strokeOpacity="0.45" strokeWidth="0.9"/>
+          <circle cx={f1(x+bx*r-br*r*0.35)} cy={f1(y+by*r-br*r*0.35)} r={f1(br*r*0.22)} fill="#fff" opacity="0.7"/>
+        </g>
+      ))}
+      <ellipse cx={x-r*0.32} cy={y-r*0.48} rx={r*0.36} ry={r*0.15} fill="#fff" opacity="0.6" transform={`rotate(-25,${x-r*0.32},${y-r*0.48})`}/>
+    </g>
+  );
+}
+
+function Antibody({x,y,angle,pulse}){
+  const gl=0.55+Math.sin(pulse*0.1)*0.2;
+  const arm=(x2,y2,k)=>(
+    <g key={k}>
+      <line x1="0" y1="0" x2={x2} y2={y2} stroke="#1d2f8a" strokeWidth="8.5" strokeLinecap="round"/>
+      <line x1="0" y1="0" x2={x2} y2={y2} stroke="#4c74f0" strokeWidth="5.5" strokeLinecap="round"/>
+      <line x1={x2*0.18-0.8} y1={y2*0.18-0.8} x2={x2*0.78-0.8} y2={y2*0.78-0.8} stroke="#dbe8ff" strokeOpacity="0.75" strokeWidth="1.4" strokeLinecap="round"/>
+    </g>);
+  return(
+    <g transform={`translate(${x},${y}) rotate(${angle})`}>
+      <circle cx="0" cy="0" r="38" fill="url(#glowBlue)" opacity={gl*0.6}/>
+      {arm(0,22,'s')}{arm(-17,-17,'l')}{arm(17,-17,'r')}
+      <circle cx="0" cy="0" r="4.6" fill="#6f95ff" stroke="#c8dcff" strokeWidth="1"/>
+      {[[-17,-17],[17,-17],[0,22]].map(([tx,ty],i)=>(
+        <g key={i}>
+          <circle cx={tx} cy={ty} r={i<2?14:11} fill="url(#glowBlue)" opacity={gl}/>
+          <circle cx={tx} cy={ty} r={i<2?6.8:5.8} fill="url(#abTip)" stroke="#e3eeff" strokeWidth="1"/>
+        </g>
+      ))}
+    </g>
+  );
+}
+
+function Helmet({x,y,pulse}){
+  const s=1+Math.sin(pulse*0.08)*0.06;
+  return(
+    <g transform={`translate(${x},${y}) scale(${s})`}>
+      <circle cx="0" cy="0" r="36" fill="url(#glowGold)" opacity="0.75"/>
+      <circle cx="0" cy="0" r="23" fill="url(#orbFill)" stroke="#ffe28c" strokeOpacity="0.7" strokeWidth="1.2"/>
+      <circle cx="0" cy="0" r="27.5" fill="none" stroke="#ffd25e" strokeWidth="1.6" strokeDasharray="9 13" strokeLinecap="round" transform={`rotate(${(pulse*1.2)%360})`} opacity="0.8"/>
+      <g transform="translate(0,13.5) scale(0.72)"><HelmetShape/></g>
+      <ellipse cx="-9" cy="-13" rx="7" ry="3.2" fill="#fff" opacity="0.55" transform="rotate(-38,-9,-13)"/>
+    </g>
+  );
+}
+
+function arcPath(r,startA,endA){
+  const x1=Math.cos(startA)*r,y1=Math.sin(startA)*r;
+  const x2=Math.cos(endA)*r,y2=Math.sin(endA)*r;
+  const sweep=((endA-startA)+Math.PI*4)%(Math.PI*2);
+  return`M ${x1} ${y1} A ${r} ${r} 0 ${sweep>Math.PI?1:0} 1 ${x2} ${y2}`;
+}
+function Ovule({x,y,pulse,angle}){
+  const entryA=angle||0;
+  const gapH=Math.PI/3.2;
+  const a0=entryA+gapH,a1=entryA-gapH+Math.PI*2;
+  const entryX=Math.cos(entryA)*58,entryY=Math.sin(entryA)*58;
+  const pg=0.6+Math.sin(pulse*0.15)*0.3;
+  const N=24,span=a1-a0-0.24;
+  return(
+    <g transform={`translate(${x},${y})`}>
+      <circle cx="0" cy="0" r={125+Math.sin(pulse*0.05)*8} fill="url(#glowGold)" opacity="0.6"/>
+      {/* Corona radiata */}
+      {Array.from({length:N},(_,i)=>{
+        const a=a0+0.12+(i/(N-1))*span;
+        const rr=69+Math.sin(pulse*0.05+i*1.3)*2.5+(i%2)*4;
+        return<circle key={i} cx={f1(Math.cos(a)*rr)} cy={f1(Math.sin(a)*rr)} r={6+(i*7%3)} fill="url(#corona)"/>;
+      })}
+      {/* Zona pellucida */}
+      <path d={arcPath(54,a0,a1)} fill="none" stroke="#ffe8b0" strokeOpacity="0.3" strokeWidth="11" strokeLinecap="round"/>
+      <path d={arcPath(59.5,a0,a1)} fill="none" stroke="#fff4d6" strokeOpacity="0.8" strokeWidth="1.3" strokeLinecap="round"/>
+      <path d={arcPath(48.5,a0,a1)} fill="none" stroke="#fff4d6" strokeOpacity="0.55" strokeWidth="1" strokeLinecap="round"/>
+      {/* Cytoplasm */}
+      <circle cx="0" cy="0" r="46" fill="url(#ovCyto)"/>
+      {Array.from({length:18},(_,i)=>{const a=hrnd(i+7)*Math.PI*2,d=8+hrnd(i+31)*30;
+        return<circle key={i} cx={f1(Math.cos(a)*d)} cy={f1(Math.sin(a)*d)} r={0.8+hrnd(i+53)*1.4} fill="#e7a647" opacity="0.35"/>;
+      })}
+      <circle cx="9" cy="-4" r="13" fill="url(#ovNuc)"/>
+      <circle cx="11" cy="-6" r="3.4" fill="#eaa53c" opacity="0.7"/>
+      <ellipse cx="-17" cy="-23" rx="14" ry="5.5" fill="#fff" opacity="0.6" transform="rotate(-38,-17,-23)"/>
+      {/* Entry portal */}
+      <circle cx={entryX} cy={entryY} r={22+Math.sin(pulse*0.18)*4} fill="url(#glowWhite)" opacity={pg}/>
+      <circle cx={entryX} cy={entryY} r={9+Math.sin(pulse*0.18)*1.5} fill="none" stroke="#fff" strokeOpacity="0.7" strokeWidth="1.2"/>
+      <circle cx={entryX} cy={entryY} r="4.5" fill="#fff"/>
+    </g>
+  );
+}
+
+function Ptcl({list}){
+  return<g>{list.map(p=>{const a=clamp(p.life/p.ml,0,1);return<g key={p.id}>
+    <circle cx={p.x} cy={p.y} r={11*a} fill={p.color} opacity={a*0.2}/>
+    <circle cx={p.x} cy={p.y} r={3.6*a+0.6} fill={p.color} opacity={a}/>
+    <circle cx={p.x} cy={p.y} r={1.4*a} fill="#fff" opacity={a*0.85}/>
+  </g>;})}</g>;
+}
+
+/* ── UI atoms ── */
+function LifeIcon({x,y,on,hard}){
+  return(
+    <g transform={`translate(${x},${y})`} opacity={on?1:0.2}>
+      <path d={ribbon([[6,0],[11,1.8],[16,-1.2],[21,1.2],[26,-0.4]],5,1)} fill={hard?'#ff7a8a':'#ffffff'} opacity="0.85"/>
+      <ellipse cx="0" cy="0" rx="9" ry="8.6" fill={hard?'#e8344a':'#ffffff'}/>
+      <ellipse cx="0" cy="0" rx="9" ry="8.6" fill="url(#headShade)"/>
+      <circle cx="-3" cy="-0.6" r="1.8" fill={hard?'#3a0010':'#3d6fb0'}/>
+      <circle cx="3" cy="-0.6" r="1.8" fill={hard?'#3a0010':'#3d6fb0'}/>
+    </g>
+  );
+}
+function RankBadge({i,x,y}){
+  return(
+    <g transform={`translate(${x},${y})`}>
+      <circle r="11" fill={`url(#medal${i})`}/>
+      <circle r="11" fill="none" stroke="#fff" strokeOpacity="0.5" strokeWidth="0.8"/>
+      <text y="4.2" textAnchor="middle" fontSize="11.5" fontWeight="800" fill="#2a1406" fontFamily="Sora,Helvetica Neue,Arial">{i+1}</text>
+    </g>
+  );
+}
+function Crown(){
+  return(
+    <g>
+      <path d="M -18 0 L -15 -15 L -8 -5 L 0 -18 L 8 -5 L 15 -15 L 18 0 Z" fill="url(#goldMetal)" stroke="#7a4805" strokeWidth="1" strokeLinejoin="round"/>
+      <rect x="-18.5" y="-1.5" width="37" height="5.5" rx="1.5" fill="#c98510" stroke="#7a4805" strokeWidth="0.8"/>
+      <circle cx="-15" cy="-15" r="2.6" fill="#ff6f91" stroke="#fff" strokeOpacity="0.6" strokeWidth="0.6"/>
+      <circle cx="0" cy="-18" r="3.1" fill="#ff3d6e" stroke="#fff" strokeOpacity="0.6" strokeWidth="0.6"/>
+      <circle cx="15" cy="-15" r="2.6" fill="#ff6f91" stroke="#fff" strokeOpacity="0.6" strokeWidth="0.6"/>
+      <circle cx="-8" cy="1.2" r="1.6" fill="#8ff0ff"/><circle cx="0" cy="1.2" r="1.6" fill="#8ff0ff"/><circle cx="8" cy="1.2" r="1.6" fill="#8ff0ff"/>
+      <path d="M -12 -4 L -10.5 -10" stroke="#fff" strokeOpacity="0.8" strokeWidth="1.4" strokeLinecap="round"/>
+    </g>
+  );
+}
+// Glass pill / button
+function Pill({x,y,w,h,fill,stroke,glow}){
+  return(<g>
+    {glow&&<rect x={x-6} y={y-2} width={w+12} height={h+14} rx={(h+14)/2} fill={glow} opacity="0.35" filter="url(#sg)"/>}
+    <rect x={x} y={y} width={w} height={h} rx={h/2} fill={fill||'url(#glass)'}/>
+    {fill&&<rect x={x} y={y} width={w} height={h} rx={h/2} fill="url(#btnSheen)"/>}
+    <rect x={x+0.5} y={y+0.5} width={w-1} height={h-1} rx={(h-1)/2} fill="none" stroke={stroke||'url(#glassStroke)'} strokeWidth="1"/>
+  </g>);
+}
+function IconBtn({cx,cy,onClick,active,children}){
+  return(
+    <g onClick={onClick} style={{cursor:'pointer'}}>
+      <circle cx={cx} cy={cy} r="17" fill={active?'rgba(120,190,255,0.16)':'url(#glass)'}/>
+      <circle cx={cx} cy={cy} r="16.5" fill="none" stroke={active?'rgba(130,200,255,0.6)':'url(#glassStroke)'} strokeWidth="1"/>
+      {children}
+    </g>
+  );
+}
+
+/* ── Game logic ─────────────────────────────────────────── */
+let _uid=0;const uid=()=>++_uid;
+
+function initState(){
+  return{
+    px:GW/2,py:GH*0.72,tx:GW/2,ty:GH*0.72,pvx:0,
+    wob:0,pulse:0,hitFlash:0,inv:0,
+    shield:false,shieldT:0,slowed:0,
+    lives:3,score:0,bg:0,
+    zone:0,tiz:0,zoneBlend:0,  // zoneBlend: 0=current zone fully, 1=transitioned
+    prevZone:0,
+    waveOn:true,waveT:0,waveDur:7000,restDur:2200,
+    spawnT:0,playT:0,infinite:false,hardcore:false,helmetsPicked:0,lastHelmT:11000,
+    mucus:[],wbcs:[],abs:[],sperms:[],helmets:[],ptcl:[],trail:[],
+    ovuleY:-160,ovuleAngle:0,
+    phase:'start',
+    zoneAnn:null,
+  };
+}
+
+function Game(){
+  const [safeArea,setSafeArea]=React.useState({sat:0,sab:0});
+  const safeAreaRef=React.useRef({sat:0,sab:0});
+  React.useEffect(()=>{
+    const el=document.createElement('div');
+    el.style.cssText='position:fixed;top:0;left:0;width:0;height:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden';
+    document.body.appendChild(el);
+    const cs=getComputedStyle(el);
+    const sat=parseFloat(cs.paddingTop)||0;
+    const sab=parseFloat(cs.paddingBottom)||0;
+    document.body.removeChild(el);
+    if(sat||sab){setSafeArea({sat,sab});safeAreaRef.current={sat,sab};}
+    // Retry après 200ms au cas où le viewport iOS n'est pas encore stabilisé
+    const t=setTimeout(()=>{
+      const el2=document.createElement('div');
+      el2.style.cssText='position:fixed;top:0;left:0;width:0;height:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden';
+      document.body.appendChild(el2);
+      const cs2=getComputedStyle(el2);
+      const sat2=parseFloat(cs2.paddingTop)||0;
+      const sab2=parseFloat(cs2.paddingBottom)||0;
+      document.body.removeChild(el2);
+      setSafeArea({sat:sat2,sab:sab2});safeAreaRef.current={sat:sat2,sab:sab2};
+    },200);
+    return()=>clearTimeout(t);
+  },[]);
+  const SAT=safeArea.sat;
+  const SAB=safeArea.sab;
+  const [screen,setScreen]=React.useState('start');
+  const screenRef=React.useRef('start');
+  const [highScores,setHighScores]=React.useState(loadHS);
+  const [highScoresInf,setHighScoresInf]=React.useState(loadHSInf);
+  const [infiniteUnlocked,setInfiniteUnlocked]=React.useState(()=>localStorage.getItem('theone_won')==='1');
+  const [discreteMode,setDiscreteMode]=React.useState(()=>localStorage.getItem('theone_discrete')==='1');
+  DISCRETE_MODE=discreteMode;
+  const [muted,setMuted]=React.useState(()=>localStorage.getItem('theone_muted')==='1');
+  const [shareImg,setShareImg]=React.useState(null);
+  const [showInfo,setShowInfo]=React.useState(false);
+  const [showStats,setShowStats]=React.useState(false);
+  const [showAch,setShowAch]=React.useState(false);
+  const [showShop,setShowShop]=React.useState(false);
+  const [owned,setOwned]=React.useState(loadOwned);
+  const [equipped,setEquipped]=React.useState(loadSkin);
+  const equippedRef=React.useRef(equipped);
+  React.useEffect(()=>{equippedRef.current=equipped;},[equipped]);
+  const [stats,setStats]=React.useState(loadStats);
+  const [achSet,setAchSet]=React.useState(loadAch);
+  const [mL,setML]=React.useState(loadML);
+  const [achToast,setAchToast]=React.useState(null);
+  const [daily,setDaily]=React.useState(loadDaily);
+  const [weekly,setWeekly]=React.useState(loadWeekly);
+  const [showDaily,setShowDaily]=React.useState(false);
+  const [dailyToast,setDailyToast]=React.useState(null);
+  const [,re]=React.useReducer(n=>n+1,0);
+  const svgRef=React.useRef(null);
+  const divRef=React.useRef(null);
+  const vpRef=React.useRef({ox:0,oy:0,vbW:GW,vbH:GH});
+  const raf=React.useRef(null);
+  const touch=React.useRef(false);
+  const gs=React.useRef(initState());
+
+  // First-run tutorial (null = hidden) — the game loop is frozen while it shows
+  const [tuto,setTuto]=React.useState(null);
+  const tutoRef=React.useRef(null);
+  function nextTuto(){
+    const n=tutoRef.current+1;
+    if(n>=TUTO_STEPS){localStorage.setItem(TUTO_KEY,'1');tutoRef.current=null;setTuto(null);}
+    else{tutoRef.current=n;setTuto(n);}
+  }
+  // Landscape is not supported on phones: show a "rotate" screen and freeze the game
+  const LAND_MQ='(orientation: landscape) and (pointer: coarse)';
+  const [landscape,setLandscape]=React.useState(()=>window.matchMedia(LAND_MQ).matches);
+  const landRef=React.useRef(landscape);
+  React.useEffect(()=>{
+    const mq=window.matchMedia(LAND_MQ);
+    const h=()=>{
+      landRef.current=mq.matches;setLandscape(mq.matches);
+      // Layout constants are measured once at load: if we booted in landscape, reload once back in portrait
+      if(!mq.matches&&GW>GH)location.reload();
+    };
+    mq.addEventListener?mq.addEventListener('change',h):mq.addListener(h);
+    try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('portrait').catch(()=>{});}catch(e){}
+    return()=>{mq.removeEventListener?mq.removeEventListener('change',h):mq.removeListener(h);};
+  },[]);
+
+  function setScreenBoth(s){screenRef.current=s;setScreen(s);if(s==='win'||s==='dead'||s==='start')stopAmbient();}
+
+  function getPos(e){
+    const el=svgRef.current;if(!el)return null;
+    const r=el.getBoundingClientRect(),s=e.touches?e.touches[0]:e;
+    const {ox,oy,vbW,vbH}=vpRef.current;
+    return{
+      x:clamp(-ox+(s.clientX-r.left)*(vbW/r.width),POX+22,POX+PW-22),
+      y:clamp(-oy+(s.clientY-r.top)*(vbH/r.height),47+safeAreaRef.current.sat,GH-31),
+    };
+  }
+  const onTS=e=>{_initAudio();touch.current=true;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
+  const onTM=e=>{if(gs.current.phase==='playing')e.preventDefault();if(!touch.current)return;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
+  const onTE=()=>touch.current=false;
+
+  function startGame(infinite,hardcore){
+    const s=initState();s.phase='playing';s.infinite=!!infinite;
+    s.hardcore=!!hardcore;if(hardcore)s.lives=1;
+    gs.current=s;setShareImg(null);setScreenBoth('playing');
+    if(localStorage.getItem(TUTO_KEY)!=='1'){tutoRef.current=0;setTuto(0);}
+    startAmbient();
+  }
+
+  async function shareScore(){
+    try{
+      const g=gs.current;const won=g.phase==='win';const inf=g.infinite;
+      const CW=360,CH=640,cv=document.createElement('canvas');
+      cv.width=CW;cv.height=CH;
+      const ctx=cv.getContext('2d');
+      const acc=won||inf?'#ffc94d':'#ff6f91';
+      // bg: deep radial + bokeh
+      const gr=ctx.createLinearGradient(0,0,0,CH);
+      gr.addColorStop(0,won?'#3a2808':'#4a0a28');gr.addColorStop(0.55,'#14040f');gr.addColorStop(1,'#06010a');
+      ctx.fillStyle=gr;ctx.fillRect(0,0,CW,CH);
+      for(let i=0;i<14;i++){
+        const bx0=hrnd(i*3+2)*CW,by0=hrnd(i*3+1)*CH,br=8+hrnd(i*3)*(i<5?70:22);
+        const bg=ctx.createRadialGradient(bx0,by0,0,bx0,by0,br);
+        bg.addColorStop(0,acc+'55');bg.addColorStop(0.5,acc+'1c');bg.addColorStop(1,acc+'00');
+        ctx.fillStyle=bg;ctx.beginPath();ctx.arc(bx0,by0,br,0,Math.PI*2);ctx.fill();
+      }
+      const vg=ctx.createRadialGradient(CW/2,CH/2,CH*0.25,CW/2,CH/2,CH*0.75);
+      vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.65)');
+      ctx.fillStyle=vg;ctx.fillRect(0,0,CW,CH);
+      // Title
+      ctx.textAlign='center';
+      const tg=ctx.createLinearGradient(0,30,0,85);
+      tg.addColorStop(0,'#fff9f4');tg.addColorStop(0.5,'#ffcdb5');tg.addColorStop(1,'#ff6f91');
+      ctx.shadowColor='rgba(255,111,145,0.6)';ctx.shadowBlur=24;
+      ctx.fillStyle=tg;ctx.font='800 54px Sora,Helvetica Neue,Arial';ctx.fillText('TheOne',CW/2,82);
+      ctx.shadowBlur=0;
+      ctx.fillStyle='rgba(255,215,200,0.6)';ctx.font='600 11px Sora,Helvetica Neue,Arial';
+      ctx.fillText('S O I S   L E   P R E M I E R',CW/2,108);
+      // Player sprite — same SVG components as in game, rasterised
+      const sk=getSkin(equippedRef.current||equipped);
+      const px=CW/2,py=235;
+      const halo=ctx.createRadialGradient(px,py,0,px,py,120);
+      halo.addColorStop(0,(sk.glow||acc)+'66');halo.addColorStop(1,(sk.glow||acc)+'00');
+      ctx.fillStyle=halo;ctx.beginPath();ctx.arc(px,py,120,0,Math.PI*2);ctx.fill();
+      const sprite=await new Promise(res=>{
+        const host=document.createElement('div');const root=ReactDOM.createRoot(host);
+        ReactDOM.flushSync(()=>root.render(
+          <svg xmlns="http://www.w3.org/2000/svg" width="240" height="320" viewBox="-60 -70 120 160">
+            <defs><FxDefs acc={acc}/></defs>
+            <SpermPlayer x={0} y={0} wob={20} hit={false} shield={false} tilt={0} skin={sk}/>
+            {won&&<g transform="translate(0,-21)"><Crown/></g>}
+          </svg>));
+        const s=host.innerHTML;root.unmount();
+        const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);
+        im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s);
+      });
+      if(sprite)ctx.drawImage(sprite,px-120,py-140,240,320);
+      // Score box
+      const bx=CW/2-84,by=380;
+      const _rr=(x,y,w,h,r)=>{ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();};
+      ctx.fillStyle='rgba(255,255,255,0.07)';ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=1;
+      _rr(bx,by,168,72,36);ctx.fill();ctx.stroke();
+      ctx.fillStyle='rgba(255,215,200,0.55)';ctx.font='700 10px Sora,Helvetica Neue,Arial';
+      ctx.fillText(inf?'TEMPS DE SURVIE':'RIVAUX ÉLIMINÉS',CW/2,by+25);
+      ctx.fillStyle=won||inf?'#ffd25e':'#ffffff';ctx.font='800 34px Sora,Helvetica Neue,Arial';
+      ctx.fillText(inf?fmtTime(g.playT):String(g.score),CW/2,by+60);
+      // Hardcore badge
+      if(g.hardcore){
+        ctx.fillStyle='rgba(180,30,30,0.85)';
+        _rr(CW/2-90,460,180,28,14);ctx.fill();
+        ctx.fillStyle='rgba(255,110,110,0.95)';ctx.font='bold 13px Sora,Helvetica Neue,Arial';
+        ctx.fillText('☠ MODE HARDCORE',CW/2,479);
+      }
+      // Verdict
+      ctx.fillStyle=won||inf?'#ffd25e':'#ff7d9c';
+      ctx.font='800 28px Sora,Helvetica Neue,Arial';
+      ctx.fillText(won?'Victoire !':inf?'∞ Mode Infini':'Éliminé',CW/2,g.hardcore?516:510);
+      ctx.fillStyle='rgba(200,160,130,0.45)';ctx.font='13px Sora,Helvetica Neue,Arial';
+      ctx.fillText('Peux-tu faire mieux ?',CW/2,g.hardcore?546:540);
+      ctx.fillStyle='rgba(180,140,110,0.3)';ctx.font='10px Sora,Helvetica Neue,Arial';
+      ctx.fillText('TheOne — la course du sperme',CW/2,610);
+
+      const url=cv.toDataURL('image/png');setShareImg(url);
+      if(navigator.share){
+        const blob=await(await fetch(url)).blob();
+        const txt=inf?('TheOne ∞ — '+fmtTime(g.playT)+' de survie 🏆'):(won?('TheOne — Victoire avec '+g.score+' rivaux ! 🥚'):('TheOne — '+g.score+' rivaux éliminés'));
+        await navigator.share({title:'TheOne',text:txt,files:[new File([blob],'theone.png',{type:'image/png'})]});
+      }
+    }catch(e){console.log(e);}
+  }
+
+  // Small per-run mL reward: 1 per 10 rivals, +15 for a win, +2 per 30 s survived in infinite mode
+  function runReward(g,won){
+    return Math.floor(g.score/10)+(won?15:0)+(g.infinite?Math.floor(g.playT/30000)*2:0);
+  }
+
+  // End of run (death or win): save scores/stats, check achievements & challenges, grant mL
+  function finishRun(g,won){
+    g.phase=won?'win':'dead';
+    if(won)playSound('win');
+    setScreenBoth(won?'win':'dead');
+    try{
+      if(won){localStorage.setItem('theone_won','1');setInfiniteUnlocked(true);}
+      if(g.infinite){setHighScoresInf(saveHSInf(g.playT));}
+      else{setHighScores(saveHS(g.score,won?4:g.zone,won));}
+      const newStats=recordGame({won,rivals:g.score,playT:g.playT,infinite:g.infinite,helmets:g.helmetsPicked});
+      setStats(newStats);
+      const bestInf=loadHSInf()[0]?.time||0;
+      const ac=checkAchievements(newStats,bestInf,won?{perfectWin:g.lives===3,noHelmetWin:g.helmetsPicked===0}:{});
+      setAchSet(ac.ach);
+      if(ac.earned.length)setAchToast(ac.earned);
+      const gSt=won
+        ?{killsInGame:g.score,helmetsInGame:g.helmetsPicked,bestZoneInGame:5,playT:g.playT,won:true,infinite:false,
+          perfectWin:g.hardcore?(g.lives===1):g.lives===3,noHelmetWin:!g.hardcore&&g.helmetsPicked===0,bestWinInGame:g.playT}
+        :{killsInGame:g.score,helmetsInGame:g.helmetsPicked,bestInfInGame:g.infinite?g.playT:0,bestZoneInGame:g.zone+1,
+          playT:g.playT,won:false,infinite:g.infinite};
+      const dr=checkDaily(loadDaily(),gSt);setDaily(dr.d);
+      const wr=checkWeekly(loadWeekly(),gSt);setWeekly(wr.w);
+      const allEarned=[...dr.earned,...wr.earned];
+      if(allEarned.length)setDailyToast(allEarned);
+      g.runML=runReward(g,won);
+      setML(saveML(loadML()+g.runML));
+    }catch(e){console.log(e);}
+  }
+
+  function burst(g,x,y,color,n=10){
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2,sp=1.5+Math.random()*3;
+      g.ptcl.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:24+Math.random()*12,ml:36,color,id:uid()});
+    }
+  }
+
+  // Individual enemy spawner — checks real-time lane occupancy to guarantee passage
+  function spawnOne(g,zd,fz){
+    const spd=lerp(zd.spd[0],zd.spd[1],fz);
+    const type=zd.types[Math.floor(Math.random()*zd.types.length)];
+    const minGaps=zd.minGaps||1;
+
+    if(type==='sperm'){
+      // Sperms come from bottom — check bottom occupancy
+      const bOcc=new Set();
+      g.sperms.filter(e=>e.y>GH-180).forEach(e=>bOcc.add(Math.floor(clamp((e.x-POX)/LW,0,LANES-1))));
+      const bFree=Array.from({length:LANES},(_,i)=>i).filter(l=>!bOcc.has(l));
+      if(bFree.length<1)return;
+      const lane=bFree[Math.floor(Math.random()*bFree.length)];
+      const lx=POX+(lane+0.5)*LW+(Math.random()-0.5)*LW*0.4;
+      const spdVar=0.82+Math.random()*0.36;
+      g.sperms.push({x:lx,y:GH+20+Math.random()*50,vx:(Math.random()-0.5)*0.7,svx:0,spd:spd*(zd.spermSpd||0.9)*spdVar,wob:Math.random()*100,id:uid()});
+      return;
+    }
+
+    // Top-spawning enemies — check which lanes are free in spawn zone (y<240)
+    const occ=new Set();
+    [...g.mucus,...g.wbcs,...g.abs].filter(e=>e.y>-90&&e.y<240)
+      .forEach(e=>occ.add(Math.floor(clamp((e.x-POX)/LW,0,LANES-1))));
+    const free=Array.from({length:LANES},(_,i)=>i).filter(l=>!occ.has(l));
+    // Must keep at least minGaps lanes free after placing
+    const canFill=free.length-minGaps;
+    if(canFill<1)return;
+    // Shuffle free lanes, pick from first canFill
+    const shuffled=[...free];
+    for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+    const lane=shuffled[Math.floor(Math.random()*canFill)];
+    const lx=POX+(lane+0.5)*LW+(Math.random()-0.5)*LW*0.42;
+    // Stagger y so enemies don't line up
+    const yOff=-(15+Math.random()*55);
+    if(type==='mucus')
+      g.mucus.push({x:lx,y:yOff,spd:spd*0.5,r:20+Math.random()*10,pulse:Math.random()*100,id:uid()});
+    else if(type==='wbc')
+      g.wbcs.push({x:lx,y:yOff,spd:(spd*0.85+0.35)*(zd.wbcSpd||1),pulse:Math.random()*100,id:uid(),hom:0.004});
+    else if(type==='antibody')
+      g.abs.push({x:lx,y:yOff,spd:spd*1.1,angle:0,pulse:Math.random()*100,id:uid(),hom:0.013});
+  }
+
+  React.useEffect(()=>{
+    const el=divRef.current;if(!el)return;
+    const h=e=>{if(gs.current.phase==='playing')e.preventDefault();if(!touch.current)return;const p=getPos(e);if(p&&gs.current.phase==='playing'){gs.current.tx=p.x;gs.current.ty=p.y;}};
+    el.addEventListener('touchmove',h,{passive:false});
+    return()=>el.removeEventListener('touchmove',h);
+  },[]);
+
+  React.useEffect(()=>{
+    let last=0;
+    function tick(now){
+      raf.current=requestAnimationFrame(tick); // ALWAYS re-queue first
+      const dt=Math.min(now-last,40);last=now;
+      const g=gs.current;
+      // Always animate wob/pulse for menu/shop animations
+      g.wob+=dt*0.1;g.pulse+=dt*0.08;g.drift=(g.drift||0)+dt*0.03;
+      // Canal width eases between window-wide (home menu) and play-lane width
+      const wideT=screenRef.current==='start'?1:0;
+      g.wallMix=g.wallMix===undefined?1:lerp(g.wallMix,wideT,clamp(dt/180,0,1));
+      if(g.phase!=='playing'){re();return;}
+      if(tutoRef.current!==null||landRef.current){re();return;}
+      if(g.inv>0)g.inv-=dt;
+      if(g.hitFlash>0)g.hitFlash-=2;
+      if(g.slowed>0)g.slowed-=dt;
+      if(g.shield){g.shieldT-=dt;if(g.shieldT<=0)g.shield=false;}
+      if(g.zoneAnn){g.zoneAnn.t-=dt;if(g.zoneAnn.t<=0)g.zoneAnn=null;}
+      // Smooth bg blend between zones
+      if(g.zoneBlend<1)g.zoneBlend=Math.min(1,g.zoneBlend+dt/1200);
+
+      // Player
+      const fs=g.slowed>0?0.07:0.17;
+      const px0=g.px;
+      g.px+=(g.tx-g.px)*fs*(dt/16);
+      const py0=g.py;
+      g.py+=(g.ty-g.py)*fs*(dt/16);
+      const rawVx=g.px-px0;
+      g.pvx=lerp(g.pvx||0,rawVx,clamp(0.12*(dt/16),0,1));
+      // Skin trail particles
+      const skTrail=(equippedRef.current&&getSkin(equippedRef.current).trail)||null;
+      if(skTrail){
+        const speed=Math.abs(rawVx)+Math.abs(g.py-py0);
+        const rate=0.5+Math.min(speed*0.1,1.5);
+        if(Math.random()<rate*(dt/100)){
+          g.trail.push({x:g.px+(Math.random()-0.5)*10,y:g.py+(Math.random()-0.5)*10+8,life:35,ml:35,type:skTrail,seed:Math.random()*100,vy:0.3+Math.random()*0.4});
+        }
+      }
+      g.trail=g.trail.filter(p=>p.life>0).map(p=>{p.life-=dt/16;p.y+=p.vy*(dt/16);return p;});
+
+      // Scroll
+      const zd=effZD(g);
+      const fz=clamp(g.tiz/(zd.dur===999?60:zd.dur),0,1);
+      g.bg=(g.bg+lerp(zd.scr[0],zd.scr[1],fz)*(dt/16))%GH;
+      g.bgT=(g.bgT||0)+lerp(zd.scr[0],zd.scr[1],fz)*(dt/16);
+      g.tiz+=dt/1000;
+      g.playT+=dt;
+
+      // Wave/rest — shorter rests
+      g.waveT+=dt;
+      if(g.waveOn&&g.waveT>=g.waveDur){
+        g.waveT=0;
+        if(g.zone===0){g.waveDur=4000+Math.random()*3500;} // zone 1 : pas de pause
+        else{g.waveOn=false;g.restDur=g.zone>=3?(300+Math.random()*500):(800+Math.random()*1200);}
+      }
+      else if(!g.waveOn&&g.waveT>=g.restDur){g.waveOn=true;g.waveT=0;g.waveDur=g.zone>=3?(5500+Math.random()*3000):(4000+Math.random()*3500);}
+
+      // Individual enemy spawn
+      if(g.waveOn){
+        g.spawnT+=dt;
+        const ms=lerp(zd.ms[0],zd.ms[1],fz);
+        while(g.spawnT>=ms){g.spawnT-=ms;spawnOne(g,zd,fz);}
+      }
+      g.lastHelmT+=dt;
+      if(!g.hardcore&&!g.shield&&g.helmets.length<1&&g.lastHelmT>11000&&g.zone>=1&&Math.random()<0.00007*dt){
+        g.helmets.push({x:POX+30+Math.random()*(PW-60),y:-45,pulse:0,id:uid(),hspd:1.172});
+        g.lastHelmT=0;
+      }
+
+      // Move top→bottom enemies
+      g.mucus=g.mucus.filter(m=>m.y<GH+70).map(m=>{m.y+=m.spd*(dt/16);m.x=clamp(m.x,POX+28,POX+PW-28);m.pulse+=dt*0.07;return m;});
+      g.wbcs=g.wbcs.filter(w=>w.y<GH+70).map(w=>{
+        w.y+=w.spd*(dt/16);w.x=clamp(w.x+(g.px-w.x)*w.hom*(dt/16),POX+28,POX+PW-28);w.pulse+=dt*0.08;return w;
+      });
+      g.abs=g.abs.filter(a=>a.y<GH+70).map(a=>{
+        a.y+=a.spd*(dt/16);
+        const dx=g.px-a.x,dy=g.py-a.y,dd=Math.sqrt(dx*dx+dy*dy)||1;
+        a.x=clamp(a.x+dx/dd*a.hom*(dt/16)*a.spd*2.5,POX+28,POX+PW-28);
+        a.angle=Math.atan2(dy,dx)*(180/Math.PI)+90;
+        a.pulse+=dt*0.1;return a;
+      });
+
+      // Enemy sperms bottom→top; escaped = lose life
+      const nextSperms=[];
+      for(const e of g.sperms){
+        e.y-=e.spd*(dt/16);e.x+=e.vx*(dt/16);
+        if(e.x<POX+28||e.x>POX+PW-28)e.vx*=-1;
+        e.x=clamp(e.x,POX+28,POX+PW-28);
+        e.svx=lerp(e.svx!==undefined?e.svx:e.vx,e.vx,clamp(0.12*(dt/16),0,1));
+        e.wob+=dt*0.08;
+        if(e.y<-65){
+          // escaped — penalise
+          g.hitFlash=25;g.lives--;g.inv=900;
+          if(g.lives<=0)playSound('dead');else playSound('hit');vibrate(60);
+          burst(g,clamp(e.x,POX+20,POX+PW-20),15,P.rose,8);
+          if(g.lives<=0){finishRun(g,false);return;}
+        } else if(d2(g.px,g.py,e.x,e.y)<PR+15){
+          burst(g,e.x,e.y,'#e89870',10);g.score++;vibrate(15);playSound('kill');
+        } else {
+          nextSperms.push(e);
+        }
+      }
+      g.sperms=nextSperms;
+
+      // Helmets
+      g.helmets=g.helmets.filter(h=>h.y<GH+60).map(h=>{h.y+=(h.hspd||1.035)*(dt/16);h.pulse+=dt*0.08;return h;});
+      g.ptcl=g.ptcl.filter(p=>p.life>0).map(p=>{p.x+=p.vx*(dt/16);p.y+=p.vy*(dt/16);p.vy+=0.08;p.life-=dt/16;return p;});
+
+      // Mucus slow
+      for(let i=g.mucus.length-1;i>=0;i--){
+        if(d2(g.px,g.py,g.mucus[i].x,g.mucus[i].y)<PR+g.mucus[i].r-5){
+          if(g.slowed<=0)burst(g,g.mucus[i].x,g.mucus[i].y,'#aae030',7);
+          playSound('slow');
+          g.slowed=1400;g.mucus.splice(i,1);break;
+        }
+      }
+
+      // WBC/Antibody hit
+      if(g.inv<=0){
+        const hl=[...g.wbcs.map(w=>({...w,_t:'wbc'})),...g.abs.map(a=>({...a,_t:'ab'}))];
+        for(const e of hl){
+          if(d2(g.px,g.py,e.x,e.y)<PR+(e._t==='wbc'?27:21)){
+            if(g.shield){
+              g.shield=false;burst(g,e.x,e.y,'#f5c842',14);g.inv=500;
+              if(e._t==='wbc')g.wbcs=g.wbcs.filter(w=>w.id!==e.id);
+              else g.abs=g.abs.filter(a=>a.id!==e.id);
+            }else{
+              g.hitFlash=30;g.lives--;g.inv=1800;
+              if(g.lives<=0)playSound('dead');else playSound('hit');vibrate(60);
+              burst(g,e.x,e.y,e._t==='wbc'?'#88ccff':'#6090e0',12);
+              if(e._t==='wbc')g.wbcs=g.wbcs.filter(w=>w.id!==e.id);
+              else g.abs=g.abs.filter(a=>a.id!==e.id);
+              if(g.lives<=0){finishRun(g,false);return;}
+            }
+            break;
+          }
+        }
+      }
+
+      // Helmet pickup
+      for(let i=g.helmets.length-1;i>=0;i--){
+        if(d2(g.px,g.py,g.helmets[i].x,g.helmets[i].y)<PR+22){
+          g.shield=true;g.shieldT=8000;burst(g,g.helmets[i].x,g.helmets[i].y,'#f5c842',16);g.helmetsPicked++;g.helmets.splice(i,1);
+        }
+      }
+
+      // Zone advance — seamless, no pause
+      if(g.zone<ZONES.length-1&&g.tiz>=ZONES[g.zone].dur){
+        g.prevZone=g.zone;g.zone++;g.tiz=0;g.zoneBlend=0;
+        g.waveOn=true;g.waveT=0;g.spawnT=0;
+        // Don't clear existing enemies — let them naturally exit for continuity
+        const nz=ZONES[g.zone];
+        g.zoneAnn={name:g.infinite&&g.zone===4?'Mode Infini':nz.name,dname:g.infinite&&g.zone===4?'Mode Infini':nz.dname,emoji:g.infinite&&g.zone===4?'∞':nz.emoji,demoji:g.infinite&&g.zone===4?'∞':nz.demoji,t:2000};
+      }
+
+      // Zone 5 ovule — rotating with single entry (skipped in infinite mode)
+      if(g.zone===4&&!g.infinite){
+        if(g.tiz>5)g.ovuleY=clamp(-160+(g.tiz-5)*22,-160,100);
+        g.ovuleAngle=(g.ovuleAngle+0.0018*dt)%(Math.PI*2);
+        if(g.ovuleY>=80){
+          const dd=d2(g.px,g.py,GW/2,g.ovuleY);
+          const gapH=Math.PI/3.2;
+          const pA=Math.atan2(g.py-g.ovuleY,g.px-GW/2);
+          let diff=Math.abs(pA-g.ovuleAngle)%(Math.PI*2);
+          if(diff>Math.PI)diff=Math.PI*2-diff;
+          const inEntry=diff<gapH;
+          // The membrane is always solid (even while invulnerable): only the rotating gap lets you in.
+          // A contact costs a life (or the helmet), then the usual invulnerability avoids losing several in a row.
+          if(dd<PR+62&&!inEntry){
+            const nx=(g.px-GW/2)/(dd||1),ny=(g.py-g.ovuleY)/(dd||1);
+            g.px=GW/2+nx*(PR+62);g.py=g.ovuleY+ny*(PR+62);
+            g.tx=g.px+nx*28;g.ty=g.py+ny*28;
+            if(g.inv<=0){
+              if(g.shield){g.shield=false;burst(g,GW/2,g.ovuleY,'#f5c842',14);g.inv=500;}
+              else{
+                g.hitFlash=30;g.lives--;g.inv=1800;
+                if(g.lives<=0)playSound('dead');else playSound('hit');vibrate(60);
+                if(g.lives<=0){finishRun(g,false);return;}
+              }
+            }
+          }
+          {const bx=GW/2+Math.cos(g.ovuleAngle)*58,by=g.ovuleY+Math.sin(g.ovuleAngle)*58;
+          if(d2(g.px,g.py,bx,by)<PR+20){
+            burst(g,GW/2,g.ovuleY,'#ffd700',40);
+            finishRun(g,true);return;
+          }}
+        }
+      }
+
+      re();
+    }
+    raf.current=requestAnimationFrame(tick);
+    return()=>cancelAnimationFrame(raf.current);
+  },[]);
+
+  const g=gs.current;
+  const z=effZD(g);
+  const pz=ZONES[g.prevZone||0]||ZONES[0];
+  const fz=clamp(g.tiz/(z.dur===999?60:z.dur),0,1);
+  const totalProg=g.infinite&&g.zone===4?1:clamp((g.zone+(z.dur===999?0.99:fz))/ZONES.length,0,1);
+  const bgl=lerpHex(pz.bg1,z.bg1,g.zoneBlend||1);
+  const bgd=lerpHex(pz.bg2,z.bg2,g.zoneBlend||1);
+  const bgLines=Array.from({length:16},(_,i)=>((g.bg+i*(GH/16))%GH));
+
+  // CSS filter for hit flash
+  const hitCss='none'; // hit feedback is now an in-SVG red vignette (cheaper than a CSS filter)
+
+  const _vpS=Math.min(window.innerWidth/GW,window.innerHeight/GH);
+  const _vpW=window.innerWidth/_vpS,_vpH=window.innerHeight/_vpS;
+  vpRef.current={ox:(_vpW-GW)/2,oy:(_vpH-GH)/2,vbW:_vpW,vbH:_vpH};
+  const {ox,oy,vbW,vbH}=vpRef.current;
+
+  // Height-adaptive menu layout: buttons anchored to the bottom, score lists keep only the rows that fit
+  const LY=(()=>{
+    const btm=GH-SAB;
+    const s2Y=btm-14-32, playY=s2Y-12-56;
+    const infHdrY=highScoresInf.length>0?playY-60:null;
+    const hsY=GH*0.56;
+    const hsRows=clamp(Math.floor(((infHdrY===null?playY:infHdrY)-14-(hsY+5))/44),0,3);
+    const heroY=SAT+clamp(GH*0.2,80,170);
+    const titleY=heroY+clamp(GH*0.19,95,150);
+    const cardY=titleY+46, dScoresY=cardY+92;
+    const menuY=btm-20, infY=menuY-48;
+    const retryY=(infiniteUnlocked?infY-14:menuY-26)-52;
+    const dRows=clamp(Math.floor((retryY-12-(dScoresY+5))/38),0,3);
+    return{s2Y,playY,infHdrY,hsY,hsRows,heroY,titleY,cardY,dScoresY,menuY,infY,retryY,dRows};
+  })();
+
+  return(
+    <div ref={divRef} className="gw" style={{filter:hitCss}}
+      onMouseDown={onTS} onMouseMove={onTM} onMouseUp={onTE}
+      onTouchStart={onTS} onTouchEnd={onTE}
+    >
+      <svg ref={svgRef} viewBox={`${-ox} ${-oy} ${vbW} ${vbH}`} preserveAspectRatio="none" style={{touchAction:screen==='playing'?'none':'auto'}}>
+        <defs>
+          <linearGradient id="bgG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={bgl}/><stop offset="100%" stopColor={bgd}/>
+          </linearGradient>
+          <FxDefs acc={z.acc}/>
+        </defs>
+
+        <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="url(#bgG)"/>
+        <Backdrop t={(g.bgT||0)+(g.drift||0)} acc={z.acc} ox={ox} oy={oy} vbW={vbW} vbH={vbH} wide={g.wallMix??1}/>
+        {/* Side darkening outside play zone (fades out while the canal is window-wide) */}
+        {POX+ox>0&&<rect x={-ox} y={-oy} width={POX+ox} height={vbH} fill="rgba(0,0,0,0.45)" opacity={1-(g.wallMix??1)}/>}
+        {POX+ox>0&&<rect x={POX+PW} y={-oy} width={ox+GW-(POX+PW)} height={vbH} fill="rgba(0,0,0,0.45)" opacity={1-(g.wallMix??1)}/>}
+
+        {/* Ovule */}
+        {g.zone===4&&g.ovuleY>-130&&<Ovule x={GW/2} y={g.ovuleY} pulse={g.pulse} angle={g.ovuleAngle}/>}
+
+        <Ptcl list={g.ptcl}/>
+
+        {g.mucus.map(m=><Mucus key={m.id} x={m.x} y={m.y} pulse={m.pulse} r={m.r}/>)}
+        {g.wbcs.map(w=><WBC key={w.id} x={w.x} y={w.y} pulse={w.pulse}/>)}
+        {g.abs.map(a=><Antibody key={a.id} x={a.x} y={a.y} angle={a.angle} pulse={a.pulse}/>)}
+        {g.sperms.map(e=><SpermEnemy key={e.id} x={e.x} y={e.y} wob={e.wob} vx={e.vx} svx={e.svx}/>)}
+        {g.helmets.map(h=><Helmet key={h.id} x={h.x} y={h.y} pulse={h.pulse}/>)}
+
+        {/* Player & skin trail */}
+        {screen==='playing'&&(<React.Fragment>
+          {g.trail.map(p=>{
+            const a=Math.max(0,p.life/p.ml);
+            if(p.type==='fire')return<g key={p.seed} opacity={a*0.9}><circle cx={p.x} cy={p.y} r={7*a+2} fill="url(#sk_fire)"/><ellipse cx={p.x} cy={p.y} rx={2.6*a+1} ry={4.4*a+1} fill="#ff7a2a"/><ellipse cx={p.x} cy={p.y-0.5} rx={1.2*a} ry={2.2*a} fill="#ffe27a"/></g>;
+            if(p.type==='ice')return<g key={p.seed} transform={`translate(${p.x},${p.y}) rotate(${p.seed*7})`} opacity={a*0.9}>{[0,60,120].map(an=>(<g key={an} transform={`rotate(${an})`}><line x1="0" y1="-2.6" x2="0" y2="2.6" stroke="#eef7ff" strokeWidth={1.1*a+0.3} strokeLinecap="round"/></g>))}</g>;
+            if(p.type==='diamond')return<g key={p.seed} transform={`translate(${p.x},${p.y}) scale(${0.6+a*0.5})`} opacity={a}><circle r="4" fill="url(#glowWhite)"/><path d="M 0 -3.2 Q 0.4 -0.4 3.2 0 Q 0.4 0.4 0 3.2 Q -0.4 0.4 -3.2 0 Q -0.4 -0.4 0 -3.2 Z" fill="#fff"/></g>;
+            if(p.type==='neon')return<g key={p.seed}><circle cx={p.x} cy={p.y} r={6*a+1} fill="url(#sk_neon)" opacity={a}/><circle cx={p.x} cy={p.y} r={1.8*a+0.6} fill="#c8fff4" opacity={a}/></g>;
+            if(p.type==='toxic')return<g key={p.seed} opacity={a}><circle cx={p.x} cy={p.y} r={3.5*(1.4-a)+1.5} fill="#c4f24a" fillOpacity="0.15" stroke="#d8fa7a" strokeWidth="1"/><circle cx={p.x-1} cy={p.y-1} r="0.8" fill="#fff"/></g>;
+            if(p.type==='aurora')return<circle key={p.seed} cx={p.x} cy={p.y} r={7*a+2} fill={Math.floor(p.seed)%2?'url(#sk_aurora)':'url(#glowBlue)'} opacity={a}/>;
+            if(p.type==='stars')return<g key={p.seed} transform={`translate(${p.x},${p.y}) scale(${0.5+a*0.6}) rotate(${p.seed*9})`} opacity={a}><circle r="4" fill="url(#sk_galaxy)"/><path d="M 0 -3.5 Q 0.4 -0.4 3.5 0 Q 0.4 0.4 0 3.5 Q -0.4 0.4 -3.5 0 Q -0.4 -0.4 0 -3.5 Z" fill={Math.floor(p.seed)%3?'#fff':'#ffb8f0'}/></g>;
+            if(p.type==='gold')return<g key={p.seed} transform={`translate(${p.x},${p.y}) scale(${0.5+a*0.6})`} opacity={a}><circle r="5" fill="url(#glowGold)"/><path d="M 0 -3.2 L 1 -1 L 3.2 0 L 1 1 L 0 3.2 L -1 1 L -3.2 0 L -1 -1 Z" fill="#ffe08a"/></g>;
+            if(p.type==='holo'){const c=['#ffc6ec','#c6e8ff','#d8ffd6','#e2c9ff','#ffd9c2'];return<g key={p.seed}><circle cx={p.x} cy={p.y} r={6*a+1} fill="url(#glowWhite)" opacity={a*0.6}/><circle cx={p.x} cy={p.y} r={2.4*a+0.8} fill={c[Math.floor(p.seed)%5]} opacity={a}/></g>;}
+            if(p.type==='rainbow'){const c=['#ff5a7a','#ffa45c','#ffd95e','#7ee0a0','#5fb4ff','#8a7bff','#d77bff'];return<circle key={p.seed} cx={p.x} cy={p.y} r={2.5*a+1} fill={c[Math.floor(p.seed)%7]} opacity={a*0.85}/>;}
+            return null;
+          })}
+          <g opacity={g.inv>0?(Math.sin(g.inv*0.025)>0?1:0.35):1}>
+            <SpermPlayer x={g.px} y={g.py} wob={g.wob} hit={false} shield={g.shield} tilt={g.pvx} skin={getSkin(equipped)}/>
+          </g>
+        </React.Fragment>)}
+
+        {/* Hit flash — red edge pulse */}
+        {screen==='playing'&&g.hitFlash>0&&(
+          <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="url(#hitVign)" opacity={clamp(g.hitFlash/30,0,1)}/>
+        )}
+        {/* Slowed — mucus tint */}
+        {screen==='playing'&&g.slowed>0&&(
+          <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="url(#slowVign)" opacity={clamp(g.slowed/700,0,1)}/>
+        )}
+
+        {/* Escape warning: rivals close to the top edge cost a life if they get out */}
+        {screen==='playing'&&g.sperms.map(e=>{
+          const a=clamp((170-e.y)/140,0,1);if(a<=0)return null;
+          const p=0.55+Math.sin(g.pulse*0.18)*0.45;
+          const ty=SAT+58;
+          return(<g key={'w'+e.id} opacity={a}>
+            <circle cx={e.x} cy={e.y} r="23" fill="none" stroke="#ff3b5c" strokeWidth="1.8" opacity={p}/>
+            <circle cx={e.x} cy={ty+5} r="14" fill="#ff3b5c" opacity={p*0.16}/>
+            <path d={`M ${e.x-8} ${ty+9} L ${e.x} ${ty+1} L ${e.x+8} ${ty+9}`} stroke="#ff3b5c" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={p}/>
+          </g>);
+        })}
+
+        {/* ── HUD ── */}
+        {screen==='playing'&&(<>
+          <rect x={-ox} y={-oy} width={vbW} height={oy+64+SAT} fill="url(#hudGrad)"/>
+          {/* Lives */}
+          {g.hardcore?(
+            <LifeIcon x={18} y={22+SAT} on={g.lives>0} hard/>
+          ):[0,1,2].map(i=>(
+            <LifeIcon key={i} x={18+i*34} y={22+SAT} on={i<g.lives}/>
+          ))}
+          {/* Zone pill */}
+          {(()=>{const label=g.infinite&&g.zone===4?'Mode Infini':(discreteMode?z.dname:z.name);
+            const w=Math.max(112,label.length*7.4+40);
+            return(<g>
+              <Pill x={GW/2-w/2} y={8+SAT} w={w} h={28}/>
+              <circle cx={GW/2-w/2+16} cy={22+SAT} r="7" fill="url(#glowAcc)"/>
+              <circle cx={GW/2-w/2+16} cy={22+SAT} r="3.2" fill={z.acc}/>
+              <text x={GW/2+8} y={26.5+SAT} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="600" letterSpacing="0.3" fontFamily="Sora,Helvetica Neue,Arial">{label}</text>
+            </g>);
+          })()}
+          {/* Score */}
+          <text x={GW-16} y={28+SAT} textAnchor="end" fill="#fff" fontSize="22" fontWeight="800" letterSpacing="-0.5" fontFamily="Sora,Helvetica Neue,Arial">{g.infinite?fmtTime(g.playT):g.score}</text>
+          <text x={GW-16} y={41+SAT} textAnchor="end" fill="rgba(255,225,215,0.5)" fontSize="8.5" fontWeight="600" letterSpacing="1.6" fontFamily="Sora,Helvetica Neue,Arial">{g.infinite?'TEMPS':'RIVAUX'}</text>
+          {/* Mucus + Helmet badges side-by-side at bottom */}
+          {(g.slowed>0||g.shield)&&(()=>{
+            const both=g.slowed>0&&g.shield;
+            const mx=both?(GW/2-32):(GW/2);
+            const hx=both?(GW/2+32):(GW/2);
+            const C=2*Math.PI*20;
+            const ring=(cx,pct,col,track,icon)=>(
+              <g transform={`translate(${cx},${GH-60})`}>
+                <circle cx="0" cy="0" r="30" fill={col==='#c4f24a'?'url(#glowLime)':'url(#glowGold)'} opacity="0.5"/>
+                <circle cx="0" cy="0" r="23" fill="rgba(10,3,12,0.72)"/>
+                <circle cx="0" cy="0" r="23" fill="url(#glass)"/>
+                <circle cx="0" cy="0" r="20" fill="none" stroke={track} strokeWidth="3"/>
+                <circle cx="0" cy="0" r="20" fill="none" stroke={col} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${C*pct} ${C}`} transform="rotate(-90)"/>
+                {icon}
+              </g>);
+            return(<g>
+              {g.slowed>0&&ring(mx,Math.max(0,Math.min(1,g.slowed/1400)),'#c4f24a','rgba(196,242,74,0.16)',
+                <g>
+                  <path d={smoothClosed(blobPts(0,1,8,i=>9+Math.sin(g.pulse*0.06+i*1.7)*1.4))} fill="url(#mucusBody)" stroke="#d8fa7a" strokeOpacity="0.8" strokeWidth="1"/>
+                  <ellipse cx="-3" cy="-2.5" rx="3.6" ry="1.6" fill="#fff" opacity="0.6" transform="rotate(-25,-3,-2.5)"/>
+                </g>)}
+              {g.shield&&ring(hx,g.shieldT/8000,'#ffd25e','rgba(255,210,94,0.16)',
+                <g transform="translate(0,9) scale(0.5)"><HelmetShape/></g>)}
+            </g>);
+          })()}
+        </>)}
+
+        {/* Zone banner (seamless — game continues underneath) */}
+        {g.zoneAnn&&screen==='playing'&&(()=>{
+          const a=clamp(Math.min(g.zoneAnn.t/350,(g.zoneAnn.t>300?1:g.zoneAnn.t/300)),0,1);
+          const slide=(1-clamp((2000-g.zoneAnn.t)/350,0,1))*24;
+          const name=discreteMode?g.zoneAnn.dname:g.zoneAnn.name;
+          const idx=g.infinite&&g.zone===4?'∞':`ZONE ${g.zone+1} / ${ZONES.length}`;
+          return(
+            <g opacity={a} transform={`translate(0,${slide})`}>
+              <rect x={-ox} y={GH*0.40} width={vbW} height="104" fill="url(#bannerGrad)"/>
+              <line x1={GW/2-110} y1={GH*0.40+30} x2={GW/2-44} y2={GH*0.40+30} stroke={z.acc} strokeOpacity="0.7" strokeWidth="1"/>
+              <line x1={GW/2+44} y1={GH*0.40+30} x2={GW/2+110} y2={GH*0.40+30} stroke={z.acc} strokeOpacity="0.7" strokeWidth="1"/>
+              <text x={GW/2} y={GH*0.40+34} textAnchor="middle" fill={z.acc} fontSize="10.5" fontWeight="700" letterSpacing="3" fontFamily="Sora,Helvetica Neue,Arial">{idx}</text>
+              <text x={GW/2} y={GH*0.40+70} textAnchor="middle" fill="#fff" fontSize="27" fontWeight="800" letterSpacing="-0.5" fontFamily="Sora,Helvetica Neue,Arial">{name}</text>
+            </g>
+          );
+        })()}
+
+        {/* ── START SCREEN ── */}
+        {screen==='start'&&(
+          <g>
+            <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="rgba(10,2,8,0.55)"/>
+            {/* bg decorative sperms — scattered, slower & desynced tails */}
+            {[[GW*0.154,GH*0.199,-0.28,0.85,17],[GW*0.815,GH*0.231,0.32,0.95,71],[GW*0.097,GH*0.338,0.16,1.0,131],[GW*0.885,GH*0.373,-0.22,0.9,193],[GW*0.244,GH*0.377,0.25,0.88,257],[GW*0.718,GH*0.361,-0.18,1.05,313]].map((p,i)=>(
+              <g key={i} transform={`scale(${p[3]})`} style={{transformOrigin:`${p[0]}px ${p[1]}px`}} opacity="0.55">
+                <SpermEnemy x={p[0]} y={p[1]} wob={g.wob*0.4+p[4]} vx={p[2]}/>
+              </g>
+            ))}
+            <circle cx={GW/2} cy={GH*0.27} r="95" fill={`url(#${getSkin(equipped).glow?'sk_'+equipped:'glowRose'})`} opacity="0.55"/>
+            <SpermPlayer x={GW/2} y={GH*0.27} wob={g.wob*0.4} hit={false} shield={false} tilt={0} skin={getSkin(equipped)}/>
+
+            <text x={GW/2} y={SAT+66} textAnchor="middle" fill="#ff6f91" fontSize="56" fontWeight="800" opacity="0.55"
+              fontFamily="Sora,Helvetica Neue,Arial" letterSpacing="-2.5" filter="url(#sg)">TheOne</text>
+            <text x={GW/2} y={SAT+66} textAnchor="middle" fill="url(#titleGrad)" fontSize="56" fontWeight="800"
+              fontFamily="Sora,Helvetica Neue,Arial" letterSpacing="-2.5">TheOne</text>
+            <text x={GW/2} y={SAT+90} textAnchor="middle" fill="rgba(255,215,200,0.6)" fontSize="10.5" fontWeight="600"
+              fontFamily="Sora,Helvetica Neue,Arial" letterSpacing="5">SOIS LE PREMIER</text>
+
+            {/* Right column: info / discrete / mute */}
+            <IconBtn cx={GW-28} cy={32+SAT} onClick={()=>setShowInfo(true)}>
+              <circle cx={GW-28} cy={26.5+SAT} r="1.6" fill="rgba(255,235,225,0.9)"/>
+              <rect x={GW-29.3} y={30+SAT} width="2.6" height="9" rx="1.3" fill="rgba(255,235,225,0.9)"/>
+            </IconBtn>
+            <IconBtn cx={GW-28} cy={70+SAT} active={discreteMode} onClick={()=>{const d=!discreteMode;setDiscreteMode(d);localStorage.setItem('theone_discrete',d?'1':'0');}}>
+              <path d={`M ${GW-37} ${70+SAT} Q ${GW-28} ${62+SAT} ${GW-19} ${70+SAT} Q ${GW-28} ${78+SAT} ${GW-37} ${70+SAT} Z`} fill="none" stroke={discreteMode?'rgba(150,210,255,0.95)':'rgba(255,235,225,0.9)'} strokeWidth="1.5" strokeLinejoin="round"/>
+              <circle cx={GW-28} cy={70+SAT} r="2.4" fill={discreteMode?'rgba(150,210,255,0.95)':'rgba(255,235,225,0.9)'}/>
+              {discreteMode&&<line x1={GW-36} y1={62+SAT} x2={GW-20} y2={78+SAT} stroke="rgba(150,210,255,0.95)" strokeWidth="1.6" strokeLinecap="round"/>}
+            </IconBtn>
+            <IconBtn cx={GW-28} cy={108+SAT} onClick={()=>{_muted=!_muted;localStorage.setItem('theone_muted',_muted?'1':'0');Howler.mute(_muted);setMuted(_muted);}}>
+              <path d={`M ${GW-36} ${105+SAT} L ${GW-32.5} ${105+SAT} L ${GW-28} ${101+SAT} L ${GW-28} ${115+SAT} L ${GW-32.5} ${111+SAT} L ${GW-36} ${111+SAT} Z`} fill="rgba(255,235,225,0.9)" strokeLinejoin="round"/>
+              {muted?(
+                <path d={`M ${GW-25} ${105+SAT} L ${GW-19.5} ${111+SAT} M ${GW-19.5} ${105+SAT} L ${GW-25} ${111+SAT}`} stroke="#ff7a8a" strokeWidth="1.6" strokeLinecap="round"/>
+              ):(
+                <g fill="none" stroke="rgba(255,235,225,0.9)" strokeWidth="1.5" strokeLinecap="round">
+                  <path d={`M ${GW-25} ${105+SAT} Q ${GW-22.5} ${108+SAT} ${GW-25} ${111+SAT}`}/>
+                  <path d={`M ${GW-22} ${102.5+SAT} Q ${GW-17.5} ${108+SAT} ${GW-22} ${113.5+SAT}`}/>
+                </g>
+              )}
+            </IconBtn>
+            {/* Left column: stats / achievements / daily / shop */}
+            <IconBtn cx={28} cy={32+SAT} onClick={()=>setShowStats(true)}>
+              <rect x="21" y={33+SAT} width="3" height="6" rx="1.5" fill="rgba(255,235,225,0.9)"/>
+              <rect x="26.5" y={29+SAT} width="3" height="10" rx="1.5" fill="rgba(255,235,225,0.9)"/>
+              <rect x="32" y={25+SAT} width="3" height="14" rx="1.5" fill="#ff8fa8"/>
+            </IconBtn>
+            <IconBtn cx={28} cy={70+SAT} onClick={()=>setShowAch(true)}>
+              <path d={`M 22 ${63+SAT} L 34 ${63+SAT} L 33 ${69+SAT} Q 28 ${75+SAT} 23 ${69+SAT} Z`} fill="url(#goldMetal)"/>
+              <path d={`M 22 ${64.5+SAT} Q 18 ${65+SAT} 20.5 ${69+SAT} M 34 ${64.5+SAT} Q 38 ${65+SAT} 35.5 ${69+SAT}`} stroke="#ffd25e" strokeWidth="1.3" fill="none"/>
+              <rect x="25.5" y={73+SAT} width="5" height="2.4" rx="1" fill="#ffd25e"/>
+              <rect x="23.5" y={75.5+SAT} width="9" height="2" rx="1" fill="#e39c12"/>
+            </IconBtn>
+            {(()=>{const pending=daily.ch.filter(c=>!c.completed).length+weekly.ch.filter(c=>!c.completed).length;return(
+            <IconBtn cx={28} cy={108+SAT} onClick={()=>setShowDaily(true)}>
+              <rect x="20" y={101+SAT} width="16" height="15" rx="3.5" fill="none" stroke="rgba(255,235,225,0.9)" strokeWidth="1.4"/>
+              <line x1="20" y1={105.5+SAT} x2="36" y2={105.5+SAT} stroke="rgba(255,235,225,0.9)" strokeWidth="1.4"/>
+              <line x1="23.5" y1={99+SAT} x2="23.5" y2={102.5+SAT} stroke="rgba(255,235,225,0.9)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="32.5" y1={99+SAT} x2="32.5" y2={102.5+SAT} stroke="rgba(255,235,225,0.9)" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="28" cy={110.5+SAT} r="2" fill="#7ee0a0"/>
+              {pending>0&&<g>
+                <circle cx="40" cy={96+SAT} r="7" fill="url(#btnPrimary)" stroke="#1a0510" strokeWidth="1.5"/>
+                <text x="40" y={99.2+SAT} textAnchor="middle" fill="white" fontSize="8.5" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{pending}</text>
+              </g>}
+            </IconBtn>);})()}
+            <IconBtn cx={28} cy={146+SAT} onClick={()=>setShowShop(true)}>
+              <path d={`M 21.5 ${141+SAT} L 34.5 ${141+SAT} L 33.5 ${153+SAT} Q 33.3 ${154.5+SAT} 31.8 ${154.5+SAT} L 24.2 ${154.5+SAT} Q 22.7 ${154.5+SAT} 22.5 ${153+SAT} Z`} fill="none" stroke="rgba(255,235,225,0.9)" strokeWidth="1.4" strokeLinejoin="round"/>
+              <path d={`M 24.5 ${144+SAT} L 24.5 ${140+SAT} Q 24.5 ${136.5+SAT} 28 ${136.5+SAT} Q 31.5 ${136.5+SAT} 31.5 ${140+SAT} L 31.5 ${144+SAT}`} fill="none" stroke="#ff8fa8" strokeWidth="1.4" strokeLinecap="round"/>
+            </IconBtn>
+
+            <text x={GW/2} y={GH*0.48} textAnchor="middle" fill="rgba(255,220,205,0.55)" fontSize="11.5" fontWeight="400" letterSpacing="0.3" fontFamily="Sora,Helvetica Neue,Arial">Glisse pour naviguer — évite, percute, survis</text>
+
+            {/* High scores */}
+            {highScores.length>0?(LY.hsRows>0&&
+              <g transform={`translate(${GW/2},${LY.hsY})`}>
+                <text x="0" y="0" textAnchor="middle" fill="rgba(255,215,200,0.5)" fontSize="9.5" letterSpacing="3" fontFamily="Sora,Helvetica Neue,Arial" fontWeight="700">MEILLEURS SCORES</text>
+                {highScores.slice(0,LY.hsRows).map((h,i)=>(
+                  <g key={i} transform={`translate(0,${22+i*44})`}>
+                    <Pill x={-132} y={-17} w={264} h={38}/>
+                    <RankBadge i={i} x={-110} y={2}/>
+                    <text x="-90" y="5" fill="#fff" fontSize="18" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{h.score}</text>
+                    <text x="-90" y="15" fill="rgba(255,215,200,0.45)" fontSize="7" fontWeight="600" letterSpacing="1" fontFamily="Sora,Helvetica Neue,Arial">RIVAUX</text>
+                    <line x1="-22" y1="-8" x2="-22" y2="12" stroke="rgba(255,255,255,0.12)" strokeWidth="1"/>
+                    <text x="-10" y="1" fill={h.won?'#ffd25e':'rgba(255,230,220,0.85)'} fontSize="12" fontFamily="Sora,Helvetica Neue,Arial" fontWeight="600">{h.won?'Victoire':(discreteMode?ZONES[h.zone]?.dname:ZONES[h.zone]?.name)}</text>
+                    <text x="-10" y="14" fill="rgba(255,215,200,0.4)" fontSize="9" fontFamily="Sora,Helvetica Neue,Arial">{h.d}</text>
+                  </g>
+                ))}
+              </g>
+            ):(
+              <g transform={`translate(${GW/2},${GH*0.6})`}>
+                <text x="0" y="0" textAnchor="middle" fill="rgba(255,215,200,0.4)" fontSize="12" fontFamily="Sora,Helvetica Neue,Arial">Aucun score encore — à toi de jouer !</text>
+              </g>
+            )}
+
+            {(highScoresInf.length>0)&&(
+              <g transform={`translate(${GW/2},${LY.infHdrY})`}>
+                <text x="0" y="0" textAnchor="middle" fill="rgba(255,210,94,0.6)" fontSize="9.5" letterSpacing="3" fontFamily="Sora,Helvetica Neue,Arial" fontWeight="700">MEILLEUR TEMPS ∞</text>
+                {highScoresInf.slice(0,1).map((h,i)=>(
+                  <g key={i} transform={`translate(0,18)`}>
+                    <Pill x={-132} y={-14} w={264} h={32} stroke="rgba(255,210,94,0.3)"/>
+                    <RankBadge i={0} x={-110} y={2}/>
+                    <text x="-88" y="7" fill="url(#goldText)" fontSize="17" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{fmtTime(h.time)}</text>
+                    <line x1="-22" y1="-6" x2="-22" y2="10" stroke="rgba(255,210,94,0.2)" strokeWidth="1"/>
+                    <text x="-10" y="1" fill="rgba(255,220,140,0.85)" fontSize="11.5" fontFamily="Sora,Helvetica Neue,Arial" fontWeight="600">Mode Infini</text>
+                    <text x="-10" y="12" fill="rgba(255,210,140,0.4)" fontSize="8.5" fontFamily="Sora,Helvetica Neue,Arial">{h.d}</text>
+                  </g>
+                ))}
+              </g>
+            )}
+
+            {/* Play button */}
+            <g onClick={()=>startGame(false)} style={{cursor:'pointer'}}>
+              <Pill x={GW/2-88} y={LY.playY} w={176} h={56} fill="url(#btnPrimary)" stroke="rgba(255,255,255,0.35)" glow="#ff6a8a"/>
+              <path d={`M ${GW/2-58} ${LY.playY+21} L ${GW/2-58} ${LY.playY+35} L ${GW/2-46.5} ${LY.playY+28} Z`} fill="#fff" strokeLinejoin="round" stroke="#fff" strokeWidth="2"/>
+              <text x={GW/2+9} y={LY.playY+36} textAnchor="middle" fill="#fff" fontSize="21"
+                fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial" letterSpacing="3">JOUER</text>
+            </g>
+            {/* Secondary mode buttons */}
+            {infiniteUnlocked?(
+              <g>
+                <g onClick={()=>startGame(true)} style={{cursor:'pointer'}}>
+                  <Pill x={GW/2-88} y={LY.s2Y} w={84} h={32} stroke="rgba(255,210,94,0.4)"/>
+                  <text x={GW/2-46} y={LY.s2Y+20.5} textAnchor="middle" fill="#ffd25e" fontSize="11.5" fontWeight="700" fontFamily="Sora,Helvetica Neue,Arial">∞ Infini</text>
+                </g>
+                <g onClick={()=>startGame(false,true)} style={{cursor:'pointer'}}>
+                  <Pill x={GW/2+4} y={LY.s2Y} w={84} h={32} stroke="rgba(255,90,110,0.45)"/>
+                  <text x={GW/2+46} y={LY.s2Y+20.5} textAnchor="middle" fill="#ff7a8a" fontSize="11.5" fontWeight="700" fontFamily="Sora,Helvetica Neue,Arial">Hardcore</text>
+                </g>
+              </g>
+            ):(
+              <g onClick={()=>startGame(false,true)} style={{cursor:'pointer'}}>
+                <Pill x={GW/2-88} y={LY.s2Y} w={176} h={32} stroke="rgba(255,90,110,0.45)"/>
+                <text x={GW/2} y={LY.s2Y+20.5} textAnchor="middle" fill="#ff7a8a" fontSize="11.5" fontWeight="700" letterSpacing="0.5" fontFamily="Sora,Helvetica Neue,Arial">Mode Hardcore</text>
+              </g>
+            )}
+            {/* Version */}
+            <text x={GW-10} y={GH-SAB-8} textAnchor="end" fill="rgba(255,215,200,0.3)" fontSize="9.5" fontFamily="Sora,Helvetica Neue,Arial">v67</text>
+          </g>
+        )}
+
+        {/* ── DEAD SCREEN ── */}
+        {screen==='dead'&&(
+          <g>
+            <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="rgba(16,2,8,0.86)"/>
+            <g transform={`translate(${GW/2},${LY.heroY})`}>
+              <circle cx="0" cy="0" r="80" fill="url(#glowRose)" opacity="0.7"/>
+              {/* Mean victorious rival */}
+              <RivalVictor wob={g.wob}/>
+            </g>
+            <text x={GW/2} y={LY.titleY} textAnchor="middle" fill="url(#roseText)" fontSize="40" fontWeight="800"
+              fontFamily="Sora,Helvetica Neue,Arial" letterSpacing="-1.5">Éliminé</text>
+            <text x={GW/2} y={LY.titleY+28} textAnchor="middle" fill="rgba(255,200,205,0.6)" fontSize="12.5" fontWeight="600"
+              fontFamily="Sora,Helvetica Neue,Arial" letterSpacing="0.5">{g.hardcore?'Mode Hardcore':g.infinite?'Mode Infini':(discreteMode?z.dname:z.name)}</text>
+
+            <Pill x={GW/2-84} y={LY.cardY} w={168} h={64}/>
+            <text x={GW/2} y={LY.cardY+23} textAnchor="middle" fill="rgba(255,215,200,0.5)" fontSize="9" fontWeight="700" letterSpacing="2.5" fontFamily="Sora,Helvetica Neue,Arial">{g.infinite?'TEMPS DE SURVIE':'RIVAUX ÉLIMINÉS'}</text>
+            <text x={GW/2} y={LY.cardY+51} textAnchor="middle" fill="#fff" fontSize="28" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{g.infinite?fmtTime(g.playT):g.score}</text>
+            {g.runML>0&&<text x={GW/2} y={LY.cardY+80} textAnchor="middle" fill="#ff8fa8" fontSize="11.5" fontWeight="800" letterSpacing="0.5" fontFamily="Sora,Helvetica Neue,Arial">+{g.runML} mL</text>}
+
+            {/* High scores on dead screen */}
+            {LY.dRows>0&&(g.infinite?highScoresInf:highScores).length>0&&(
+              <g transform={`translate(${GW/2},${LY.dScoresY})`}>
+                <text x="0" y="0" textAnchor="middle" fill="rgba(255,215,200,0.45)" fontSize="9.5" letterSpacing="3" fontFamily="Sora,Helvetica Neue,Arial" fontWeight="700">{g.infinite?'MEILLEURS TEMPS':'MEILLEURS SCORES'}</text>
+                {(g.infinite?highScoresInf:highScores).slice(0,LY.dRows).map((h,i)=>(
+                  <g key={i} transform={`translate(0,${20+i*38})`}>
+                    <Pill x={-132} y={-15} w={264} h={33}/>
+                    <RankBadge i={i} x={-110} y={1.5}/>
+                    <text x="-88" y="8" fill={g.infinite?'#ffd25e':'#fff'} fontSize="18" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{g.infinite?fmtTime(h.time):h.score}</text>
+                    <line x1="-22" y1="-6" x2="-22" y2="10" stroke="rgba(255,255,255,0.12)" strokeWidth="1"/>
+                    <text x="-10" y="0" fill={!g.infinite&&h.won?'#ffd25e':'rgba(255,230,220,0.8)'} fontSize="11.5" fontFamily="Sora,Helvetica Neue,Arial" fontWeight="600">{g.infinite?'Mode Infini':(h.won?'Victoire':(discreteMode?ZONES[h.zone]?.dname:ZONES[h.zone]?.name))}</text>
+                    <text x="-10" y="12" fill="rgba(255,215,200,0.38)" fontSize="8.5" fontFamily="Sora,Helvetica Neue,Arial">{h.d}</text>
+                  </g>
+                ))}
+              </g>
+            )}
+
+            <g onClick={()=>startGame(g.infinite,g.hardcore)} style={{cursor:'pointer'}}>
+              <Pill x={GW/2-88} y={LY.retryY} w={176} h={52} fill={g.hardcore?'url(#btnRed)':'url(#btnPrimary)'} stroke="rgba(255,255,255,0.35)" glow={g.hardcore?'#ff3b4e':'#ff6a8a'}/>
+              <text x={GW/2} y={LY.retryY+33} textAnchor="middle" fill="white" fontSize="18" fontWeight="800" letterSpacing="1.5"
+                fontFamily="Sora,Helvetica Neue,Arial">RÉESSAYER</text>
+            </g>
+            <IconBtn cx={GW-28} cy={32+SAT} onClick={()=>shareScore()}>
+              <g fill="none" stroke="rgba(255,235,225,0.9)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d={`M ${GW-28} ${35+SAT} L ${GW-28} ${23.5+SAT} M ${GW-32.5} ${28+SAT} L ${GW-28} ${23.5+SAT} L ${GW-23.5} ${28+SAT}`}/>
+                <path d={`M ${GW-33} ${31.5+SAT} L ${GW-35} ${31.5+SAT} L ${GW-35} ${40.5+SAT} L ${GW-21} ${40.5+SAT} L ${GW-21} ${31.5+SAT} L ${GW-23} ${31.5+SAT}`}/>
+              </g>
+            </IconBtn>
+            {infiniteUnlocked&&(
+              <g onClick={()=>startGame(true)} style={{cursor:'pointer'}}>
+                <Pill x={GW/2-88} y={LY.infY} w={176} h={34} stroke="rgba(255,210,94,0.4)"/>
+                <text x={GW/2} y={LY.infY+22} textAnchor="middle" fill="#ffd25e" fontSize="12" fontWeight="700" fontFamily="Sora,Helvetica Neue,Arial">∞ Mode Infini</text>
+              </g>
+            )}
+            <g onClick={()=>setScreenBoth('start')} style={{cursor:'pointer'}}>
+              <text x={GW/2} y={LY.menuY} textAnchor="middle" fill="rgba(255,215,200,0.6)" fontSize="12.5" fontWeight="600" fontFamily="Sora,Helvetica Neue,Arial">← Menu principal</text>
+            </g>
+          </g>
+        )}
+
+        {/* ── WIN SCREEN ── */}
+        {screen==='win'&&(
+          <g>
+            <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="rgba(14,9,2,0.86)"/>
+            <g transform={`translate(${GW/2},${GH*0.23})`}>
+              {/* Light rays */}
+              <g transform={`rotate(${(g.pulse*0.15)%360})`}>
+                {Array.from({length:12},(_,i)=>(
+                  <path key={i} d="M -7 -30 L 0 -170 L 7 -30 Z" fill="#ffd25e" opacity="0.09" transform={`rotate(${i*30})`}/>
+                ))}
+              </g>
+              <circle cx="0" cy="0" r="90" fill="url(#glowGold)"/>
+              {/* Confetti */}
+              {Array.from({length:14},(_,i)=>{
+                const a=i/14*Math.PI*2+g.pulse*0.004,d=72+Math.sin(g.pulse*0.08+i)*7;
+                const cols=['#ffd25e','#ff6f91','#8ff0ff','#b77bff'];
+                return<rect key={i} x="-2.5" y="-5" width="5" height="10" rx="1.5" fill={cols[i%4]} opacity="0.9"
+                  transform={`translate(${f1(Math.cos(a)*d)},${f1(Math.sin(a)*d)}) rotate(${(g.pulse*(i%2?1.5:-1.5)+i*40)%360})`}/>;
+              })}
+              {/* Player */}
+              <SpermPlayer x={0} y={0} wob={g.wob} hit={false} shield={false} tilt={0} skin={getSkin(equipped)}/>
+              {/* Crown on head — drawn after player to appear in front */}
+              <g transform="translate(0,-21)"><Crown/></g>
+            </g>
+            <text x={GW/2} y={GH*0.44} textAnchor="middle" fill="#ffc23d" fontSize="46" fontWeight="800" opacity="0.5"
+              fontFamily="Sora,Helvetica Neue,Arial" letterSpacing="-1.5" filter="url(#sg)">Victoire</text>
+            <text x={GW/2} y={GH*0.44} textAnchor="middle" fill="url(#goldText)" fontSize="46" fontWeight="800"
+              fontFamily="Sora,Helvetica Neue,Arial" letterSpacing="-1.5">Victoire</text>
+            <text x={GW/2} y={GH*0.44+30} textAnchor="middle" fill="rgba(255,230,170,0.7)" fontSize="13" fontWeight="600"
+              fontFamily="Sora,Helvetica Neue,Arial">{g.hardcore?'Mode Hardcore accompli !':discreteMode?'Tu as atteint la cible en premier !':'Tu as atteint l\'ovule en premier !'}</text>
+
+            <Pill x={GW/2-84} y={GH*0.565} w={168} h={64} stroke="rgba(255,210,94,0.35)"/>
+            <text x={GW/2} y={GH*0.565+23} textAnchor="middle" fill="rgba(255,225,160,0.55)" fontSize="9" fontWeight="700" letterSpacing="2.5" fontFamily="Sora,Helvetica Neue,Arial">RIVAUX ÉLIMINÉS</text>
+            <text x={GW/2} y={GH*0.565+51} textAnchor="middle" fill="url(#goldText)" fontSize="28" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{g.score}</text>
+            {g.runML>0&&<text x={GW/2} y={GH*0.565+82} textAnchor="middle" fill="#ff8fa8" fontSize="11.5" fontWeight="800" letterSpacing="0.5" fontFamily="Sora,Helvetica Neue,Arial">+{g.runML} mL</text>}
+
+            <g onClick={()=>startGame(false,g.hardcore)} style={{cursor:'pointer'}}>
+              <Pill x={GW/2-88} y={GH*0.71} w={176} h={52} fill={g.hardcore?'url(#btnRed)':'url(#btnGold)'} stroke="rgba(255,255,255,0.45)" glow={g.hardcore?'#ff3b4e':'#ffc23d'}/>
+              <text x={GW/2} y={GH*0.71+33} textAnchor="middle" fill={g.hardcore?'#fff':'#3a1d02'} fontSize="18" fontWeight="800" letterSpacing="1.5"
+                fontFamily="Sora,Helvetica Neue,Arial">REJOUER</text>
+            </g>
+            <IconBtn cx={GW-28} cy={32+SAT} onClick={()=>shareScore()}>
+              <g fill="none" stroke="#ffd25e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d={`M ${GW-28} ${35+SAT} L ${GW-28} ${23.5+SAT} M ${GW-32.5} ${28+SAT} L ${GW-28} ${23.5+SAT} L ${GW-23.5} ${28+SAT}`}/>
+                <path d={`M ${GW-33} ${31.5+SAT} L ${GW-35} ${31.5+SAT} L ${GW-35} ${40.5+SAT} L ${GW-21} ${40.5+SAT} L ${GW-21} ${31.5+SAT} L ${GW-23} ${31.5+SAT}`}/>
+              </g>
+            </IconBtn>
+            <g onClick={()=>startGame(true)} style={{cursor:'pointer'}}>
+              <Pill x={GW/2-88} y={GH*0.86} w={176} h={34} stroke="rgba(255,210,94,0.4)"/>
+              <text x={GW/2} y={GH*0.86+22} textAnchor="middle" fill="#ffd25e" fontSize="12" fontWeight="700" fontFamily="Sora,Helvetica Neue,Arial">∞ Mode Infini</text>
+            </g>
+
+            <g onClick={()=>setScreenBoth('start')} style={{cursor:'pointer'}}>
+              <text x={GW/2} y={GH*0.94} textAnchor="middle" fill="rgba(255,225,170,0.6)" fontSize="12.5" fontWeight="600" fontFamily="Sora,Helvetica Neue,Arial">← Menu principal</text>
+            </g>
+          </g>
+        )}
+        {/* Daily challenges modal — HTML overlay (outside SVG, see below) */}
+
+        {/* Combined rewards toast (achievements + daily/weekly) */}
+        {(dailyToast||achToast)&&(()=>{
+          const aList=achToast||[];
+          const dList=dailyToast||[];
+          const hasBoth=aList.length>0&&dList.length>0;
+          let y=SAT+40;
+          const el=[];
+          const check=(cx,cy,col)=>(<g>
+            <circle cx={cx} cy={cy} r="22" fill={col} opacity="0.18"/>
+            <circle cx={cx} cy={cy} r="14" fill={col}/>
+            <circle cx={cx} cy={cy} r="14" fill="url(#headShade)" opacity="0.6"/>
+            <path d={`M ${cx-5.5} ${cy+0.5} L ${cx-1.5} ${cy+4.5} L ${cx+6} ${cy-4}`} stroke="#fff" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </g>);
+          if(aList.length>0){
+            el.push(<text key="ath" x={GW/2} y={y} textAnchor="middle" fill="url(#goldText)" fontSize="11.5" letterSpacing="3" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{aList.length>1?'NOUVELLES RÉCOMPENSES':'NOUVELLE RÉCOMPENSE'}</text>);
+            y+=24;
+            for(const a of aList){
+              el.push(<g key={a.id} transform={`translate(${GW/2-115},${y})`}>
+                <rect x="0" y="0" width="230" height="58" rx="16" fill="url(#glass)"/>
+                <rect x="0.5" y="0.5" width="229" height="57" rx="15.5" fill="none" stroke={TIERS[a.tier].color} strokeOpacity="0.55" strokeWidth="1"/>
+                {check(29,29,TIERS[a.tier].color)}
+                <text x="54" y="24" fill="#fff" fontSize="12" fontWeight="700" fontFamily="Sora,Helvetica Neue,Arial">{a.name}</text>
+                <text x="218" y="24" textAnchor="end" fill="#ff8fa8" fontSize="11" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">+{a.ml} mL</text>
+                <text x="54" y="41" fill="rgba(255,225,215,0.6)" fontSize="9.5" fontFamily="Sora,Helvetica Neue,Arial">{a.desc}</text>
+              </g>);
+              y+=66;
+            }
+          }
+          if(dList.length>0){
+            if(hasBoth)y+=18;
+            el.push(<text key="dth" x={GW/2} y={y} textAnchor="middle" fill="#7ee0a0" fontSize="11.5" letterSpacing="3" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{dList.length>1?'DÉFIS RÉUSSIS':'DÉFI RÉUSSI'}</text>);
+            y+=24;
+            for(const c of dList){
+              const tier=TIERS[c.t]||TIERS.medium;
+              el.push(<g key={c.id} transform={`translate(${GW/2-115},${y})`}>
+                <rect x="0" y="0" width="230" height="60" rx="16" fill="url(#glass)"/>
+                <rect x="0.5" y="0.5" width="229" height="59" rx="15.5" fill="none" stroke={tier.color} strokeOpacity="0.6" strokeWidth="1"/>
+                {check(30,30,tier.color)}
+                <text x="56" y="24" fill={tier.color} fontSize="8.5" letterSpacing="1.8" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{tier.label.toUpperCase()}</text>
+                <text x="218" y="24" textAnchor="end" fill="#ff8fa8" fontSize="11" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">+{c.ml} mL</text>
+                <text x="56" y="43" fill="#fff" fontSize="11" fontWeight="600" fontFamily="Sora,Helvetica Neue,Arial">{c.fmt.length>26?c.fmt.slice(0,26)+'…':c.fmt}</text>
+              </g>);
+              y+=68;
+            }
+          }
+          return(
+            <g onClick={()=>{setDailyToast(null);setAchToast(null);}} style={{cursor:'pointer'}}>
+              <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="rgba(8,2,10,0.9)"/>
+              {el}
+              <text x={GW/2} y={GH-SAB-18} textAnchor="middle" fill="rgba(255,220,205,0.55)" fontSize="11" fontWeight="600" letterSpacing="1" fontFamily="Sora,Helvetica Neue,Arial">Touche pour continuer</text>
+            </g>
+          );
+        })()}
+
+
+        {/* Achievements modal — HTML overlay (outside SVG, see below) */}
+
+        {/* Shop modal rendered outside SVG (see below) */}
+
+        {/* Stats modal — HTML overlay (outside SVG, see below) */}
+
+        {/* Info modal — HTML overlay (outside SVG, see below) */}
+
+        {shareImg&&(
+          <g onClick={()=>setShareImg(null)} style={{cursor:'pointer'}}>
+            <rect x="0" y="0" width={GW} height={GH} fill="rgba(0,0,0,0.88)"/>
+            <image href={shareImg} x={GW/2-99} y={GH*0.07} width="198" height="352"/>
+            <text x={GW/2} y={GH*0.85} textAnchor="middle" fill="rgba(220,190,150,0.7)" fontSize="12" fontFamily="Sora,Helvetica Neue,Arial">Appui long sur l'image pour sauvegarder — tap pour fermer</text>
+          </g>
+        )}
+      </svg>
+      {/* Progress bar — HTML overlay, toujours collé au bas absolu de l'écran */}
+      {screen==='playing'&&(
+        <div style={{position:'absolute',bottom:0,left:0,right:0,height:'5px',background:'rgba(255,255,255,0.07)',pointerEvents:'none'}}>
+          <div style={{position:'absolute',bottom:0,left:0,width:`${totalProg*100}%`,height:'5px',background:`linear-gradient(90deg,${ZONES[0].acc},${z.acc})`,boxShadow:`0 0 12px ${z.acc}`,borderRadius:'0 3px 3px 0'}}/>
+          {[1,2,3,4].map(i=>(
+            <div key={i} style={{position:'absolute',bottom:0,left:`${i*20}%`,width:'2px',height:'5px',background:'rgba(6,1,10,0.8)'}}/>
+          ))}
+          {ZONES.map((zo,i)=>(
+            <div key={i} style={{position:'absolute',bottom:'9px',left:`${i*20+10}%`,transform:'translateX(-50%)',width:6,height:6,borderRadius:3,background:g.zone>=i?zo.acc:'rgba(255,255,255,0.18)',boxShadow:g.zone===i?`0 0 8px ${zo.acc}`:'none'}}/>
+          ))}
+        </div>
+      )}
+      {/* First-run tutorial */}
+      {tuto!==null&&screen==='playing'&&!landscape&&(()=>{
+        const steps=[
+          {t:'Glisse ton doigt',d:'Ton spermatozoïde suit ton doigt : glisse n’importe où sur l’écran pour le diriger.',
+           art:<g transform="translate(0,-22) scale(0.7)"><SpermPlayer x={0} y={0} wob={g.wob} hit={false} shield={false} tilt={Math.sin(g.wob*0.02)*0.8} skin={getSkin(equipped)}/></g>},
+          {t:'Percute les rivaux',d:'Fonce dans les rivaux qui remontent pour les éliminer. S’ils atteignent le haut de l’écran, tu perds une vie !',
+           art:<g>
+             <path d="M 0 -52 L -9 -40 M 0 -52 L 9 -40" stroke="#ff3b5c" strokeWidth="3" strokeLinecap="round" fill="none" opacity={0.6+Math.sin(g.pulse*0.12)*0.4}/>
+             <circle cx="0" cy="-6" r="22" fill="none" stroke="#ff3b5c" strokeWidth="1.6" opacity={0.6+Math.sin(g.pulse*0.12)*0.4}/>
+             <SpermEnemy x={0} y={-6} wob={g.wob} vx={0}/>
+           </g>},
+          {t:'Évite les défenses',d:'Globules blancs et anticorps te font perdre une vie. Le mucus te ralentit. Le casque te protège d’un coup.',
+           art:<g transform="scale(0.58)">
+             <WBC x={-99} y={0} pulse={g.pulse}/>
+             <Antibody x={-33} y={0} angle={0} pulse={g.pulse}/>
+             <Mucus x={33} y={0} pulse={g.pulse} r={22}/>
+             <Helmet x={99} y={0} pulse={g.pulse}/>
+           </g>},
+        ];
+        const s=steps[tuto];const last=tuto===steps.length-1;
+        return(
+          <div onClick={e=>{e.stopPropagation();nextTuto();}} style={{position:'absolute',inset:0,zIndex:12,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(6,1,10,0.55)',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)',padding:24}}>
+            <div style={{width:'100%',maxWidth:320,borderRadius:24,padding:'22px 22px 18px',background:'linear-gradient(180deg,rgba(80,16,52,0.92),rgba(18,4,16,0.95))',border:'1px solid rgba(255,255,255,0.14)',boxShadow:'0 20px 60px rgba(0,0,0,0.5)',color:'#fff',textAlign:'center'}}>
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:3,color:'#ff8fa8'}}>{`${tuto+1} / ${steps.length}`}</div>
+              <svg viewBox={tuto===2?'-75 -45 150 70':'-60 -60 120 130'} width="100%" height="130" style={{display:'block',margin:'6px 0 4px'}}>{s.art}</svg>
+              <div style={{fontSize:21,fontWeight:800,letterSpacing:-0.3}}>{s.t}</div>
+              <div style={{fontSize:13,lineHeight:'19px',color:'rgba(255,225,215,0.75)',marginTop:8}}>{s.d}</div>
+              <div style={{marginTop:18,padding:'12px 0',borderRadius:99,fontSize:14,fontWeight:800,letterSpacing:1.5,background:'linear-gradient(135deg,#ff9e8a,#ff6a8a 50%,#d4407f)',boxShadow:'0 6px 24px rgba(255,106,138,0.45)'}}>{last?'C’EST PARTI !':'SUIVANT'}</div>
+              {!last&&<div onClick={e=>{e.stopPropagation();tutoRef.current=TUTO_STEPS-1;nextTuto();}} style={{marginTop:12,fontSize:12,fontWeight:600,color:'rgba(255,215,200,0.55)'}}>Passer</div>}
+            </div>
+          </div>
+        );
+      })()}
+      {/* Rotate-your-phone screen (landscape is blocked on touch devices) */}
+      {landscape&&(
+        <div style={{position:'absolute',inset:0,zIndex:50,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:18,background:'radial-gradient(120% 90% at 50% 30%,#4a0a28,#0a0108 70%)',color:'#fff',textAlign:'center',padding:24}}>
+          <svg viewBox="-40 -40 80 80" width="96" height="96">
+            <g transform={`rotate(${-90*(0.5+0.5*Math.sin(g.wob*0.03))})`}>
+              <rect x="-15" y="-26" width="30" height="52" rx="6" fill="none" stroke="#fff" strokeWidth="2.5"/>
+              <rect x="-5" y="-22" width="10" height="2" rx="1" fill="#fff" opacity="0.6"/>
+            </g>
+            <path d="M 26 -18 A 32 32 0 0 1 30 10" fill="none" stroke="#ff8fa8" strokeWidth="2.5" strokeLinecap="round"/>
+            <path d="M 25 6 L 30 11 L 35 5" fill="none" stroke="#ff8fa8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <div style={{fontSize:20,fontWeight:800}}>Tourne ton téléphone</div>
+          <div style={{fontSize:13,color:'rgba(255,225,215,0.7)',maxWidth:260,lineHeight:'19px'}}>TheOne se joue uniquement en mode portrait.{screen==='playing'?' La partie est en pause.':''}</div>
+        </div>
+      )}
+      {/* Shop overlay (HTML — outside SVG for clean grid) */}
+      {showShop&&(
+        <div onClick={()=>setShowShop(false)} style={{position:'absolute',inset:0,background:'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',zIndex:10}}>
+          <div className="modal-wrap" style={{color:'white',fontFamily:'Sora,Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
+          <div style={{fontSize:'26px',fontWeight:800,color:P.skin1,textAlign:'center'}}>Boutique</div>
+          <div style={{fontSize:'10.5px',letterSpacing:'2px',color:'rgba(210,170,140,0.5)',textAlign:'center',marginTop:'4px'}}>TAP N'IMPORTE OÙ POUR FERMER</div>
+          <div style={{margin:'12px auto 6px',background:'rgba(232,113,138,0.08)',border:'1px solid rgba(232,113,138,0.3)',borderRadius:14,padding:'6px 24px',textAlign:'center'}}>
+            <div style={{fontSize:9,letterSpacing:2,color:'rgba(232,140,160,0.65)'}}>RÉSERVE</div>
+            <div style={{fontSize:20,fontWeight:800,color:P.rose,marginTop:2}}>{mL.toLocaleString('fr')} mL</div>
+          </div>
+          <div style={{fontSize:11,letterSpacing:2,color:'rgba(220,180,150,0.55)',textAlign:'center',marginBottom:8}}>SKINS — {owned.size}/{SKINS.length}</div>
+          <div className="ach-scroll" style={{flex:1,overflowY:'auto',padding:'0 4px 30px',touchAction:'pan-y',WebkitOverflowScrolling:'touch'}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              {[...SKINS].sort((a,b)=>a.cost-b.cost).map(s=>{
+                const isOwned=owned.has(s.id);
+                const isEquip=equipped===s.id;
+                const canAfford=mL>=s.cost;
+                return(
+                  <div key={s.id} style={{display:'flex',flexDirection:'column',alignItems:'center',borderRadius:14,padding:'12px 10px',background:isEquip?'rgba(245,200,66,0.15)':'rgba(255,255,255,0.05)',border:`1.5px solid ${isEquip?'rgba(245,200,66,0.6)':(isOwned?'rgba(126,200,138,0.4)':'rgba(220,160,120,0.15)')}`,boxSizing:'border-box'}}>
+                    <svg viewBox="-36 -32 72 112" width="76" height="118" style={{display:"block"}}>
+                      <g transform="scale(0.7)"><SpermPlayer x={0} y={0} wob={g.wob*0.5} hit={false} shield={false} tilt={0} skin={s}/></g>
+                    </svg>
+                    <div style={{fontSize:13,fontWeight:700,color:'rgba(230,200,180,0.95)',textAlign:'center',marginTop:2}}>{s.name}</div>
+                    <div style={{fontSize:10,fontWeight:600,color:isEquip?'#f5c842':(isOwned?'#7ec88a':(canAfford?'rgba(232,140,160,0.85)':'rgba(180,140,140,0.45)')),marginTop:3,textAlign:'center'}}>{isEquip?'Équipé':(isOwned?'Possédé':`${s.cost} mL`)}</div>
+                    <button type="button" onClick={ev=>{
+                      ev.stopPropagation();
+                      if(isEquip)return;
+                      if(isOwned){const id=saveSkin(s.id);setEquipped(id);}
+                      else if(canAfford){const newML=saveML(mL-s.cost);setML(newML);const o=loadOwned();o.add(s.id);saveOwned(o);setOwned(new Set(o));const id=saveSkin(s.id);setEquipped(id);}
+                    }} style={{marginTop:8,padding:'7px 10px',borderRadius:14,fontSize:11,fontWeight:700,cursor:isEquip?'default':'pointer',background:isEquip?'rgba(245,200,66,0.2)':(isOwned?'rgba(126,200,138,0.18)':(canAfford?P.rose:'rgba(255,255,255,0.05)')),color:isEquip?'#f5c842':(isOwned?'#7ec88a':(canAfford?'white':'rgba(220,180,180,0.4)')),border:`1px solid ${isEquip?'rgba(245,200,66,0.4)':(isOwned?'rgba(126,200,138,0.35)':(canAfford?'transparent':'rgba(255,255,255,0.08)'))}`,width:'100%',fontFamily:'inherit'}}>
+                      {isEquip?'✓ Équipé':(isOwned?'Équiper':(canAfford?'Acheter':'Pas assez'))}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          </div>
+        </div>
+      )}
+      {/* Daily challenges overlay — HTML outside SVG */}
+      {showDaily&&(
+        <div onClick={()=>setShowDaily(false)} style={{position:'absolute',inset:0,background:'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',zIndex:10}}>
+          <div className="modal-wrap" style={{color:'white',fontFamily:'Sora,Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
+            <div style={{textAlign:'center'}}>
+              <div style={{fontSize:26,fontWeight:800,color:P.skin1}}>Défis temporaires</div>
+              <div style={{fontSize:9,letterSpacing:1.5,color:'rgba(210,170,140,0.5)',marginTop:3}}>SE RENOUVELLENT</div>
+              <div style={{fontSize:9,letterSpacing:1.5,color:'rgba(210,170,140,0.5)'}}>QUOTIDIENNEMENT / HEBDOMADAIREMENT</div>
+            </div>
+            <div className="ach-scroll" style={{flex:1,overflowY:'auto',padding:'0 4px 30px',touchAction:'pan-y',WebkitOverflowScrolling:'touch'}}>
+              <div style={{textAlign:'center',marginTop:10}}>
+                <div style={{fontSize:11,letterSpacing:2.5,fontWeight:700,color:P.skin2}}>☀ DÉFIS DU JOUR</div>
+                <div style={{fontSize:10,color:'rgba(220,180,150,0.5)',marginTop:3}}>{daily.ch.filter(c=>c.completed).length} / {daily.ch.length} complétés</div>
+              </div>
+              {daily.ch.map((c,i)=>{
+                const tier=TIERS[c.t];
+                return(
+                  <div key={c.id} style={{marginTop:10,borderRadius:14,padding:'10px 12px',background:c.completed?'rgba(126,200,138,0.1)':`${tier.color}10`,border:`1.2px solid ${c.completed?'rgba(126,200,138,0.4)':`${tier.color}55`}`}}>
+                    <div style={{display:'flex',alignItems:'flex-start'}}>
+                      <div style={{width:20,height:20,borderRadius:'50%',background:c.completed?'#7ec88a':tier.color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'white',flexShrink:0,marginRight:10,marginTop:2}}>{c.completed?'✓':i+1}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:9,fontWeight:700,letterSpacing:1.5,color:tier.color}}>{tier.label.toUpperCase()}</div>
+                        <div style={{fontSize:13,fontWeight:600,color:c.completed?'rgba(180,220,180,0.75)':'rgba(230,200,180,0.92)',textDecoration:c.completed?'line-through':'none',marginTop:2}}>{c.fmt}</div>
+                        {(()=>{
+                          const tpl=CH_TEMPLATES.find(t=>t.id===c.tplId);
+                          if(!tpl||c.completed)return c.completed?<div style={{fontSize:11,color:'rgba(150,210,160,0.75)',marginTop:2}}>Récompense obtenue</div>:null;
+                          let progressTxt='';
+                          if(tpl.key in daily.ds){const val=daily.ds[tpl.key]||0;if(tpl.scale)progressTxt=`Progression : ${fmtDuration(val)} / ${fmtDuration(c.target*tpl.scale)}`;else progressTxt=`Progression : ${val} / ${c.target}`;}else progressTxt='En jeu — réussis-le en une partie';
+                          return<div style={{fontSize:11,color:'rgba(200,170,150,0.5)',marginTop:2}}>{progressTxt}</div>;
+                        })()}
+                        {(()=>{
+                          const tpl=CH_TEMPLATES.find(t=>t.id===c.tplId);
+                          if(!tpl||c.completed||!(tpl.key in daily.ds))return null;
+                          const val=daily.ds[tpl.key]||0;const target=tpl.scale?c.target*tpl.scale:c.target;const p=clamp(val/target,0,1);
+                          return<div style={{marginTop:8,height:5,background:'rgba(255,255,255,0.08)',borderRadius:2.5,overflow:'hidden'}}><div style={{height:'100%',width:(p*100)+'%',background:tier.color,borderRadius:2.5}}></div></div>;
+                        })()}
+                      </div>
+                      <div style={{fontSize:12,fontWeight:800,color:c.completed?'#7ec88a':P.rose,whiteSpace:'nowrap',marginLeft:8,marginTop:2,flexShrink:0}}>+{c.ml} mL</div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div style={{textAlign:'center',marginTop:18}}>
+                <div style={{fontSize:11,letterSpacing:2.5,fontWeight:700,color:P.gold}}>★ DÉFIS HEBDOMADAIRES</div>
+                <div style={{fontSize:10,color:'rgba(220,180,150,0.5)',marginTop:3}}>{weekly.ch.filter(c=>c.completed).length} / {weekly.ch.length} complétés · se renouvellent chaque semaine</div>
+              </div>
+              {weekly.ch.map((c,i)=>(
+                <div key={c.id} style={{marginTop:10,borderRadius:14,padding:'10px 12px',background:c.completed?'rgba(126,200,138,0.1)':'rgba(245,200,66,0.08)',border:`1.2px solid ${c.completed?'rgba(126,200,138,0.4)':'rgba(245,200,66,0.45)'}`}}>
+                  <div style={{display:'flex',alignItems:'flex-start'}}>
+                    <div style={{width:20,height:20,borderRadius:'50%',background:c.completed?'#7ec88a':P.gold,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'white',flexShrink:0,marginRight:10,marginTop:2}}>{c.completed?'✓':'★'}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:9,fontWeight:700,letterSpacing:1.5,color:P.gold}}>HEBDO</div>
+                      <div style={{fontSize:13,fontWeight:600,color:c.completed?'rgba(180,220,180,0.75)':'rgba(230,200,180,0.92)',textDecoration:c.completed?'line-through':'none',marginTop:2}}>{c.fmt}</div>
+                      {(()=>{
+                        const tpl=WK_TEMPLATES.find(t=>t.id===c.tplId);
+                        if(!tpl||c.completed)return c.completed?<div style={{fontSize:11,color:'rgba(150,210,160,0.75)',marginTop:2}}>Récompense obtenue</div>:null;
+                        let txt='';if(tpl.key in weekly.ws){const val=weekly.ws[tpl.key]||0;if(tpl.scale)txt=`Progression : ${fmtDuration(val)} / ${fmtDuration(c.target*tpl.scale)}`;else txt=`Progression : ${val} / ${c.target}`;}else txt='En jeu — réussis-le en une partie';
+                        return<div style={{fontSize:11,color:'rgba(200,170,150,0.5)',marginTop:2}}>{txt}</div>;
+                      })()}
+                      {(()=>{
+                        const tpl=WK_TEMPLATES.find(t=>t.id===c.tplId);
+                        if(!tpl||c.completed||!(tpl.key in weekly.ws))return null;
+                        const val=weekly.ws[tpl.key]||0;const target=tpl.scale?c.target*tpl.scale:c.target;const p=clamp(val/target,0,1);
+                        return<div style={{marginTop:8,height:5,background:'rgba(255,255,255,0.08)',borderRadius:2.5,overflow:'hidden'}}><div style={{height:'100%',width:(p*100)+'%',background:P.gold,borderRadius:2.5}}></div></div>;
+                      })()}
+                    </div>
+                    <div style={{fontSize:12,fontWeight:800,color:c.completed?'#7ec88a':P.rose,whiteSpace:'nowrap',marginLeft:8,marginTop:2,flexShrink:0}}>+{c.ml} mL</div>
+                  </div>
+                </div>
+              ))}
+              <div style={{textAlign:'center',marginTop:16,fontSize:11,fontStyle:'italic',color:'rgba(220,170,140,0.4)'}}>💧 {mL.toLocaleString('fr')} mL en réserve</div>
+              <div style={{height:20}}></div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Stats overlay — HTML outside SVG */}
+      {showStats&&(
+        <div onClick={()=>setShowStats(false)} style={{position:'absolute',inset:0,background:'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',zIndex:10}}>
+          <div className="modal-wrap" style={{color:'white',fontFamily:'Sora,Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
+            <div style={{textAlign:'center'}}>
+              <div style={{fontSize:28,fontWeight:800,color:P.skin1}}>Statistiques</div>
+              <div style={{fontSize:11,letterSpacing:2,color:'rgba(210,170,140,0.5)',marginTop:4}}>TAP N'IMPORTE OÙ POUR FERMER</div>
+            </div>
+            <div className="ach-scroll" style={{flex:1,overflowY:'auto',padding:'0 4px 30px',touchAction:'pan-y',WebkitOverflowScrolling:'touch'}}>
+              <div style={{marginTop:16,borderRadius:14,padding:'14px',textAlign:'center',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(220,160,120,0.15)'}}>
+                <div style={{fontSize:10.5,letterSpacing:1.8,color:'rgba(215,180,140,0.55)'}}>PARTIES JOUÉES</div>
+                <div style={{fontSize:34,fontWeight:800,color:P.skin1,marginTop:4}}>{stats.games}</div>
+              </div>
+              <div style={{display:'flex',gap:10,marginTop:10}}>
+                <div style={{flex:1,borderRadius:14,padding:'12px 8px',textAlign:'center',background:'rgba(245,200,66,0.06)',border:'1px solid rgba(245,200,66,0.2)'}}>
+                  <div style={{fontSize:10,letterSpacing:1.8,color:'rgba(245,200,100,0.6)'}}>VICTOIRES</div>
+                  <div style={{fontSize:28,fontWeight:800,color:P.gold,marginTop:4}}>{stats.wins}</div>
+                  <div style={{fontSize:10,color:'rgba(245,200,100,0.5)',marginTop:2}}>{stats.games>0?Math.round(stats.wins/stats.games*100):0}% de réussite</div>
+                </div>
+                <div style={{flex:1,borderRadius:14,padding:'12px 8px',textAlign:'center',background:'rgba(232,113,138,0.06)',border:'1px solid rgba(232,113,138,0.2)'}}>
+                  <div style={{fontSize:10,letterSpacing:1.8,color:'rgba(232,140,160,0.6)'}}>RIVAUX ÉLIMINÉS</div>
+                  <div style={{fontSize:28,fontWeight:800,color:P.rose,marginTop:4}}>{stats.rivals}</div>
+                  <div style={{fontSize:10,color:'rgba(232,140,160,0.5)',marginTop:2}}>total cumulé</div>
+                </div>
+              </div>
+              <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginTop:18,marginBottom:6}}>TEMPS DE JEU</div>
+              <div style={{borderRadius:12,padding:'10px 14px',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(220,160,120,0.12)',marginBottom:8}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <div style={{fontSize:10,letterSpacing:1.5,color:'rgba(215,180,140,0.55)'}}>MODE NORMAL</div>
+                    <div style={{fontSize:20,fontWeight:700,color:P.skin1,marginTop:4}}>{fmtDuration(stats.timeNorm)}</div>
+                  </div>
+                  <div style={{fontSize:22}}>🥚</div>
+                </div>
+              </div>
+              <div style={{borderRadius:12,padding:'10px 14px',background:'rgba(245,200,66,0.05)',border:'1px solid rgba(245,200,66,0.2)'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <div style={{fontSize:10,letterSpacing:1.5,color:'rgba(245,200,100,0.6)'}}>MODE INFINI ∞</div>
+                    <div style={{fontSize:20,fontWeight:700,color:P.gold,marginTop:4}}>{fmtDuration(stats.timeInf)}</div>
+                  </div>
+                  <div style={{fontSize:22,fontWeight:800,color:P.gold}}>∞</div>
+                </div>
+              </div>
+              <div style={{borderTop:'1px solid rgba(220,160,120,0.15)',marginTop:12,paddingTop:10,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div style={{fontSize:11,letterSpacing:1.5,color:'rgba(215,180,140,0.45)'}}>TEMPS TOTAL</div>
+                <div style={{fontSize:14,fontWeight:700,color:'rgba(230,200,180,0.85)'}}>{fmtDuration(stats.timeNorm+stats.timeInf)}</div>
+              </div>
+              <div style={{textAlign:'center',marginTop:14,fontSize:11,fontStyle:'italic',color:'rgba(220,170,140,0.4)'}}>Stats sauvegardées localement</div>
+              <div style={{height:20}}></div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Info overlay — HTML outside SVG */}
+      {showInfo&&(
+        <div onClick={()=>setShowInfo(false)} style={{position:'absolute',inset:0,background:'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',zIndex:10}}>
+          <div className="modal-wrap" style={{color:'white',fontFamily:'Sora,Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
+            <div style={{textAlign:'center'}}>
+              <div style={{fontSize:28,fontWeight:800,color:P.skin1}}>Règles du jeu</div>
+              <div style={{fontSize:11,letterSpacing:2,color:'rgba(210,170,140,0.5)',marginTop:4}}>TAP N'IMPORTE OÙ POUR FERMER</div>
+            </div>
+            <div className="ach-scroll" style={{flex:1,overflowY:'auto',padding:'0 4px 30px',touchAction:'pan-y',WebkitOverflowScrolling:'touch'}}>
+              <div style={{marginTop:14}}>
+                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginBottom:6}}>OBJECTIF</div>
+                <div style={{fontSize:13,color:'rgba(230,200,180,0.85)'}}>{discreteMode?'Atteins la cible en premier —':'Atteins l\'ovule en premier —'}</div>
+                <div style={{fontSize:13,color:'rgba(230,200,180,0.85)'}}>{discreteMode?'tu joues le point blanc.':'tu joues le sperm blanc.'}</div>
+              </div>
+              <div style={{marginTop:14}}>
+                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginBottom:6}}>COMMANDES</div>
+                <div style={{fontSize:13,color:'rgba(230,200,180,0.85)'}}>Glisse ton doigt pour naviguer</div>
+                <div style={{fontSize:13,color:'rgba(230,200,180,0.85)'}}>librement dans le canal.</div>
+              </div>
+              <div style={{marginTop:14}}>
+                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginBottom:8}}>ENNEMIS</div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <svg viewBox="-18 -14 36 28" style={{width:36,height:28,flexShrink:0,display:'block'}}>
+                      <ellipse cx="0" cy="0" rx="14" ry="11" fill="rgba(160,210,35,0.5)" stroke="rgba(120,185,15,0.7)" strokeWidth="1.4"/>
+                    </svg>
+                    <div><div style={{fontSize:12,fontWeight:600,color:'rgba(230,200,180,0.85)'}}>Mucus</div><div style={{fontSize:10,color:'rgba(190,160,140,0.55)'}}>te ralentit</div></div>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <svg viewBox="-16 -14 32 28" style={{width:36,height:28,flexShrink:0,display:'block'}}>
+                      <circle cx="0" cy="0" r="12" fill="#e89870"/>
+                      <ellipse cx="-3.5" cy="-2" rx="3.5" ry="3.5" fill="white"/>
+                      <ellipse cx="3.5" cy="-2" rx="3.5" ry="3.5" fill="white"/>
+                      <circle cx="-3.5" cy="-2" r="2.2" fill="#b03050"/>
+                      <circle cx="3.5" cy="-2" r="2.2" fill="#b03050"/>
+                    </svg>
+                    <div><div style={{fontSize:12,fontWeight:600,color:'rgba(230,200,180,0.85)'}}>Rivaux</div><div style={{fontSize:10,color:'rgba(190,160,140,0.55)'}}>percute avant le haut !</div></div>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <svg viewBox="-18 -18 36 36" style={{width:36,height:36,flexShrink:0,display:'block'}}>
+                      {[0,1,2,3,4,5,6,7].map(i=>{const a=i/8*Math.PI*2;return<circle key={i} cx={Math.cos(a)*9} cy={Math.sin(a)*9} r="4" fill="#d4eaf7"/>;})}
+                      <circle cx="0" cy="0" r="10" fill="#f0f8ff"/>
+                      <ellipse cx="1.5" cy="1" rx="5" ry="3.5" fill="#c5dff0" transform="rotate(-25,1.5,1)"/>
+                    </svg>
+                    <div><div style={{fontSize:12,fontWeight:600,color:'rgba(230,200,180,0.85)'}}>Globule blanc</div><div style={{fontSize:10,color:'rgba(190,160,140,0.55)'}}>évite ! — 1 vie</div></div>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <svg viewBox="-14 -14 28 28" style={{width:36,height:36,flexShrink:0,display:'block'}}>
+                      <line x1="0" y1="0" x2="0" y2="10" stroke="#6090e0" strokeWidth="2.5" strokeLinecap="round"/>
+                      <line x1="0" y1="0" x2="-8" y2="-8" stroke="#6090e0" strokeWidth="2.5" strokeLinecap="round"/>
+                      <line x1="0" y1="0" x2="8" y2="-8" stroke="#6090e0" strokeWidth="2.5" strokeLinecap="round"/>
+                      <circle cx="-8" cy="-8" r="3" fill="#2848cc"/>
+                      <circle cx="8" cy="-8" r="3" fill="#2848cc"/>
+                      <circle cx="0" cy="10" r="3" fill="#2848cc"/>
+                    </svg>
+                    <div><div style={{fontSize:12,fontWeight:600,color:'rgba(230,200,180,0.85)'}}>Anticorps</div><div style={{fontSize:10,color:'rgba(190,160,140,0.55)'}}>évite ! — 1 vie</div></div>
+                  </div>
+                </div>
+              </div>
+              <div style={{marginTop:14}}>
+                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginBottom:8}}>BONUS</div>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <svg viewBox="-14 -18 28 26" style={{width:36,height:32,flexShrink:0,display:'block'}}>
+                    <path d="M -10 2 Q -12 -11 0 -15 Q 12 -11 10 2 Z" fill="#d49018" stroke="#a06808" strokeWidth="1.2"/>
+                    <ellipse cx="0" cy="-11" rx="7" ry="4" fill="#f0b030"/>
+                    <path d="M -9 0 Q -7 5 0 5 Q 7 5 9 0" fill="rgba(200,230,255,0.4)"/>
+                  </svg>
+                  <div><div style={{fontSize:12,fontWeight:600,color:'rgba(230,200,180,0.85)'}}>Casque</div><div style={{fontSize:10,color:'rgba(190,160,140,0.55)'}}>bouclier 8s</div></div>
+                </div>
+              </div>
+              <div style={{marginTop:14}}>
+                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginBottom:6}}>5 ZONES À TRAVERSER</div>
+                {ZONES.map((zo,i)=>(
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:4,fontSize:13}}>
+                    <span>{discreteMode?zo.demoji:zo.emoji}</span>
+                    <span style={{color:'rgba(220,190,170,0.8)'}}>{discreteMode?zo.dname:zo.name}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{marginTop:20,padding:'12px 10px',background:'rgba(245,200,66,0.06)',border:'1px solid rgba(245,200,66,0.22)',borderRadius:12}}>
+                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.9)',marginBottom:6}}>∞ MODE INFINI</div>
+                <div style={{fontSize:12,color:'rgba(200,180,170,0.75)',lineHeight:1.6}}>Débloqué après ta <span style={{color:'rgba(245,200,66,0.9)',fontWeight:700}}>première victoire</span> (mode normal ou hardcore). Tu restes en zone 5 indéfiniment — la difficulté augmente au fil du temps. Pas de victoire possible, l'objectif est de survivre le plus longtemps.</div>
+              </div>
+              <div style={{marginTop:10,padding:'12px 10px',background:'rgba(220,40,40,0.07)',border:'1px solid rgba(220,60,60,0.28)',borderRadius:12}}>
+                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(255,100,100,0.9)',marginBottom:6}}>☠ MODE HARDCORE</div>
+                <div style={{fontSize:12,color:'rgba(200,180,170,0.75)',lineHeight:1.6}}>Une seule vie. Aucun casque. La moindre erreur est fatale. Disponible dès le début.</div>
+              </div>
+              <div style={{marginTop:10,padding:'12px 10px',background:'rgba(100,180,255,0.07)',border:'1px solid rgba(100,180,255,0.25)',borderRadius:12}}>
+                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(100,200,255,0.85)',marginBottom:6}}>👁 MODE DISCRET</div>
+                <div style={{fontSize:12,color:'rgba(200,180,170,0.75)',lineHeight:1.6}}>Active le mode discret avec le bouton 👁 sur l'écran principal pour jouer sans regards indiscrets — les queues des personnages sont masquées et les noms des zones deviennent neutres.</div>
+              </div>
+              <div style={{height:20}}></div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Achievements overlay — HTML outside SVG, même pattern que le shop */}
+      {showAch&&(
+        <div onClick={()=>setShowAch(false)} style={{position:'absolute',inset:0,background:'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',zIndex:10}}>
+          <div className="modal-wrap" style={{color:'white',fontFamily:'Sora,Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
+          <div style={{fontSize:'26px',fontWeight:800,color:P.skin1,textAlign:'center'}}>Récompenses</div>
+          <div style={{fontSize:'10.5px',letterSpacing:'2px',color:'rgba(210,170,140,0.5)',textAlign:'center',marginTop:'4px'}}>TAP N'IMPORTE OÙ POUR FERMER</div>
+          <div style={{margin:'8px auto 6px',background:'rgba(232,113,138,0.08)',border:'1px solid rgba(232,113,138,0.3)',borderRadius:14,padding:'6px 24px',textAlign:'center'}}>
+            <div style={{fontSize:9,letterSpacing:2,color:'rgba(232,140,160,0.65)'}}>RÉSERVE COLLECTÉE</div>
+            <div style={{fontSize:20,fontWeight:800,color:P.rose,marginTop:2}}>{mL.toLocaleString('fr')} mL</div>
+          </div>
+          <div style={{fontSize:11,color:'rgba(220,190,170,0.7)',textAlign:'center',marginBottom:8}}>{achSet.size} / {ACHIEVEMENTS.length} débloquées</div>
+          <div className="ach-scroll" style={{flex:1,overflowY:'auto',padding:'0 8px 30px',touchAction:'pan-y',WebkitOverflowScrolling:'touch'}}>
+            {['easy','medium','hard','extreme'].map(tier=>(
+              <div key={tier} style={{marginBottom:10}}>
+                <div style={{fontSize:10,letterSpacing:2,fontWeight:700,color:TIERS[tier].color,padding:'8px 4px 4px'}}>{TIERS[tier].label.toUpperCase()}</div>
+                {ACHIEVEMENTS.filter(a=>a.tier===tier).map(a=>{
+                  const unlocked=achSet.has(a.id);
+                  const sExt={...stats,bestInfTime:highScoresInf[0]?.time||0};
+                  const val=a.get(sExt)||0;
+                  const tgt=a.target;
+                  let pct=unlocked?1:clamp(val/tgt,0,1);
+                  let progressTxt;
+                  if(unlocked){progressTxt='Débloqué';}
+                  else if(a.fmt==='time'){progressTxt=fmtDuration(val)+' / '+fmtDuration(tgt);}
+                  else if(a.fmt==='speed'){
+                    progressTxt=sExt.bestWinTime>0?('Record : '+fmtTime(sExt.bestWinTime)+' / '+fmtTime(tgt)):('Cible : '+fmtTime(tgt));
+                    pct=sExt.bestWinTime>0?clamp(tgt/sExt.bestWinTime,0,1):0;
+                  }
+                  else{progressTxt=val+' / '+tgt;}
+                  return(
+                    <div key={a.id} style={{padding:'8px 10px',marginBottom:5,borderRadius:10,background:unlocked?'rgba(245,200,66,0.08)':'rgba(255,255,255,0.025)',border:`1px solid ${unlocked?'rgba(245,200,66,0.3)':'rgba(220,160,120,0.08)'}`}}>
+                      <div style={{display:'flex',alignItems:'flex-start'}}>
+                        <div style={{width:28,height:28,borderRadius:'50%',background:unlocked?TIERS[tier].color:'rgba(255,255,255,0.05)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,marginRight:10,color:unlocked?'white':'rgba(255,255,255,0.3)',flexShrink:0}}>{unlocked?'✓':'·'}</div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:600,color:unlocked?'rgba(230,200,180,0.95)':'rgba(180,150,130,0.5)'}}>{a.name}</div>
+                          <div style={{fontSize:10,color:unlocked?'rgba(190,160,140,0.6)':'rgba(150,125,110,0.4)',marginTop:2}}>{a.desc}</div>
+                        </div>
+                        <div style={{fontSize:12,fontWeight:700,color:unlocked?P.rose:'rgba(180,140,140,0.35)',whiteSpace:'nowrap',marginLeft:8,marginTop:2,flexShrink:0}}>+{a.ml} mL</div>
+                      </div>
+                      <div style={{marginTop:7,marginLeft:38}}>
+                        <div style={{height:4,background:'rgba(255,255,255,0.06)',borderRadius:2,overflow:'hidden'}}>
+                          <div style={{height:'100%',width:(pct*100)+'%',background:unlocked?'#7ec88a':TIERS[tier].color,borderRadius:2,transition:'width .3s'}}></div>
+                        </div>
+                        <div style={{fontSize:9.5,color:'rgba(180,150,130,0.5)',marginTop:3}}>{progressTxt}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+            <div style={{height:20}}></div>
+          </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Game/>);
+</script>
+</body>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
+</html>

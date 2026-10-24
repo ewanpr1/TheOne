@@ -2,10 +2,10 @@
   "name": "TheOne",
   "short_name": "TheOne",
   "description": "La course du sperme — sois le premier à atteindre l'ovule",
-  "start_url": "./TheOne_V5.html",
+  "start_url": "./TheOne_V6.html",
   "display": "standalone",
-  "background_color": "#14040c",
-  "theme_color": "#14040c",
+  "background_color": "#0a0108",
+  "theme_color": "#0a0108",
   "orientation": "portrait",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },

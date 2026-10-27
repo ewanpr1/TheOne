@@ -2026,34 +2026,142 @@ function SpermPlayer({
     opacity: "0.85"
   })));
 }
-function EnemyHead() {
-  const eye = cx => React.createElement("g", {
-    transform: `translate(${cx},-2)`
-  }, React.createElement("ellipse", {
-    rx: "3.9",
-    ry: "4.5",
-    fill: "url(#eyeWhite)"
-  }), React.createElement("circle", {
-    cx: cx < 0 ? 0.5 : -0.5,
-    cy: "0.6",
-    r: "2.8",
-    fill: "#c2185b"
-  }), React.createElement("circle", {
-    cx: cx < 0 ? 0.5 : -0.5,
-    cy: "0.6",
-    r: "2.8",
-    fill: "url(#irisShade)"
-  }), React.createElement("circle", {
-    cx: cx < 0 ? 0.6 : -0.4,
-    cy: "0.8",
-    r: "1.4",
-    fill: "#2a0012"
-  }), React.createElement("circle", {
-    cx: cx < 0 ? 1.6 : 0.6,
-    cy: "-0.8",
-    r: "0.95",
-    fill: "#fff"
-  }));
+const vOf = (id, n) => Math.floor(hrnd((id | 0) + 1) * n);
+const N_RIVAL = 1,
+  N_WBC = 1,
+  N_MUCUS = 1;
+function EnemyHead({
+  v = 0
+}) {
+  const SK = '#f59c7c',
+    INK = '#8e1840';
+  const eye = (cx, {
+    dx = 0,
+    lid = 0
+  } = {}) => {
+    const s = cx < 0 ? 1 : -1;
+    return React.createElement("g", {
+      transform: `translate(${cx},-2)`
+    }, React.createElement("ellipse", {
+      rx: "3.9",
+      ry: "4.5",
+      fill: "url(#eyeWhite)"
+    }), React.createElement("circle", {
+      cx: (cx < 0 ? 0.5 : -0.5) + dx,
+      cy: "0.6",
+      r: "2.8",
+      fill: "#c2185b"
+    }), React.createElement("circle", {
+      cx: (cx < 0 ? 0.5 : -0.5) + dx,
+      cy: "0.6",
+      r: "2.8",
+      fill: "url(#irisShade)"
+    }), React.createElement("circle", {
+      cx: (cx < 0 ? 0.6 : -0.4) + dx,
+      cy: "0.8",
+      r: "1.4",
+      fill: "#2a0012"
+    }), React.createElement("circle", {
+      cx: (cx < 0 ? 1.6 : 0.6) + dx,
+      cy: "-0.8",
+      r: "0.95",
+      fill: "#fff"
+    }), lid > 0 && React.createElement("path", {
+      d: `M ${-4.6 * s} -5.6 L ${4.6 * s} -5.6 L ${4.6 * s} ${-5.6 + lid} Z`,
+      fill: SK
+    }));
+  };
+  const brow = (d, w = 2) => React.createElement("path", {
+    d: d,
+    stroke: INK,
+    strokeWidth: w,
+    fill: "none",
+    strokeLinecap: "round"
+  });
+  const teeth = React.createElement("path", {
+    d: "M -5 5.2 L -3.5 7.6 L -2 5.4 L -0.5 7.8 L 1 5.4 L 2.5 7.7 L 4 5.4 L 5 5.2",
+    stroke: "#fff",
+    strokeWidth: "0.9",
+    fill: "none",
+    strokeLinejoin: "round"
+  });
+  let eyes,
+    brows,
+    mouth,
+    extra = null;
+  if (v === 1) {
+    eyes = React.createElement(React.Fragment, null, eye(-5, {
+      lid: 4.2
+    }), eye(5, {
+      lid: 4.2
+    }));
+    brows = React.createElement(React.Fragment, null, brow('M -10 -11.5 L -2 -6.2', 2.5), brow('M 2 -6.2 L 10 -11.5', 2.5));
+    mouth = React.createElement("g", null, React.createElement("path", {
+      d: "M -6.5 4.6 Q 0 12.5 6.5 4.6 Z",
+      fill: "#4a0618",
+      stroke: INK,
+      strokeWidth: "1",
+      strokeLinejoin: "round"
+    }), teeth);
+  } else if (v === 2) {
+    eyes = React.createElement(React.Fragment, null, eye(-5, {
+      dx: 1.3,
+      lid: 2.2
+    }), eye(5, {
+      dx: 1.3
+    }));
+    brows = React.createElement(React.Fragment, null, brow('M -9 -7.8 L -2 -7.2'), brow('M 2.5 -9.6 Q 6.5 -13.6 10.5 -9.8'));
+    mouth = React.createElement("g", null, brow('M -5.5 6.4 Q 1 8.4 6.6 3.4', 1.7), brow('M 6.6 3.4 L 8.2 2', 1.3));
+  } else if (v === 3) {
+    eyes = React.createElement(React.Fragment, null, eye(-5, {
+      lid: 5
+    }), eye(5, {
+      lid: 5
+    }));
+    brows = React.createElement(React.Fragment, null, brow('M -10.8 -12.4 L -1.4 -5.6', 2.9), brow('M 1.4 -5.6 L 10.8 -12.4', 2.9));
+    mouth = React.createElement("g", null, React.createElement("ellipse", {
+      cx: "0",
+      cy: "7.6",
+      rx: "4.4",
+      ry: "3.5",
+      fill: "#4a0618",
+      stroke: INK,
+      strokeWidth: "1"
+    }), React.createElement("path", {
+      d: "M -2.6 5.2 H 2.6 V 6.6 H -2.6 Z",
+      fill: "#fff"
+    }));
+    extra = React.createElement("path", {
+      d: "M 8.4 -12.6 l3.2 0 M 10 -14.2 l0 3.2",
+      stroke: "#d81e4a",
+      strokeWidth: "1.3",
+      strokeLinecap: "round"
+    });
+  } else if (v === 4) {
+    eyes = React.createElement(React.Fragment, null, eye(-5, {
+      dx: -1,
+      lid: 1.6
+    }), eye(5, {
+      dx: -1
+    }));
+    brows = React.createElement(React.Fragment, null, brow('M -9 -8.8 L -2 -6.8'), brow('M 2 -6.8 Q 6 -11 10 -10'));
+    mouth = React.createElement("g", null, React.createElement("path", {
+      d: "M -7.4 4.2 Q 0 12.5 7.4 4.2 Z",
+      fill: "#4a0618",
+      stroke: INK,
+      strokeWidth: "1",
+      strokeLinejoin: "round"
+    }), React.createElement("path", {
+      d: "M -6 5.4 H 6",
+      stroke: "#fff",
+      strokeWidth: "1.7",
+      strokeLinecap: "round"
+    }));
+  } else {
+    eyes = React.createElement(React.Fragment, null, eye(-5), eye(5));
+    brows = React.createElement(React.Fragment, null, brow('M -9 -8.6 L -2 -5.8'), brow('M 2 -5.8 L 9 -8.6'));
+    mouth = brow('M -3.2 6.2 Q 0 4.6 3.2 6.2', 1.4);
+  }
   return React.createElement("g", null, React.createElement("ellipse", {
     cx: "0",
     cy: "3.5",
@@ -2066,7 +2174,7 @@ function EnemyHead() {
     cy: "0",
     rx: "15",
     ry: "16",
-    fill: "#f59c7c"
+    fill: SK
   }), React.createElement("ellipse", {
     cx: "0",
     cy: "0",
@@ -2086,23 +2194,7 @@ function EnemyHead() {
     stroke: "#fff",
     strokeOpacity: "0.28",
     strokeWidth: "0.8"
-  }), eye(-5), eye(5), React.createElement("path", {
-    d: "M -9 -8.6 L -2 -5.8",
-    stroke: "#8e1840",
-    strokeWidth: "2",
-    strokeLinecap: "round"
-  }), React.createElement("path", {
-    d: "M 2 -5.8 L 9 -8.6",
-    stroke: "#8e1840",
-    strokeWidth: "2",
-    strokeLinecap: "round"
-  }), React.createElement("path", {
-    d: "M -3.2 6.2 Q 0 4.6 3.2 6.2",
-    stroke: "#8e1840",
-    strokeWidth: "1.4",
-    fill: "none",
-    strokeLinecap: "round"
-  }), React.createElement("ellipse", {
+  }), eyes, brows, mouth, extra, React.createElement("ellipse", {
     cx: "-5.5",
     cy: "-9.5",
     rx: "4.6",
@@ -2117,7 +2209,8 @@ function SpermEnemy({
   y,
   wob,
   vx,
-  svx
+  svx,
+  v = 0
 }) {
   const pts = [];
   for (let i = 0; i <= 16; i++) {
@@ -2142,11 +2235,13 @@ function SpermEnemy({
     strokeWidth: "1",
     fill: "none",
     strokeLinecap: "round"
-  })), SPR.enemy ? React.createElement(Img, {
-    k: "enemy",
+  })), SPR['enemy' + v] ? React.createElement(Img, {
+    k: 'enemy' + v,
     x: 0,
     y: 0
-  }) : React.createElement(EnemyHead, null));
+  }) : React.createElement(EnemyHead, {
+    v: v
+  }));
 }
 function RivalVictor({
   wob
@@ -2357,11 +2452,27 @@ function Img({
 function WBCVec({
   x,
   y,
-  pulse
+  pulse,
+  v = 0
 }) {
   const r = 27 + Math.sin(pulse * 0.09) * 2;
-  const mem = smoothClosed(blobPts(x, y, 14, i => r + Math.sin(pulse * 0.07 + i * 2.1) * 2.2 + Math.sin(pulse * 0.035 + i * 0.9) * 1.6));
-  const nr = pulse * 0.012;
+  const wob = i => Math.sin(pulse * 0.07 + i * 2.1) * 2.2 + Math.sin(pulse * 0.035 + i * 0.9) * 1.6;
+  let rf, nuclei;
+  if (v === 1) {
+    rf = (i, t) => {
+      const rx = r + 3,
+        ry = r - 4;
+      return 1 / Math.sqrt((Math.cos(t) / rx) ** 2 + (Math.sin(t) / ry) ** 2) + wob(i) * 0.6;
+    };
+    nuclei = [[-6, 7, 6.4], [6.5, 7.5, 6.4]];
+  } else if (v === 2) {
+    rf = (i, t) => r - 2 + Math.cos(t * 6 + 0.4) * 3.8 + wob(i) * 0.3;
+    nuclei = [[0, 5.5, 4.6], [5.4, 9, 4.6], [-5.4, 9, 4.6], [0, 12.6, 4.6]];
+  } else {
+    rf = i => r + wob(i);
+    nuclei = [[1 + 5, 7, 6.4], [1 + 5 * Math.cos(2.1), 7 + 3.5 * Math.sin(2.1), 6.4], [1 + 5 * Math.cos(4.2), 7 + 3.5 * Math.sin(4.2), 6.4]];
+  }
+  const mem = smoothClosed(blobPts(x, y, v === 2 ? 24 : 14, rf));
   return React.createElement("g", null, React.createElement("circle", {
     cx: x,
     cy: y,
@@ -2380,7 +2491,7 @@ function WBCVec({
     strokeOpacity: "0.85",
     strokeWidth: "1.4"
   }), [0, 1, 2, 3, 4, 5, 6, 7].map(i => {
-    const a = i * 0.83 + pulse * 0.004,
+    const a = i * 0.83,
       d = 9 + i % 3 * 5.5;
     return React.createElement("circle", {
       key: i,
@@ -2390,16 +2501,13 @@ function WBCVec({
       fill: "#8fa6d8",
       opacity: "0.5"
     });
-  }), [0, 1, 2].map(i => {
-    const a = nr + i * 2.1;
-    return React.createElement("circle", {
-      key: i,
-      cx: f1(x + 1 + Math.cos(a) * 5),
-      cy: f1(y + 7 + Math.sin(a) * 3.5),
-      r: "6.4",
-      fill: "url(#wbcNuc)"
-    });
-  }), React.createElement("ellipse", {
+  }), nuclei.map(([nx, ny, nr], i) => React.createElement("circle", {
+    key: i,
+    cx: f1(x + nx),
+    cy: f1(y + ny),
+    r: nr,
+    fill: "url(#wbcNuc)"
+  })), React.createElement("ellipse", {
     cx: x - 1.5,
     cy: y + 4.5,
     rx: "2.8",
@@ -2433,26 +2541,37 @@ function WBCVec({
   }));
 }
 function WBC(p) {
-  if (!SPR.wbc) return React.createElement(WBCVec, p);
+  const v = p.v || 0,
+    rot = p.rot || 0,
+    fl = p.flip ? -1 : 1;
+  if (!SPR["wbc" + v]) return React.createElement("g", {
+    transform: `translate(${p.x},${p.y}) rotate(${rot}) scale(${fl},1) translate(${-p.x},${-p.y})`
+  }, React.createElement(WBCVec, p));
   const a = Math.sin(p.pulse * 0.09),
     b = Math.sin(p.pulse * 0.09 + 1.3);
   return React.createElement(Img, {
-    k: "wbc",
+    k: "wbc" + v,
     x: p.x,
     y: p.y,
-    sx: 1 + a * 0.05,
+    rot: rot,
+    sx: fl * (1 + a * 0.05),
     sy: 1 - b * 0.05
   });
 }
+const MUCUS_BUBBLES = [[[-0.34, 0.2, 0.2], [0.32, 0.28, 0.12], [0.06, -0.08, 0.08], [-0.05, 0.52, 0.07]], [[-0.5, 0.08, 0.17], [0.12, 0.24, 0.12], [0.55, -0.06, 0.09], [0, -0.2, 0.07]], [[-0.22, 0.3, 0.18], [0.32, -0.1, 0.13], [0.08, 0.1, 0.07], [-0.38, -0.15, 0.06]]];
 function MucusVec({
   x,
   y,
   pulse,
-  r
+  r,
+  v = 0
 }) {
   const w1 = Math.sin(pulse * 0.08) * 3;
-  const blob = smoothClosed(blobPts(x, y, 10, i => r + Math.sin(pulse * 0.05 + i * 1.9) * 3 + (i % 2 ? w1 : -w1) * 0.5));
+  const base = i => (i % 2 ? w1 : -w1) * 0.5 + Math.sin(pulse * 0.05 + i * 1.9) * 3;
+  const rf = v === 1 ? (i, t) => r * (1 + 0.27 * Math.cos(2 * t)) * 0.94 + base(i) : v === 2 ? (i, t) => r * (1 + 0.2 * Math.cos(3 * t + 0.5)) + base(i) : i => r + base(i);
+  const blob = smoothClosed(blobPts(x, y, v === 0 ? 10 : 14, rf));
   const drip = Math.sin(pulse * 0.04) * 0.5 + 0.5;
+  const dx = [0.18, -0.32, 0.38][v] || 0.18;
   return React.createElement("g", null, React.createElement("circle", {
     cx: x,
     cy: y,
@@ -2460,8 +2579,8 @@ function MucusVec({
     fill: "url(#glowLime)",
     opacity: "0.4"
   }), React.createElement("ellipse", {
-    cx: x + r * 0.18,
-    cy: y + r * 0.92 + drip * 5,
+    cx: x + r * dx,
+    cy: y + r * (v === 1 ? 0.62 : 0.92) + drip * 5,
     rx: 2.6 + drip,
     ry: 3.6 + drip * 2,
     fill: "#a6dc3a",
@@ -2472,7 +2591,7 @@ function MucusVec({
     stroke: "#d8fa7a",
     strokeOpacity: "0.75",
     strokeWidth: "1.3"
-  }), [[-0.34, 0.2, 0.2], [0.32, 0.28, 0.12], [0.06, -0.08, 0.08], [-0.05, 0.52, 0.07]].map(([bx, by, br], i) => React.createElement("g", {
+  }), MUCUS_BUBBLES[v].map(([bx, by, br], i) => React.createElement("g", {
     key: i
   }, React.createElement("circle", {
     cx: f1(x + bx * r + Math.sin(pulse * 0.03 + i) * 1.5),
@@ -2500,13 +2619,18 @@ function MucusVec({
   }));
 }
 function Mucus(p) {
-  if (!SPR.mucus) return React.createElement(MucusVec, p);
+  const v = p.v || 0,
+    rot = p.rot || 0;
+  if (!SPR["mucus" + v]) return React.createElement("g", {
+    transform: `rotate(${rot},${p.x},${p.y})`
+  }, React.createElement(MucusVec, p));
   const k = p.r / 25,
     a = Math.sin(p.pulse * 0.08) * 0.06;
   return React.createElement(Img, {
-    k: "mucus",
+    k: "mucus" + v,
     x: p.x,
     y: p.y,
+    rot: rot,
     sx: k * (1 + a),
     sy: k * (1 - a)
   });
@@ -2823,36 +2947,6 @@ function Ovule(p) {
   }));
 }
 const SPR_DEFS = {
-  enemy: {
-    w: 48,
-    h: 52,
-    cx: 24,
-    cy: 26,
-    el: () => React.createElement(EnemyHead, null)
-  },
-  wbc: {
-    w: 100,
-    h: 100,
-    cx: 50,
-    cy: 50,
-    el: () => React.createElement(WBCVec, {
-      x: 0,
-      y: 0,
-      pulse: 0
-    })
-  },
-  mucus: {
-    w: 100,
-    h: 100,
-    cx: 50,
-    cy: 50,
-    el: () => React.createElement(MucusVec, {
-      x: 0,
-      y: 0,
-      pulse: 0,
-      r: 25
-    })
-  },
   ab: {
     w: 84,
     h: 84,
@@ -2897,11 +2991,45 @@ const SPR_DEFS = {
     })
   }
 };
+for (let i = 0; i < N_RIVAL; i++) SPR_DEFS['enemy' + i] = {
+  w: 48,
+  h: 52,
+  cx: 24,
+  cy: 26,
+  el: () => React.createElement(EnemyHead, {
+    v: i
+  })
+};
+for (let i = 0; i < N_WBC; i++) SPR_DEFS['wbc' + i] = {
+  w: 100,
+  h: 100,
+  cx: 50,
+  cy: 50,
+  el: () => React.createElement(WBCVec, {
+    x: 0,
+    y: 0,
+    pulse: 0,
+    v: i
+  })
+};
+for (let i = 0; i < N_MUCUS; i++) SPR_DEFS['mucus' + i] = {
+  w: 100,
+  h: 100,
+  cx: 50,
+  cy: 50,
+  el: () => React.createElement(MucusVec, {
+    x: 0,
+    y: 0,
+    pulse: 0,
+    r: 25,
+    v: i
+  })
+};
 function bakeSprites() {
   if (bakeSprites.started) return;
   bakeSprites.started = true;
   const SS = Math.min(window.devicePixelRatio || 1, 2.5);
-  const keys = Object.keys(SPR_DEFS);
+  const keys = Object.keys(SPR_DEFS).sort((a, b) => (a.startsWith("ov") ? 1 : 0) - (b.startsWith("ov") ? 1 : 0));
   let i = 0;
   const next = () => {
     if (i >= keys.length) return;
@@ -3213,6 +3341,812 @@ function initState() {
     phase: 'start',
     zoneAnn: null
   };
+}
+function ModalShell({
+  onClose,
+  title,
+  sub,
+  SAT,
+  SAB,
+  children
+}) {
+  return React.createElement("div", {
+    onClick: onClose,
+    style: {
+      position: 'absolute',
+      inset: 0,
+      background: 'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',
+      backdropFilter: 'blur(14px)',
+      WebkitBackdropFilter: 'blur(14px)',
+      zIndex: 10
+    }
+  }, React.createElement("div", {
+    className: "modal-wrap",
+    style: {
+      color: 'white',
+      fontFamily: 'Sora,Helvetica Neue,Arial',
+      paddingTop: 20 + SAT,
+      paddingBottom: 8 + SAB
+    }
+  }, React.createElement("div", {
+    style: {
+      position: 'relative',
+      textAlign: 'center',
+      padding: '0 44px'
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 25,
+      fontWeight: 800,
+      letterSpacing: -0.5,
+      background: 'linear-gradient(180deg,#fff9f4,#ffcdb5 55%,#ff8fa8)',
+      WebkitBackgroundClip: 'text',
+      backgroundClip: 'text',
+      color: 'transparent',
+      WebkitTextFillColor: 'transparent'
+    }
+  }, title), React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: 'rgba(255,225,215,0.55)',
+      marginTop: 4
+    }
+  }, sub), React.createElement("div", {
+    style: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'rgba(255,255,255,0.08)',
+      border: '1px solid rgba(255,255,255,0.18)'
+    }
+  }, React.createElement("svg", {
+    viewBox: "-6 -6 12 12",
+    style: {
+      width: 12,
+      height: 12,
+      display: 'block'
+    }
+  }, React.createElement("path", {
+    d: "M -4.5 -4.5 L 4.5 4.5 M 4.5 -4.5 L -4.5 4.5",
+    stroke: "#fff",
+    strokeWidth: "1.6",
+    strokeLinecap: "round"
+  })))), React.createElement("div", {
+    className: "ach-scroll",
+    style: {
+      flex: 1,
+      overflowY: 'auto',
+      padding: '14px 4px 30px',
+      touchAction: 'pan-y',
+      WebkitOverflowScrolling: 'touch'
+    }
+  }, children)));
+}
+const Sec = ({
+  children,
+  color = '#ff8fa8',
+  top = 22
+}) => React.createElement("div", {
+  style: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    margin: `${top}px 2px 10px`
+  }
+}, React.createElement("div", {
+  style: {
+    width: 3,
+    height: 13,
+    borderRadius: 2,
+    background: color
+  }
+}), React.createElement("div", {
+  style: {
+    fontSize: 11,
+    fontWeight: 800,
+    letterSpacing: 2,
+    color: 'rgba(255,235,225,0.8)'
+  }
+}, children));
+const Chip = ({
+  c,
+  children
+}) => React.createElement("span", {
+  style: {
+    fontSize: 9.5,
+    fontWeight: 800,
+    letterSpacing: 0.6,
+    padding: '3px 8px',
+    borderRadius: 99,
+    background: `${c}22`,
+    border: `1px solid ${c}66`,
+    color: c,
+    whiteSpace: 'nowrap'
+  }
+}, children);
+const card = {
+  borderRadius: 16,
+  background: 'linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))',
+  border: '1px solid rgba(255,255,255,0.1)'
+};
+const Badge = ({
+  color,
+  vb = '-30 -30 60 60',
+  children
+}) => React.createElement("div", {
+  style: {
+    width: 54,
+    height: 54,
+    borderRadius: 16,
+    flexShrink: 0,
+    background: `linear-gradient(145deg,${color}38,${color}0e)`,
+    border: `1px solid ${color}55`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }
+}, React.createElement("svg", {
+  viewBox: vb,
+  style: {
+    width: 46,
+    height: 46,
+    display: 'block'
+  }
+}, children));
+const Row = ({
+  badge,
+  name,
+  desc,
+  chip
+}) => React.createElement("div", {
+  style: {
+    ...card,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '10px 12px',
+    marginBottom: 8
+  }
+}, badge, React.createElement("div", {
+  style: {
+    flex: 1,
+    minWidth: 0
+  }
+}, React.createElement("div", {
+  style: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap'
+  }
+}, React.createElement("span", {
+  style: {
+    fontSize: 14,
+    fontWeight: 700
+  }
+}, name), chip), React.createElement("div", {
+  style: {
+    fontSize: 12,
+    lineHeight: '17px',
+    color: 'rgba(255,225,215,0.62)',
+    marginTop: 3
+  }
+}, desc)));
+const Step = ({
+  n,
+  title,
+  desc
+}) => React.createElement("div", {
+  style: {
+    display: 'flex',
+    gap: 12,
+    alignItems: 'flex-start',
+    marginBottom: 12
+  }
+}, React.createElement("div", {
+  style: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 13,
+    fontWeight: 800,
+    color: '#3a1d02',
+    background: 'linear-gradient(135deg,#ffe88f,#ffc43f)',
+    boxShadow: '0 4px 14px rgba(255,196,63,0.35)'
+  }
+}, n), React.createElement("div", null, React.createElement("div", {
+  style: {
+    fontSize: 14,
+    fontWeight: 700
+  }
+}, title), React.createElement("div", {
+  style: {
+    fontSize: 12,
+    lineHeight: '17px',
+    color: 'rgba(255,225,215,0.62)',
+    marginTop: 2
+  }
+}, desc)));
+function InfoModal({
+  onClose,
+  SAT,
+  SAB,
+  discrete
+}) {
+  const hints = ['Rivaux et mucus', 'Globules blancs', 'Anticorps', 'Tout à la fois, en plus rapide', 'Trouve l’ouverture de l’ovule'];
+  return React.createElement(ModalShell, {
+    onClose: onClose,
+    title: "Comment jouer",
+    sub: "Touche n\u2019importe o\xF9 pour fermer",
+    SAT: SAT,
+    SAB: SAB
+  }, React.createElement("div", {
+    style: {
+      ...card,
+      padding: '14px 14px 12px',
+      border: '1px solid rgba(255,210,94,0.35)',
+      background: 'linear-gradient(180deg,rgba(255,210,94,0.12),rgba(255,210,94,0.03))'
+    }
+  }, React.createElement("svg", {
+    viewBox: "0 0 300 96",
+    style: {
+      width: '100%',
+      height: 96,
+      display: 'block'
+    }
+  }, React.createElement("g", {
+    transform: "translate(240,48) scale(0.36)"
+  }, React.createElement(OvuleVec, {
+    x: 0,
+    y: 0,
+    pulse: 0,
+    angle: Math.PI
+  })), React.createElement("path", {
+    d: "M 112 48 L 186 48",
+    stroke: "#ffd25e",
+    strokeWidth: "2.4",
+    strokeDasharray: "2 8",
+    strokeLinecap: "round",
+    opacity: "0.8"
+  }), React.createElement("path", {
+    d: "M 180 41 L 190 48 L 180 55",
+    stroke: "#ffd25e",
+    strokeWidth: "2.4",
+    fill: "none",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    opacity: "0.9"
+  }), React.createElement("g", {
+    transform: "translate(72,48) rotate(90) scale(0.62)"
+  }, React.createElement(SpermPlayer, {
+    x: 0,
+    y: 0,
+    wob: 30,
+    hit: false,
+    shield: false,
+    tilt: 0,
+    skin: SKINS[0]
+  }))), React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 800,
+      textAlign: 'center',
+      marginTop: 2
+    }
+  }, discrete ? 'Atteins la cible en premier' : 'Atteins l’ovule en premier'), React.createElement("div", {
+    style: {
+      fontSize: 12,
+      lineHeight: '18px',
+      color: 'rgba(255,235,215,0.68)',
+      textAlign: 'center',
+      marginTop: 4
+    }
+  }, "Traverse 5 zones sans perdre tes 3 vies. ", discrete ? 'Tu joues le point blanc.' : 'Tu joues le spermatozoïde blanc.')), React.createElement(Sec, {
+    color: "#ffd25e"
+  }, "EN 4 \xC9TAPES"), React.createElement(Step, {
+    n: "1",
+    title: "Glisse ton doigt",
+    desc: "Ton personnage suit ton doigt, n\u2019importe o\xF9 sur l\u2019\xE9cran."
+  }), React.createElement(Step, {
+    n: "2",
+    title: "\xC9limine les rivaux",
+    desc: "Fonce dans les rivaux pour les \xE9liminer. Si l\u2019un d\u2019eux atteint le haut de l\u2019\xE9cran, tu perds 1 vie."
+  }), React.createElement(Step, {
+    n: "3",
+    title: "\xC9vite les d\xE9fenses",
+    desc: "Globules blancs et anticorps te font perdre 1 vie. Le mucus te ralentit."
+  }), React.createElement(Step, {
+    n: "4",
+    title: "Entre dans l\u2019ovule",
+    desc: "Dans la derni\xE8re zone, passe par l\u2019ouverture qui tourne. Toucher la membrane co\xFBte 1 vie."
+  }), React.createElement(Sec, {
+    color: "#ff8fa8"
+  }, "CE QUE TU CROISES"), React.createElement(Row, {
+    color: "#ff8fa8",
+    name: "Rival",
+    chip: React.createElement(Chip, {
+      c: "#ff8fa8"
+    }, "\xC0 \xC9LIMINER"),
+    desc: "Il remonte vers le haut : percute-le avant qu\u2019il sorte.",
+    badge: React.createElement(Badge, {
+      color: "#ff8fa8",
+      vb: "-26 -26 52 52"
+    }, React.createElement("g", {
+      transform: "scale(1.05)"
+    }, React.createElement(EnemyHead, null)))
+  }), React.createElement(Row, {
+    name: "Mucus",
+    chip: React.createElement(Chip, {
+      c: "#c4f24a"
+    }, "RALENTIT"),
+    desc: "Il te ralentit pendant 1,4 s. Il dispara\xEEt quand tu le touches.",
+    badge: React.createElement(Badge, {
+      color: "#c4f24a",
+      vb: "-34 -34 68 68"
+    }, React.createElement("g", {
+      transform: "scale(0.78)"
+    }, React.createElement(MucusVec, {
+      x: 0,
+      y: 0,
+      pulse: 0,
+      r: 25
+    })))
+  }), React.createElement(Row, {
+    name: "Globule blanc",
+    chip: React.createElement(Chip, {
+      c: "#ff6b7e"
+    }, "\u22121 VIE"),
+    desc: "Il te suit lentement. Garde tes distances.",
+    badge: React.createElement(Badge, {
+      color: "#9fc4ff",
+      vb: "-34 -34 68 68"
+    }, React.createElement("g", {
+      transform: "scale(0.72)"
+    }, React.createElement(WBCVec, {
+      x: 0,
+      y: 0,
+      pulse: 0
+    })))
+  }), React.createElement(Row, {
+    name: "Anticorps",
+    chip: React.createElement(Chip, {
+      c: "#ff6b7e"
+    }, "\u22121 VIE"),
+    desc: "Il fonce vers toi : change de direction au dernier moment.",
+    badge: React.createElement(Badge, {
+      color: "#5b8cff",
+      vb: "-34 -34 68 68"
+    }, React.createElement("g", {
+      transform: "scale(0.8)"
+    }, React.createElement(AntibodyVec, {
+      x: 0,
+      y: 0,
+      angle: 0,
+      pulse: 0
+    })))
+  }), React.createElement(Row, {
+    name: "Casque",
+    chip: React.createElement(Chip, {
+      c: "#ffd25e"
+    }, "BOUCLIER 8 S"),
+    desc: "Ramasse-le : il absorbe le prochain coup. Absent en mode Hardcore.",
+    badge: React.createElement(Badge, {
+      color: "#ffd25e",
+      vb: "-34 -34 68 68"
+    }, React.createElement("g", {
+      transform: "scale(0.78)"
+    }, React.createElement(HelmetBody, null)))
+  }), React.createElement(Sec, {
+    color: "#7cc4ff"
+  }, "TON PARCOURS"), React.createElement("div", {
+    style: {
+      ...card,
+      padding: '14px 14px 6px'
+    }
+  }, ZONES.map((zo, i) => React.createElement("div", {
+    key: i,
+    style: {
+      display: 'flex',
+      gap: 12,
+      position: 'relative',
+      paddingBottom: 12
+    }
+  }, i < ZONES.length - 1 && React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: 7,
+      top: 16,
+      bottom: -4,
+      width: 2,
+      background: `linear-gradient(${zo.acc},${ZONES[i + 1].acc})`,
+      opacity: 0.5
+    }
+  }), React.createElement("div", {
+    style: {
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      flexShrink: 0,
+      marginTop: 1,
+      background: zo.acc,
+      boxShadow: `0 0 12px ${zo.acc}`,
+      border: '2px solid rgba(10,2,10,0.9)'
+    }
+  }), React.createElement("div", null, React.createElement("div", {
+    style: {
+      fontSize: 13.5,
+      fontWeight: 700
+    }
+  }, discrete ? zo.dname : zo.name), React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: 'rgba(255,225,215,0.55)',
+      marginTop: 1
+    }
+  }, hints[i]))))), React.createElement(Sec, {
+    color: "#c88bff"
+  }, "MODES DE JEU"), [{
+    c: '#ffd25e',
+    t: 'Mode Infini ∞',
+    d: 'Débloqué après ta première victoire. Tu restes dans la dernière zone, de plus en plus dure. Ton record est ton temps de survie.'
+  }, {
+    c: '#ff6b7e',
+    t: 'Mode Hardcore',
+    d: 'Une seule vie et aucun casque. Disponible dès le début.'
+  }, {
+    c: '#7cc4ff',
+    t: 'Mode Discret',
+    d: 'Bouton œil sur l’accueil : masque les queues et rend les noms de zones neutres.'
+  }].map(m => React.createElement("div", {
+    key: m.t,
+    style: {
+      ...card,
+      padding: '12px 14px',
+      marginBottom: 8,
+      borderColor: `${m.c}44`,
+      background: `linear-gradient(180deg,${m.c}14,${m.c}05)`
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 13.5,
+      fontWeight: 800,
+      color: m.c
+    }
+  }, m.t), React.createElement("div", {
+    style: {
+      fontSize: 12,
+      lineHeight: '18px',
+      color: 'rgba(255,225,215,0.66)',
+      marginTop: 3
+    }
+  }, m.d))), React.createElement(Sec, {
+    color: "#ff8fa8"
+  }, "GAGNER DES mL"), React.createElement("div", {
+    style: {
+      ...card,
+      padding: '12px 14px'
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 12,
+      lineHeight: '19px',
+      color: 'rgba(255,225,215,0.7)'
+    }
+  }, "Chaque partie rapporte des mL : ", React.createElement("b", {
+    style: {
+      color: '#fff'
+    }
+  }, "1 pour 10 rivaux"), " \xE9limin\xE9s et ", React.createElement("b", {
+    style: {
+      color: '#fff'
+    }
+  }, "15 pour une victoire"), ". Les succ\xE8s et les d\xE9fis en rapportent aussi. D\xE9pense-les dans la boutique pour d\xE9bloquer de nouveaux skins.")));
+}
+const StatTile = ({
+  label,
+  value,
+  sub,
+  c = '#fff'
+}) => React.createElement("div", {
+  style: {
+    ...card,
+    flex: '1 1 calc(50% - 5px)',
+    minWidth: 0,
+    boxSizing: 'border-box',
+    padding: '12px 12px 11px',
+    position: 'relative',
+    overflow: 'hidden'
+  }
+}, React.createElement("div", {
+  style: {
+    position: 'absolute',
+    left: 0,
+    top: 12,
+    bottom: 12,
+    width: 3,
+    borderRadius: 2,
+    background: c
+  }
+}), React.createElement("div", {
+  style: {
+    fontSize: 9.5,
+    fontWeight: 700,
+    letterSpacing: 1.4,
+    color: 'rgba(255,225,215,0.55)',
+    paddingLeft: 6
+  }
+}, label), React.createElement("div", {
+  style: {
+    fontSize: 24,
+    fontWeight: 800,
+    color: c,
+    marginTop: 5,
+    paddingLeft: 6,
+    letterSpacing: -0.5
+  }
+}, value), sub && React.createElement("div", {
+  style: {
+    fontSize: 10.5,
+    color: 'rgba(255,225,215,0.45)',
+    marginTop: 2,
+    paddingLeft: 6
+  }
+}, sub));
+function StatsModal({
+  onClose,
+  SAT,
+  SAB,
+  stats,
+  bestScore,
+  bestInf
+}) {
+  const games = stats.games || 0,
+    wins = stats.wins || 0,
+    losses = Math.max(0, games - wins);
+  const rate = games > 0 ? wins / games : 0;
+  const tN = stats.timeNorm || 0,
+    tI = stats.timeInf || 0,
+    tT = tN + tI;
+  const R = 34,
+    C = 2 * Math.PI * R;
+  const none = '—';
+  return React.createElement(ModalShell, {
+    onClose: onClose,
+    title: "Statistiques",
+    sub: "Sauvegard\xE9es sur cet appareil",
+    SAT: SAT,
+    SAB: SAB
+  }, React.createElement("div", {
+    style: {
+      ...card,
+      padding: '16px 16px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 16
+    }
+  }, React.createElement("svg", {
+    viewBox: "-44 -44 88 88",
+    style: {
+      width: 92,
+      height: 92,
+      flexShrink: 0,
+      display: 'block'
+    }
+  }, React.createElement("circle", {
+    r: R,
+    fill: "none",
+    stroke: "rgba(255,255,255,0.1)",
+    strokeWidth: "8"
+  }), React.createElement("circle", {
+    r: R,
+    fill: "none",
+    stroke: "url(#goldMetal)",
+    strokeWidth: "8",
+    strokeLinecap: "round",
+    strokeDasharray: `${C * rate} ${C}`,
+    transform: "rotate(-90)"
+  }), React.createElement("text", {
+    y: "2",
+    textAnchor: "middle",
+    fill: "#fff",
+    fontSize: "19",
+    fontWeight: "800",
+    fontFamily: "Sora,Helvetica Neue,Arial"
+  }, Math.round(rate * 100), "%"), React.createElement("text", {
+    y: "15",
+    textAnchor: "middle",
+    fill: "rgba(255,225,215,0.5)",
+    fontSize: "7",
+    fontWeight: "700",
+    letterSpacing: "1.2",
+    fontFamily: "Sora,Helvetica Neue,Arial"
+  }, "VICTOIRES")), React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 30,
+      fontWeight: 800,
+      letterSpacing: -1,
+      lineHeight: '32px'
+    }
+  }, games), React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1.4,
+      color: 'rgba(255,225,215,0.55)',
+      marginBottom: 10
+    }
+  }, games > 1 ? 'PARTIES JOUÉES' : 'PARTIE JOUÉE'), React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6,
+      flexWrap: 'wrap'
+    }
+  }, React.createElement(Chip, {
+    c: "#ffd25e"
+  }, wins, " ", wins > 1 ? 'victoires' : 'victoire'), React.createElement(Chip, {
+    c: "#ff8fa8"
+  }, losses, " ", losses > 1 ? 'défaites' : 'défaite')))), games === 0 && React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      fontSize: 12,
+      color: 'rgba(255,225,215,0.5)',
+      marginTop: 12
+    }
+  }, "Joue une premi\xE8re partie pour remplir tes statistiques."), React.createElement(Sec, {
+    color: "#ffd25e"
+  }, "RECORDS"), React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 10
+    }
+  }, React.createElement(StatTile, {
+    label: "MEILLEUR SCORE",
+    value: bestScore > 0 ? bestScore : none,
+    sub: "rivaux en une partie",
+    c: "#ff8fa8"
+  }), React.createElement(StatTile, {
+    label: "VICTOIRE RAPIDE",
+    value: stats.bestWinTime ? fmtTime(stats.bestWinTime) : none,
+    sub: "meilleur temps, mode normal",
+    c: "#ffd25e"
+  }), React.createElement(StatTile, {
+    label: "RECORD INFINI",
+    value: bestInf > 0 ? fmtTime(bestInf) : none,
+    sub: "temps de survie",
+    c: "#c88bff"
+  }), React.createElement(StatTile, {
+    label: "MEILLEURE S\xC9RIE",
+    value: stats.bestStreak ? `×${stats.bestStreak}` : none,
+    sub: "victoires d\u2019affil\xE9e",
+    c: "#7cc4ff"
+  })), React.createElement(Sec, {
+    color: "#ff8fa8"
+  }, "AU TOTAL"), React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 10
+    }
+  }, React.createElement(StatTile, {
+    label: "RIVAUX \xC9LIMIN\xC9S",
+    value: (stats.rivals || 0).toLocaleString('fr'),
+    c: "#ff8fa8"
+  }), React.createElement(StatTile, {
+    label: "CASQUES RAMASS\xC9S",
+    value: (stats.helmets || 0).toLocaleString('fr'),
+    c: "#ffd25e"
+  })), games > 0 && React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: 'rgba(255,225,215,0.5)',
+      textAlign: 'center',
+      marginTop: 10
+    }
+  }, "Soit en moyenne ", React.createElement("b", {
+    style: {
+      color: 'rgba(255,235,225,0.85)'
+    }
+  }, Math.round((stats.rivals || 0) / games)), " rivaux \xE9limin\xE9s par partie."), React.createElement(Sec, {
+    color: "#7cc4ff"
+  }, "TEMPS DE JEU"), React.createElement("div", {
+    style: {
+      ...card,
+      padding: '14px 14px 12px'
+    }
+  }, React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'baseline',
+      justifyContent: 'space-between'
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1.4,
+      color: 'rgba(255,225,215,0.55)'
+    }
+  }, "TOTAL"), React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 800,
+      letterSpacing: -0.5
+    }
+  }, fmtDuration(tT))), React.createElement("div", {
+    style: {
+      display: 'flex',
+      height: 9,
+      borderRadius: 5,
+      overflow: 'hidden',
+      background: 'rgba(255,255,255,0.08)',
+      margin: '10px 0 12px'
+    }
+  }, tT > 0 && React.createElement("div", {
+    style: {
+      width: `${tN / tT * 100}%`,
+      background: 'linear-gradient(90deg,#ff9e8a,#ff6a8a)'
+    }
+  }), tT > 0 && React.createElement("div", {
+    style: {
+      width: `${tI / tT * 100}%`,
+      background: 'linear-gradient(90deg,#ffe88f,#ffc43f)'
+    }
+  })), React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      fontSize: 12
+    }
+  }, React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 7
+    }
+  }, React.createElement("div", {
+    style: {
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      background: '#ff6a8a'
+    }
+  }), React.createElement("span", {
+    style: {
+      color: 'rgba(255,225,215,0.65)'
+    }
+  }, "Normal"), React.createElement("b", null, fmtDuration(tN))), React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 7
+    }
+  }, React.createElement("div", {
+    style: {
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      background: '#ffc43f'
+    }
+  }), React.createElement("span", {
+    style: {
+      color: 'rgba(255,225,215,0.65)'
+    }
+  }, "Infini"), React.createElement("b", null, fmtDuration(tI))))));
 }
 function Game() {
   const [safeArea, setSafeArea] = React.useState({
@@ -4144,12 +5078,15 @@ function Game() {
     x: m.x,
     y: m.y,
     pulse: m.pulse,
-    r: m.r
+    r: m.r,
+    rot: hrnd(m.id + 77) * 360
   })), g.wbcs.map(w => React.createElement(WBC, {
     key: w.id,
     x: w.x,
     y: w.y,
-    pulse: w.pulse
+    pulse: w.pulse,
+    rot: (hrnd(w.id + 77) - 0.5) * 70,
+    flip: hrnd(w.id + 5) > 0.5
   })), g.abs.map(a => React.createElement(Antibody, {
     key: a.id,
     x: a.x,
@@ -4162,7 +5099,8 @@ function Game() {
     y: e.y,
     wob: e.wob,
     vx: e.vx,
-    svx: e.svx
+    svx: e.svx,
+    v: vOf(e.id, N_RIVAL)
   })), g.helmets.map(h => React.createElement(Helmet, {
     key: h.id,
     x: h.x,
@@ -4537,7 +5475,8 @@ function Game() {
     x: p[0],
     y: p[1],
     wob: g.wob * 0.4 + p[4],
-    vx: p[2]
+    vx: p[2],
+    v: i % N_RIVAL
   }))), React.createElement("circle", {
     cx: GW / 2,
     cy: GH * 0.27,
@@ -6305,692 +7244,19 @@ function Game() {
     style: {
       height: 20
     }
-  })))), showStats && React.createElement("div", {
-    onClick: () => setShowStats(false),
-    style: {
-      position: 'absolute',
-      inset: 0,
-      background: 'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',
-      backdropFilter: 'blur(14px)',
-      WebkitBackdropFilter: 'blur(14px)',
-      zIndex: 10
-    }
-  }, React.createElement("div", {
-    className: "modal-wrap",
-    style: {
-      color: 'white',
-      fontFamily: 'Sora,Helvetica Neue,Arial',
-      paddingTop: 24 + SAT,
-      paddingBottom: 8 + SAB
-    }
-  }, React.createElement("div", {
-    style: {
-      textAlign: 'center'
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 28,
-      fontWeight: 800,
-      color: P.skin1
-    }
-  }, "Statistiques"), React.createElement("div", {
-    style: {
-      fontSize: 11,
-      letterSpacing: 2,
-      color: 'rgba(210,170,140,0.5)',
-      marginTop: 4
-    }
-  }, "TAP N'IMPORTE O\xD9 POUR FERMER")), React.createElement("div", {
-    className: "ach-scroll",
-    style: {
-      flex: 1,
-      overflowY: 'auto',
-      padding: '0 4px 30px',
-      touchAction: 'pan-y',
-      WebkitOverflowScrolling: 'touch'
-    }
-  }, React.createElement("div", {
-    style: {
-      marginTop: 16,
-      borderRadius: 14,
-      padding: '14px',
-      textAlign: 'center',
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(220,160,120,0.15)'
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 10.5,
-      letterSpacing: 1.8,
-      color: 'rgba(215,180,140,0.55)'
-    }
-  }, "PARTIES JOU\xC9ES"), React.createElement("div", {
-    style: {
-      fontSize: 34,
-      fontWeight: 800,
-      color: P.skin1,
-      marginTop: 4
-    }
-  }, stats.games)), React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 10,
-      marginTop: 10
-    }
-  }, React.createElement("div", {
-    style: {
-      flex: 1,
-      borderRadius: 14,
-      padding: '12px 8px',
-      textAlign: 'center',
-      background: 'rgba(245,200,66,0.06)',
-      border: '1px solid rgba(245,200,66,0.2)'
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 10,
-      letterSpacing: 1.8,
-      color: 'rgba(245,200,100,0.6)'
-    }
-  }, "VICTOIRES"), React.createElement("div", {
-    style: {
-      fontSize: 28,
-      fontWeight: 800,
-      color: P.gold,
-      marginTop: 4
-    }
-  }, stats.wins), React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'rgba(245,200,100,0.5)',
-      marginTop: 2
-    }
-  }, stats.games > 0 ? Math.round(stats.wins / stats.games * 100) : 0, "% de r\xE9ussite")), React.createElement("div", {
-    style: {
-      flex: 1,
-      borderRadius: 14,
-      padding: '12px 8px',
-      textAlign: 'center',
-      background: 'rgba(232,113,138,0.06)',
-      border: '1px solid rgba(232,113,138,0.2)'
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 10,
-      letterSpacing: 1.8,
-      color: 'rgba(232,140,160,0.6)'
-    }
-  }, "RIVAUX \xC9LIMIN\xC9S"), React.createElement("div", {
-    style: {
-      fontSize: 28,
-      fontWeight: 800,
-      color: P.rose,
-      marginTop: 4
-    }
-  }, stats.rivals), React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'rgba(232,140,160,0.5)',
-      marginTop: 2
-    }
-  }, "total cumul\xE9"))), React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      letterSpacing: 1.5,
-      color: 'rgba(245,200,66,0.85)',
-      marginTop: 18,
-      marginBottom: 6
-    }
-  }, "TEMPS DE JEU"), React.createElement("div", {
-    style: {
-      borderRadius: 12,
-      padding: '10px 14px',
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(220,160,120,0.12)',
-      marginBottom: 8
-    }
-  }, React.createElement("div", {
-    style: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
-    }
-  }, React.createElement("div", null, React.createElement("div", {
-    style: {
-      fontSize: 10,
-      letterSpacing: 1.5,
-      color: 'rgba(215,180,140,0.55)'
-    }
-  }, "MODE NORMAL"), React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700,
-      color: P.skin1,
-      marginTop: 4
-    }
-  }, fmtDuration(stats.timeNorm))), React.createElement("div", {
-    style: {
-      fontSize: 22
-    }
-  }, "\uD83E\uDD5A"))), React.createElement("div", {
-    style: {
-      borderRadius: 12,
-      padding: '10px 14px',
-      background: 'rgba(245,200,66,0.05)',
-      border: '1px solid rgba(245,200,66,0.2)'
-    }
-  }, React.createElement("div", {
-    style: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
-    }
-  }, React.createElement("div", null, React.createElement("div", {
-    style: {
-      fontSize: 10,
-      letterSpacing: 1.5,
-      color: 'rgba(245,200,100,0.6)'
-    }
-  }, "MODE INFINI \u221E"), React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700,
-      color: P.gold,
-      marginTop: 4
-    }
-  }, fmtDuration(stats.timeInf))), React.createElement("div", {
-    style: {
-      fontSize: 22,
-      fontWeight: 800,
-      color: P.gold
-    }
-  }, "\u221E"))), React.createElement("div", {
-    style: {
-      borderTop: '1px solid rgba(220,160,120,0.15)',
-      marginTop: 12,
-      paddingTop: 10,
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 11,
-      letterSpacing: 1.5,
-      color: 'rgba(215,180,140,0.45)'
-    }
-  }, "TEMPS TOTAL"), React.createElement("div", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: 'rgba(230,200,180,0.85)'
-    }
-  }, fmtDuration(stats.timeNorm + stats.timeInf))), React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      marginTop: 14,
-      fontSize: 11,
-      fontStyle: 'italic',
-      color: 'rgba(220,170,140,0.4)'
-    }
-  }, "Stats sauvegard\xE9es localement"), React.createElement("div", {
-    style: {
-      height: 20
-    }
-  })))), showInfo && React.createElement("div", {
-    onClick: () => setShowInfo(false),
-    style: {
-      position: 'absolute',
-      inset: 0,
-      background: 'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',
-      backdropFilter: 'blur(14px)',
-      WebkitBackdropFilter: 'blur(14px)',
-      zIndex: 10
-    }
-  }, React.createElement("div", {
-    className: "modal-wrap",
-    style: {
-      color: 'white',
-      fontFamily: 'Sora,Helvetica Neue,Arial',
-      paddingTop: 24 + SAT,
-      paddingBottom: 8 + SAB
-    }
-  }, React.createElement("div", {
-    style: {
-      textAlign: 'center'
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 28,
-      fontWeight: 800,
-      color: P.skin1
-    }
-  }, "R\xE8gles du jeu"), React.createElement("div", {
-    style: {
-      fontSize: 11,
-      letterSpacing: 2,
-      color: 'rgba(210,170,140,0.5)',
-      marginTop: 4
-    }
-  }, "TAP N'IMPORTE O\xD9 POUR FERMER")), React.createElement("div", {
-    className: "ach-scroll",
-    style: {
-      flex: 1,
-      overflowY: 'auto',
-      padding: '0 4px 30px',
-      touchAction: 'pan-y',
-      WebkitOverflowScrolling: 'touch'
-    }
-  }, React.createElement("div", {
-    style: {
-      marginTop: 14
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      letterSpacing: 1.5,
-      color: 'rgba(245,200,66,0.85)',
-      marginBottom: 6
-    }
-  }, "OBJECTIF"), React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: 'rgba(230,200,180,0.85)'
-    }
-  }, discreteMode ? 'Atteins la cible en premier —' : 'Atteins l\'ovule en premier —'), React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: 'rgba(230,200,180,0.85)'
-    }
-  }, discreteMode ? 'tu joues le point blanc.' : 'tu joues le sperm blanc.')), React.createElement("div", {
-    style: {
-      marginTop: 14
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      letterSpacing: 1.5,
-      color: 'rgba(245,200,66,0.85)',
-      marginBottom: 6
-    }
-  }, "COMMANDES"), React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: 'rgba(230,200,180,0.85)'
-    }
-  }, "Glisse ton doigt pour naviguer"), React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: 'rgba(230,200,180,0.85)'
-    }
-  }, "librement dans le canal.")), React.createElement("div", {
-    style: {
-      marginTop: 14
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      letterSpacing: 1.5,
-      color: 'rgba(245,200,66,0.85)',
-      marginBottom: 8
-    }
-  }, "ENNEMIS"), React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: 12
-    }
-  }, React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8
-    }
-  }, React.createElement("svg", {
-    viewBox: "-18 -14 36 28",
-    style: {
-      width: 36,
-      height: 28,
-      flexShrink: 0,
-      display: 'block'
-    }
-  }, React.createElement("ellipse", {
-    cx: "0",
-    cy: "0",
-    rx: "14",
-    ry: "11",
-    fill: "rgba(160,210,35,0.5)",
-    stroke: "rgba(120,185,15,0.7)",
-    strokeWidth: "1.4"
-  })), React.createElement("div", null, React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: 'rgba(230,200,180,0.85)'
-    }
-  }, "Mucus"), React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'rgba(190,160,140,0.55)'
-    }
-  }, "te ralentit"))), React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8
-    }
-  }, React.createElement("svg", {
-    viewBox: "-16 -14 32 28",
-    style: {
-      width: 36,
-      height: 28,
-      flexShrink: 0,
-      display: 'block'
-    }
-  }, React.createElement("circle", {
-    cx: "0",
-    cy: "0",
-    r: "12",
-    fill: "#e89870"
-  }), React.createElement("ellipse", {
-    cx: "-3.5",
-    cy: "-2",
-    rx: "3.5",
-    ry: "3.5",
-    fill: "white"
-  }), React.createElement("ellipse", {
-    cx: "3.5",
-    cy: "-2",
-    rx: "3.5",
-    ry: "3.5",
-    fill: "white"
-  }), React.createElement("circle", {
-    cx: "-3.5",
-    cy: "-2",
-    r: "2.2",
-    fill: "#b03050"
-  }), React.createElement("circle", {
-    cx: "3.5",
-    cy: "-2",
-    r: "2.2",
-    fill: "#b03050"
-  })), React.createElement("div", null, React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: 'rgba(230,200,180,0.85)'
-    }
-  }, "Rivaux"), React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'rgba(190,160,140,0.55)'
-    }
-  }, "percute avant le haut !"))), React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8
-    }
-  }, React.createElement("svg", {
-    viewBox: "-18 -18 36 36",
-    style: {
-      width: 36,
-      height: 36,
-      flexShrink: 0,
-      display: 'block'
-    }
-  }, [0, 1, 2, 3, 4, 5, 6, 7].map(i => {
-    const a = i / 8 * Math.PI * 2;
-    return React.createElement("circle", {
-      key: i,
-      cx: Math.cos(a) * 9,
-      cy: Math.sin(a) * 9,
-      r: "4",
-      fill: "#d4eaf7"
-    });
-  }), React.createElement("circle", {
-    cx: "0",
-    cy: "0",
-    r: "10",
-    fill: "#f0f8ff"
-  }), React.createElement("ellipse", {
-    cx: "1.5",
-    cy: "1",
-    rx: "5",
-    ry: "3.5",
-    fill: "#c5dff0",
-    transform: "rotate(-25,1.5,1)"
-  })), React.createElement("div", null, React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: 'rgba(230,200,180,0.85)'
-    }
-  }, "Globule blanc"), React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'rgba(190,160,140,0.55)'
-    }
-  }, "\xE9vite ! \u2014 1 vie"))), React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8
-    }
-  }, React.createElement("svg", {
-    viewBox: "-14 -14 28 28",
-    style: {
-      width: 36,
-      height: 36,
-      flexShrink: 0,
-      display: 'block'
-    }
-  }, React.createElement("line", {
-    x1: "0",
-    y1: "0",
-    x2: "0",
-    y2: "10",
-    stroke: "#6090e0",
-    strokeWidth: "2.5",
-    strokeLinecap: "round"
-  }), React.createElement("line", {
-    x1: "0",
-    y1: "0",
-    x2: "-8",
-    y2: "-8",
-    stroke: "#6090e0",
-    strokeWidth: "2.5",
-    strokeLinecap: "round"
-  }), React.createElement("line", {
-    x1: "0",
-    y1: "0",
-    x2: "8",
-    y2: "-8",
-    stroke: "#6090e0",
-    strokeWidth: "2.5",
-    strokeLinecap: "round"
-  }), React.createElement("circle", {
-    cx: "-8",
-    cy: "-8",
-    r: "3",
-    fill: "#2848cc"
-  }), React.createElement("circle", {
-    cx: "8",
-    cy: "-8",
-    r: "3",
-    fill: "#2848cc"
-  }), React.createElement("circle", {
-    cx: "0",
-    cy: "10",
-    r: "3",
-    fill: "#2848cc"
-  })), React.createElement("div", null, React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: 'rgba(230,200,180,0.85)'
-    }
-  }, "Anticorps"), React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'rgba(190,160,140,0.55)'
-    }
-  }, "\xE9vite ! \u2014 1 vie"))))), React.createElement("div", {
-    style: {
-      marginTop: 14
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      letterSpacing: 1.5,
-      color: 'rgba(245,200,66,0.85)',
-      marginBottom: 8
-    }
-  }, "BONUS"), React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8
-    }
-  }, React.createElement("svg", {
-    viewBox: "-14 -18 28 26",
-    style: {
-      width: 36,
-      height: 32,
-      flexShrink: 0,
-      display: 'block'
-    }
-  }, React.createElement("path", {
-    d: "M -10 2 Q -12 -11 0 -15 Q 12 -11 10 2 Z",
-    fill: "#d49018",
-    stroke: "#a06808",
-    strokeWidth: "1.2"
-  }), React.createElement("ellipse", {
-    cx: "0",
-    cy: "-11",
-    rx: "7",
-    ry: "4",
-    fill: "#f0b030"
-  }), React.createElement("path", {
-    d: "M -9 0 Q -7 5 0 5 Q 7 5 9 0",
-    fill: "rgba(200,230,255,0.4)"
-  })), React.createElement("div", null, React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: 'rgba(230,200,180,0.85)'
-    }
-  }, "Casque"), React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'rgba(190,160,140,0.55)'
-    }
-  }, "bouclier 8s")))), React.createElement("div", {
-    style: {
-      marginTop: 14
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      letterSpacing: 1.5,
-      color: 'rgba(245,200,66,0.85)',
-      marginBottom: 6
-    }
-  }, "5 ZONES \xC0 TRAVERSER"), ZONES.map((zo, i) => React.createElement("div", {
-    key: i,
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      marginBottom: 4,
-      fontSize: 13
-    }
-  }, React.createElement("span", null, discreteMode ? zo.demoji : zo.emoji), React.createElement("span", {
-    style: {
-      color: 'rgba(220,190,170,0.8)'
-    }
-  }, discreteMode ? zo.dname : zo.name)))), React.createElement("div", {
-    style: {
-      marginTop: 20,
-      padding: '12px 10px',
-      background: 'rgba(245,200,66,0.06)',
-      border: '1px solid rgba(245,200,66,0.22)',
-      borderRadius: 12
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      letterSpacing: 1.5,
-      color: 'rgba(245,200,66,0.9)',
-      marginBottom: 6
-    }
-  }, "\u221E MODE INFINI"), React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: 'rgba(200,180,170,0.75)',
-      lineHeight: 1.6
-    }
-  }, "D\xE9bloqu\xE9 apr\xE8s ta ", React.createElement("span", {
-    style: {
-      color: 'rgba(245,200,66,0.9)',
-      fontWeight: 700
-    }
-  }, "premi\xE8re victoire"), " (mode normal ou hardcore). Tu restes en zone 5 ind\xE9finiment \u2014 la difficult\xE9 augmente au fil du temps. Pas de victoire possible, l'objectif est de survivre le plus longtemps.")), React.createElement("div", {
-    style: {
-      marginTop: 10,
-      padding: '12px 10px',
-      background: 'rgba(220,40,40,0.07)',
-      border: '1px solid rgba(220,60,60,0.28)',
-      borderRadius: 12
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      letterSpacing: 1.5,
-      color: 'rgba(255,100,100,0.9)',
-      marginBottom: 6
-    }
-  }, "\u2620 MODE HARDCORE"), React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: 'rgba(200,180,170,0.75)',
-      lineHeight: 1.6
-    }
-  }, "Une seule vie. Aucun casque. La moindre erreur est fatale. Disponible d\xE8s le d\xE9but.")), React.createElement("div", {
-    style: {
-      marginTop: 10,
-      padding: '12px 10px',
-      background: 'rgba(100,180,255,0.07)',
-      border: '1px solid rgba(100,180,255,0.25)',
-      borderRadius: 12
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      letterSpacing: 1.5,
-      color: 'rgba(100,200,255,0.85)',
-      marginBottom: 6
-    }
-  }, "\uD83D\uDC41 MODE DISCRET"), React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: 'rgba(200,180,170,0.75)',
-      lineHeight: 1.6
-    }
-  }, "Active le mode discret avec le bouton \uD83D\uDC41 sur l'\xE9cran principal pour jouer sans regards indiscrets \u2014 les queues des personnages sont masqu\xE9es et les noms des zones deviennent neutres.")), React.createElement("div", {
-    style: {
-      height: 20
-    }
-  })))), showAch && React.createElement("div", {
+  })))), showStats && React.createElement(StatsModal, {
+    onClose: () => setShowStats(false),
+    SAT: SAT,
+    SAB: SAB,
+    stats: stats,
+    bestScore: highScores.reduce((m, h) => Math.max(m, h.score || 0), 0),
+    bestInf: highScoresInf[0]?.time || 0
+  }), showInfo && React.createElement(InfoModal, {
+    onClose: () => setShowInfo(false),
+    SAT: SAT,
+    SAB: SAB,
+    discrete: discreteMode
+  }), showAch && React.createElement("div", {
     onClick: () => setShowAch(false),
     style: {
       position: 'absolute',

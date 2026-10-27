@@ -701,32 +701,66 @@ function SpermPlayer({x,y,wob,hit,shield,tilt,skin}){
   );
 }
 
-function EnemyHead(){
-  const eye=cx=>(
-    <g transform={`translate(${cx},-2)`}>
-      <ellipse rx="3.9" ry="4.5" fill="url(#eyeWhite)"/>
-      <circle cx={cx<0?0.5:-0.5} cy="0.6" r="2.8" fill="#c2185b"/>
-      <circle cx={cx<0?0.5:-0.5} cy="0.6" r="2.8" fill="url(#irisShade)"/>
-      <circle cx={cx<0?0.6:-0.4} cy="0.8" r="1.4" fill="#2a0012"/>
-      <circle cx={cx<0?1.6:0.6} cy="-0.8" r="0.95" fill="#fff"/>
-    </g>);
+// Stable per-entity variant (same id → same look for its whole life)
+const vOf=(id,n)=>Math.floor(hrnd((id|0)+1)*n);
+// Number of shape variants actually used (the extra drawings in EnemyHead / WBCVec / MucusVec stay available: raise these to re-enable them)
+const N_RIVAL=1,N_WBC=1,N_MUCUS=1;
+
+/* Rival faces — same coral head, five different villain expressions */
+function EnemyHead({v=0}){
+  const SK='#f59c7c',INK='#8e1840';
+  // lid: slanted skin-coloured cut over the top-inner corner of the eye → angry glare
+  const eye=(cx,{dx=0,lid=0}={})=>{
+    const s=cx<0?1:-1;
+    return(
+      <g transform={`translate(${cx},-2)`}>
+        <ellipse rx="3.9" ry="4.5" fill="url(#eyeWhite)"/>
+        <circle cx={(cx<0?0.5:-0.5)+dx} cy="0.6" r="2.8" fill="#c2185b"/>
+        <circle cx={(cx<0?0.5:-0.5)+dx} cy="0.6" r="2.8" fill="url(#irisShade)"/>
+        <circle cx={(cx<0?0.6:-0.4)+dx} cy="0.8" r="1.4" fill="#2a0012"/>
+        <circle cx={(cx<0?1.6:0.6)+dx} cy="-0.8" r="0.95" fill="#fff"/>
+        {lid>0&&<path d={`M ${-4.6*s} -5.6 L ${4.6*s} -5.6 L ${4.6*s} ${-5.6+lid} Z`} fill={SK}/>}
+      </g>);
+  };
+  const brow=(d,w=2)=><path d={d} stroke={INK} strokeWidth={w} fill="none" strokeLinecap="round"/>;
+  const teeth=<path d="M -5 5.2 L -3.5 7.6 L -2 5.4 L -0.5 7.8 L 1 5.4 L 2.5 7.7 L 4 5.4 L 5 5.2" stroke="#fff" strokeWidth="0.9" fill="none" strokeLinejoin="round"/>;
+  let eyes,brows,mouth,extra=null;
+  if(v===1){        // snarl: slanted glare, open mouth with fangs
+    eyes=<>{eye(-5,{lid:4.2})}{eye(5,{lid:4.2})}</>;
+    brows=<>{brow('M -10 -11.5 L -2 -6.2',2.5)}{brow('M 2 -6.2 L 10 -11.5',2.5)}</>;
+    mouth=<g><path d="M -6.5 4.6 Q 0 12.5 6.5 4.6 Z" fill="#4a0618" stroke={INK} strokeWidth="1" strokeLinejoin="round"/>{teeth}</g>;
+  }else if(v===2){  // smug smirk: one brow up, eyes slid to the side
+    eyes=<>{eye(-5,{dx:1.3,lid:2.2})}{eye(5,{dx:1.3})}</>;
+    brows=<>{brow('M -9 -7.8 L -2 -7.2')}{brow('M 2.5 -9.6 Q 6.5 -13.6 10.5 -9.8')}</>;
+    mouth=<g>{brow('M -5.5 6.4 Q 1 8.4 6.6 3.4',1.7)}{brow('M 6.6 3.4 L 8.2 2',1.3)}</g>;
+  }else if(v===3){  // fury: heavy brows, shouting mouth, anger vein
+    eyes=<>{eye(-5,{lid:5})}{eye(5,{lid:5})}</>;
+    brows=<>{brow('M -10.8 -12.4 L -1.4 -5.6',2.9)}{brow('M 1.4 -5.6 L 10.8 -12.4',2.9)}</>;
+    mouth=<g><ellipse cx="0" cy="7.6" rx="4.4" ry="3.5" fill="#4a0618" stroke={INK} strokeWidth="1"/><path d="M -2.6 5.2 H 2.6 V 6.6 H -2.6 Z" fill="#fff"/></g>;
+    extra=<path d="M 8.4 -12.6 l3.2 0 M 10 -14.2 l0 3.2" stroke="#d81e4a" strokeWidth="1.3" strokeLinecap="round"/>;
+  }else if(v===4){  // sly grin: wide toothy smile, one brow raised
+    eyes=<>{eye(-5,{dx:-1,lid:1.6})}{eye(5,{dx:-1})}</>;
+    brows=<>{brow('M -9 -8.8 L -2 -6.8')}{brow('M 2 -6.8 Q 6 -11 10 -10')}</>;
+    mouth=<g><path d="M -7.4 4.2 Q 0 12.5 7.4 4.2 Z" fill="#4a0618" stroke={INK} strokeWidth="1" strokeLinejoin="round"/><path d="M -6 5.4 H 6" stroke="#fff" strokeWidth="1.7" strokeLinecap="round"/></g>;
+  }else{            // 0: classic scowl
+    eyes=<>{eye(-5)}{eye(5)}</>;
+    brows=<>{brow('M -9 -8.6 L -2 -5.8')}{brow('M 2 -5.8 L 9 -8.6')}</>;
+    mouth=brow('M -3.2 6.2 Q 0 4.6 3.2 6.2',1.4);
+  }
   return(
     <g>
       <ellipse cx="0" cy="3.5" rx="15" ry="16" fill="#000" opacity="0.26"/>
-      <ellipse cx="0" cy="0" rx="15" ry="16" fill="#f59c7c"/>
+      <ellipse cx="0" cy="0" rx="15" ry="16" fill={SK}/>
       <ellipse cx="0" cy="0" rx="15" ry="16" fill="url(#headShade)"/>
       <path d="M -11.5 -8 Q 0 -22 11.5 -8 Q 0 -13.5 -11.5 -8 Z" fill="#fff" opacity="0.13"/>
       <ellipse cx="0" cy="0" rx="14.3" ry="15.3" fill="none" stroke="#fff" strokeOpacity="0.28" strokeWidth="0.8"/>
-      {eye(-5)}{eye(5)}
-      <path d="M -9 -8.6 L -2 -5.8" stroke="#8e1840" strokeWidth="2" strokeLinecap="round"/>
-      <path d="M 2 -5.8 L 9 -8.6" stroke="#8e1840" strokeWidth="2" strokeLinecap="round"/>
-      <path d="M -3.2 6.2 Q 0 4.6 3.2 6.2" stroke="#8e1840" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+      {eyes}{brows}{mouth}{extra}
       <ellipse cx="-5.5" cy="-9.5" rx="4.6" ry="2.3" fill="#fff" opacity="0.7" transform="rotate(-30,-5.5,-9.5)"/>
     </g>
   );
 }
 
-function SpermEnemy({x,y,wob,vx,svx}){
+function SpermEnemy({x,y,wob,vx,svx,v=0}){
   const pts=[];
   for(let i=0;i<=16;i++){const f=i/16;pts.push([Math.sin(wob*0.13+f*3)*f*8,9+f*63]);}
   const rot=clamp((svx!==undefined?svx:vx)*8,-30,30);
@@ -737,7 +771,7 @@ function SpermEnemy({x,y,wob,vx,svx}){
         <path d={ribbon(pts,5.8,0.8)} fill="#f7a0b4" opacity="0.92"/>
         {FX<1&&<path d={polyD(pts.slice(0,8))} stroke="#fff" strokeOpacity="0.4" strokeWidth="1" fill="none" strokeLinecap="round"/>}
       </g>}
-      {SPR.enemy?<Img k="enemy" x={0} y={0}/>:<EnemyHead/>}
+      {SPR['enemy'+v]?<Img k={'enemy'+v} x={0} y={0}/>:<EnemyHead v={v}/>}
     </g>
   );
 }
@@ -819,21 +853,31 @@ function Img({k,x,y,sx=1,sy=1,rot=0,op}){
   return<image href={s.href} xlinkHref={s.href} x={-s.cx} y={-s.cy} width={s.w} height={s.h} transform={tf} opacity={op}/>;
 }
 
-function WBCVec({x,y,pulse}){
+/* White blood cells — three body shapes (round / oval / lobed) with matching nuclei */
+function WBCVec({x,y,pulse,v=0}){
   const r=27+Math.sin(pulse*0.09)*2;
-  const mem=smoothClosed(blobPts(x,y,14,i=>r+Math.sin(pulse*0.07+i*2.1)*2.2+Math.sin(pulse*0.035+i*0.9)*1.6));
-  const nr=pulse*0.012;
+  const wob=(i)=>Math.sin(pulse*0.07+i*2.1)*2.2+Math.sin(pulse*0.035+i*0.9)*1.6;
+  let rf,nuclei;
+  if(v===1){        // oval
+    rf=(i,t)=>{const rx=r+3,ry=r-4;return 1/Math.sqrt((Math.cos(t)/rx)**2+(Math.sin(t)/ry)**2)+wob(i)*0.6;};
+    nuclei=[[-6,7,6.4],[6.5,7.5,6.4]];
+  }else if(v===2){  // lobed / flower
+    rf=(i,t)=>r-2+Math.cos(t*6+0.4)*3.8+wob(i)*0.3;
+    nuclei=[[0,5.5,4.6],[5.4,9,4.6],[-5.4,9,4.6],[0,12.6,4.6]];
+  }else{            // round
+    rf=(i)=>r+wob(i);
+    nuclei=[[1+5,7,6.4],[1+5*Math.cos(2.1),7+3.5*Math.sin(2.1),6.4],[1+5*Math.cos(4.2),7+3.5*Math.sin(4.2),6.4]];
+  }
+  const mem=smoothClosed(blobPts(x,y,v===2?24:14,rf));
   return(
     <g>
       <circle cx={x} cy={y} r={r+18} fill="url(#glowIce)" opacity="0.5"/>
       <path d={mem} transform="translate(0,4)" fill="#000" opacity="0.22"/>
       <path d={mem} fill="url(#wbcBody)" stroke="#fff" strokeOpacity="0.85" strokeWidth="1.4"/>
-      {[0,1,2,3,4,5,6,7].map(i=>{const a=i*0.83+pulse*0.004,d=9+(i%3)*5.5;
+      {[0,1,2,3,4,5,6,7].map(i=>{const a=i*0.83,d=9+(i%3)*5.5;
         return<circle key={i} cx={f1(x+Math.cos(a)*d)} cy={f1(y+Math.sin(a)*d)} r={1.1+(i%2)*0.5} fill="#8fa6d8" opacity="0.5"/>;
       })}
-      {[0,1,2].map(i=>{const a=nr+i*2.1;
-        return<circle key={i} cx={f1(x+1+Math.cos(a)*5)} cy={f1(y+7+Math.sin(a)*3.5)} r="6.4" fill="url(#wbcNuc)"/>;
-      })}
+      {nuclei.map(([nx,ny,nr],i)=><circle key={i} cx={f1(x+nx)} cy={f1(y+ny)} r={nr} fill="url(#wbcNuc)"/>)}
       <ellipse cx={x-1.5} cy={y+4.5} rx="2.8" ry="1.4" fill="#fff" opacity="0.45"/>
       <path d={`M ${x-11.5} ${y-10.5} Q ${x-6.5} ${y-13} ${x-2.5} ${y-7.5} Q ${x-7.5} ${y-5.5} ${x-11.5} ${y-10.5} Z`} fill="#1c1442"/>
       <path d={`M ${x+11.5} ${y-10.5} Q ${x+6.5} ${y-13} ${x+2.5} ${y-7.5} Q ${x+7.5} ${y-5.5} ${x+11.5} ${y-10.5} Z`} fill="#1c1442"/>
@@ -844,21 +888,33 @@ function WBCVec({x,y,pulse}){
   );
 }
 function WBC(p){
-  if(!SPR.wbc)return<WBCVec {...p}/>;
+  const v=p.v||0,rot=p.rot||0,fl=p.flip?-1:1;       // same body, different heading (tilted ±35° and/or mirrored so the face stays readable)
+  if(!SPR["wbc"+v])return<g transform={`translate(${p.x},${p.y}) rotate(${rot}) scale(${fl},1) translate(${-p.x},${-p.y})`}><WBCVec {...p}/></g>;
   const a=Math.sin(p.pulse*0.09),b=Math.sin(p.pulse*0.09+1.3);   // squash & stretch instead of a re-drawn membrane
-  return<Img k="wbc" x={p.x} y={p.y} sx={1+a*0.05} sy={1-b*0.05}/>;
+  return<Img k={"wbc"+v} x={p.x} y={p.y} rot={rot} sx={fl*(1+a*0.05)} sy={1-b*0.05}/>;
 }
 
-function MucusVec({x,y,pulse,r}){
+/* Mucus — three shapes: round drop / wide puddle / three-lobed blob */
+const MUCUS_BUBBLES=[
+  [[-0.34,0.2,0.2],[0.32,0.28,0.12],[0.06,-0.08,0.08],[-0.05,0.52,0.07]],
+  [[-0.5,0.08,0.17],[0.12,0.24,0.12],[0.55,-0.06,0.09],[0,-0.2,0.07]],
+  [[-0.22,0.3,0.18],[0.32,-0.1,0.13],[0.08,0.1,0.07],[-0.38,-0.15,0.06]],
+];
+function MucusVec({x,y,pulse,r,v=0}){
   const w1=Math.sin(pulse*0.08)*3;
-  const blob=smoothClosed(blobPts(x,y,10,i=>r+Math.sin(pulse*0.05+i*1.9)*3+(i%2?w1:-w1)*0.5));
+  const base=(i)=>(i%2?w1:-w1)*0.5+Math.sin(pulse*0.05+i*1.9)*3;
+  const rf=v===1?(i,t)=>r*(1+0.27*Math.cos(2*t))*0.94+base(i)
+        :v===2?(i,t)=>r*(1+0.2*Math.cos(3*t+0.5))+base(i)
+        :(i)=>r+base(i);
+  const blob=smoothClosed(blobPts(x,y,v===0?10:14,rf));
   const drip=Math.sin(pulse*0.04)*0.5+0.5;
+  const dx=[0.18,-0.32,0.38][v]||0.18;
   return(
     <g>
       <circle cx={x} cy={y} r={r+16} fill="url(#glowLime)" opacity="0.4"/>
-      <ellipse cx={x+r*0.18} cy={y+r*0.92+drip*5} rx={2.6+drip} ry={3.6+drip*2} fill="#a6dc3a" opacity="0.7"/>
+      <ellipse cx={x+r*dx} cy={y+r*(v===1?0.62:0.92)+drip*5} rx={2.6+drip} ry={3.6+drip*2} fill="#a6dc3a" opacity="0.7"/>
       <path d={blob} fill="url(#mucusBody)" stroke="#d8fa7a" strokeOpacity="0.75" strokeWidth="1.3"/>
-      {[[-0.34,0.2,0.2],[0.32,0.28,0.12],[0.06,-0.08,0.08],[-0.05,0.52,0.07]].map(([bx,by,br],i)=>(
+      {MUCUS_BUBBLES[v].map(([bx,by,br],i)=>(
         <g key={i}>
           <circle cx={f1(x+bx*r+Math.sin(pulse*0.03+i)*1.5)} cy={f1(y+by*r)} r={f1(br*r)} fill="#fff" fillOpacity="0.08" stroke="#fff" strokeOpacity="0.45" strokeWidth="0.9"/>
           <circle cx={f1(x+bx*r-br*r*0.35)} cy={f1(y+by*r-br*r*0.35)} r={f1(br*r*0.22)} fill="#fff" opacity="0.7"/>
@@ -869,9 +925,10 @@ function MucusVec({x,y,pulse,r}){
   );
 }
 function Mucus(p){
-  if(!SPR.mucus)return<MucusVec {...p}/>;
+  const v=p.v||0,rot=p.rot||0;                         // same blob, any heading
+  if(!SPR["mucus"+v])return<g transform={`rotate(${rot},${p.x},${p.y})`}><MucusVec {...p}/></g>;
   const k=p.r/25,a=Math.sin(p.pulse*0.08)*0.06;
-  return<Img k="mucus" x={p.x} y={p.y} sx={k*(1+a)} sy={k*(1-a)}/>;
+  return<Img k={"mucus"+v} x={p.x} y={p.y} rot={rot} sx={k*(1+a)} sy={k*(1-a)}/>;
 }
 
 function AntibodyVec({x,y,angle,pulse}){
@@ -996,20 +1053,18 @@ function Ovule(p){
 }
 
 const SPR_DEFS={
-  enemy:  {w:48, h:52, cx:24, cy:26, el:()=><EnemyHead/>},
-  wbc:    {w:100,h:100,cx:50, cy:50, el:()=><WBCVec x={0} y={0} pulse={0}/>},
-  mucus:  {w:100,h:100,cx:50, cy:50, el:()=><MucusVec x={0} y={0} pulse={0} r={25}/>},
   ab:     {w:84, h:84, cx:42, cy:42, el:()=><AntibodyVec x={0} y={0} angle={0} pulse={0}/>},
   helmet: {w:80, h:80, cx:40, cy:40, el:()=><HelmetBody/>},
   ovGlow: {w:272,h:272,cx:136,cy:136,el:()=><OvuleGlow/>},
   ovCore: {w:112,h:112,cx:56, cy:56, el:()=><OvuleCore/>},
   ovShell:{w:176,h:176,cx:88, cy:88, el:()=><OvuleShell angle={0} pulse={0}/>},
 };
+for(let i=0;i<N_RIVAL;i++)SPR_DEFS['enemy'+i]={w:48,h:52,cx:24,cy:26,el:()=><EnemyHead v={i}/>};for(let i=0;i<N_WBC;i++)SPR_DEFS['wbc'+i]={w:100,h:100,cx:50,cy:50,el:()=><WBCVec x={0} y={0} pulse={0} v={i}/>};for(let i=0;i<N_MUCUS;i++)SPR_DEFS['mucus'+i]={w:100,h:100,cx:50,cy:50,el:()=><MucusVec x={0} y={0} pulse={0} r={25} v={i}/>};
 // Rasterises every sprite once (one per timer tick so the main thread is never blocked for long)
 function bakeSprites(){
   if(bakeSprites.started)return;bakeSprites.started=true;
   const SS=Math.min(window.devicePixelRatio||1,2.5);
-  const keys=Object.keys(SPR_DEFS);let i=0;
+  const keys=Object.keys(SPR_DEFS).sort((a,b)=>(a.startsWith("ov")?1:0)-(b.startsWith("ov")?1:0));let i=0;   // big ovule sprites last
   const next=()=>{
     if(i>=keys.length)return;
     const k=keys[i++],d=SPR_DEFS[k];
@@ -1116,6 +1171,190 @@ function initState(){
     phase:'start',
     zoneAnn:null,
   };
+}
+
+/* ── Info & Stats windows ── */
+function ModalShell({onClose,title,sub,SAT,SAB,children}){
+  return(
+    <div onClick={onClose} style={{position:'absolute',inset:0,background:'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',zIndex:10}}>
+      <div className="modal-wrap" style={{color:'white',fontFamily:'Sora,Helvetica Neue,Arial',paddingTop:20+SAT,paddingBottom:8+SAB}}>
+        <div style={{position:'relative',textAlign:'center',padding:'0 44px'}}>
+          <div style={{fontSize:25,fontWeight:800,letterSpacing:-0.5,background:'linear-gradient(180deg,#fff9f4,#ffcdb5 55%,#ff8fa8)',WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent',WebkitTextFillColor:'transparent'}}>{title}</div>
+          <div style={{fontSize:11.5,color:'rgba(255,225,215,0.55)',marginTop:4}}>{sub}</div>
+          <div style={{position:'absolute',right:0,top:0,width:34,height:34,borderRadius:17,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.18)'}}>
+            <svg viewBox="-6 -6 12 12" style={{width:12,height:12,display:'block'}}><path d="M -4.5 -4.5 L 4.5 4.5 M 4.5 -4.5 L -4.5 4.5" stroke="#fff" strokeWidth="1.6" strokeLinecap="round"/></svg>
+          </div>
+        </div>
+        <div className="ach-scroll" style={{flex:1,overflowY:'auto',padding:'14px 4px 30px',touchAction:'pan-y',WebkitOverflowScrolling:'touch'}}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+const Sec=({children,color='#ff8fa8',top=22})=>(
+  <div style={{display:'flex',alignItems:'center',gap:8,margin:`${top}px 2px 10px`}}>
+    <div style={{width:3,height:13,borderRadius:2,background:color}}/>
+    <div style={{fontSize:11,fontWeight:800,letterSpacing:2,color:'rgba(255,235,225,0.8)'}}>{children}</div>
+  </div>
+);
+const Chip=({c,children})=>(
+  <span style={{fontSize:9.5,fontWeight:800,letterSpacing:0.6,padding:'3px 8px',borderRadius:99,background:`${c}22`,border:`1px solid ${c}66`,color:c,whiteSpace:'nowrap'}}>{children}</span>
+);
+const card={borderRadius:16,background:'linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))',border:'1px solid rgba(255,255,255,0.1)'};
+
+/* Illustrated square used by the Info rows (uses the game's own vector art) */
+const Badge=({color,vb='-30 -30 60 60',children})=>(
+  <div style={{width:54,height:54,borderRadius:16,flexShrink:0,background:`linear-gradient(145deg,${color}38,${color}0e)`,border:`1px solid ${color}55`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <svg viewBox={vb} style={{width:46,height:46,display:'block'}}>{children}</svg>
+  </div>
+);
+const Row=({badge,name,desc,chip})=>(
+  <div style={{...card,display:'flex',alignItems:'center',gap:12,padding:'10px 12px',marginBottom:8}}>
+    {badge}
+    <div style={{flex:1,minWidth:0}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}><span style={{fontSize:14,fontWeight:700}}>{name}</span>{chip}</div>
+      <div style={{fontSize:12,lineHeight:'17px',color:'rgba(255,225,215,0.62)',marginTop:3}}>{desc}</div>
+    </div>
+  </div>
+);
+const Step=({n,title,desc})=>(
+  <div style={{display:'flex',gap:12,alignItems:'flex-start',marginBottom:12}}>
+    <div style={{width:28,height:28,borderRadius:14,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:800,color:'#3a1d02',background:'linear-gradient(135deg,#ffe88f,#ffc43f)',boxShadow:'0 4px 14px rgba(255,196,63,0.35)'}}>{n}</div>
+    <div><div style={{fontSize:14,fontWeight:700}}>{title}</div><div style={{fontSize:12,lineHeight:'17px',color:'rgba(255,225,215,0.62)',marginTop:2}}>{desc}</div></div>
+  </div>
+);
+
+function InfoModal({onClose,SAT,SAB,discrete}){
+  const hints=['Rivaux et mucus','Globules blancs','Anticorps','Tout à la fois, en plus rapide','Trouve l’ouverture de l’ovule'];
+  return(
+    <ModalShell onClose={onClose} title="Comment jouer" sub="Touche n’importe où pour fermer" SAT={SAT} SAB={SAB}>
+      {/* Goal */}
+      <div style={{...card,padding:'14px 14px 12px',border:'1px solid rgba(255,210,94,0.35)',background:'linear-gradient(180deg,rgba(255,210,94,0.12),rgba(255,210,94,0.03))'}}>
+        <svg viewBox="0 0 300 96" style={{width:'100%',height:96,display:'block'}}>
+          <g transform="translate(240,48) scale(0.36)"><OvuleVec x={0} y={0} pulse={0} angle={Math.PI}/></g>
+          <path d="M 112 48 L 186 48" stroke="#ffd25e" strokeWidth="2.4" strokeDasharray="2 8" strokeLinecap="round" opacity="0.8"/>
+          <path d="M 180 41 L 190 48 L 180 55" stroke="#ffd25e" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+          <g transform="translate(72,48) rotate(90) scale(0.62)"><SpermPlayer x={0} y={0} wob={30} hit={false} shield={false} tilt={0} skin={SKINS[0]}/></g>
+        </svg>
+        <div style={{fontSize:16,fontWeight:800,textAlign:'center',marginTop:2}}>{discrete?'Atteins la cible en premier':'Atteins l’ovule en premier'}</div>
+        <div style={{fontSize:12,lineHeight:'18px',color:'rgba(255,235,215,0.68)',textAlign:'center',marginTop:4}}>Traverse 5 zones sans perdre tes 3 vies. {discrete?'Tu joues le point blanc.':'Tu joues le spermatozoïde blanc.'}</div>
+      </div>
+
+      <Sec color="#ffd25e">EN 4 ÉTAPES</Sec>
+      <Step n="1" title="Glisse ton doigt" desc="Ton personnage suit ton doigt, n’importe où sur l’écran."/>
+      <Step n="2" title="Élimine les rivaux" desc="Fonce dans les rivaux pour les éliminer. Si l’un d’eux atteint le haut de l’écran, tu perds 1 vie."/>
+      <Step n="3" title="Évite les défenses" desc="Globules blancs et anticorps te font perdre 1 vie. Le mucus te ralentit."/>
+      <Step n="4" title="Entre dans l’ovule" desc="Dans la dernière zone, passe par l’ouverture qui tourne. Toucher la membrane coûte 1 vie."/>
+
+      <Sec color="#ff8fa8">CE QUE TU CROISES</Sec>
+      <Row color="#ff8fa8" name="Rival" chip={<Chip c="#ff8fa8">À ÉLIMINER</Chip>} desc="Il remonte vers le haut : percute-le avant qu’il sorte."
+        badge={<Badge color="#ff8fa8" vb="-26 -26 52 52"><g transform="scale(1.05)"><EnemyHead/></g></Badge>}/>
+      <Row name="Mucus" chip={<Chip c="#c4f24a">RALENTIT</Chip>} desc="Il te ralentit pendant 1,4 s. Il disparaît quand tu le touches."
+        badge={<Badge color="#c4f24a" vb="-34 -34 68 68"><g transform="scale(0.78)"><MucusVec x={0} y={0} pulse={0} r={25}/></g></Badge>}/>
+      <Row name="Globule blanc" chip={<Chip c="#ff6b7e">−1 VIE</Chip>} desc="Il te suit lentement. Garde tes distances."
+        badge={<Badge color="#9fc4ff" vb="-34 -34 68 68"><g transform="scale(0.72)"><WBCVec x={0} y={0} pulse={0}/></g></Badge>}/>
+      <Row name="Anticorps" chip={<Chip c="#ff6b7e">−1 VIE</Chip>} desc="Il fonce vers toi : change de direction au dernier moment."
+        badge={<Badge color="#5b8cff" vb="-34 -34 68 68"><g transform="scale(0.8)"><AntibodyVec x={0} y={0} angle={0} pulse={0}/></g></Badge>}/>
+      <Row name="Casque" chip={<Chip c="#ffd25e">BOUCLIER 8 S</Chip>} desc="Ramasse-le : il absorbe le prochain coup. Absent en mode Hardcore."
+        badge={<Badge color="#ffd25e" vb="-34 -34 68 68"><g transform="scale(0.78)"><HelmetBody/></g></Badge>}/>
+
+      <Sec color="#7cc4ff">TON PARCOURS</Sec>
+      <div style={{...card,padding:'14px 14px 6px'}}>
+        {ZONES.map((zo,i)=>(
+          <div key={i} style={{display:'flex',gap:12,position:'relative',paddingBottom:12}}>
+            {i<ZONES.length-1&&<div style={{position:'absolute',left:7,top:16,bottom:-4,width:2,background:`linear-gradient(${zo.acc},${ZONES[i+1].acc})`,opacity:0.5}}/>}
+            <div style={{width:16,height:16,borderRadius:8,flexShrink:0,marginTop:1,background:zo.acc,boxShadow:`0 0 12px ${zo.acc}`,border:'2px solid rgba(10,2,10,0.9)'}}/>
+            <div><div style={{fontSize:13.5,fontWeight:700}}>{discrete?zo.dname:zo.name}</div><div style={{fontSize:11.5,color:'rgba(255,225,215,0.55)',marginTop:1}}>{hints[i]}</div></div>
+          </div>
+        ))}
+      </div>
+
+      <Sec color="#c88bff">MODES DE JEU</Sec>
+      {[
+        {c:'#ffd25e',t:'Mode Infini ∞',d:'Débloqué après ta première victoire. Tu restes dans la dernière zone, de plus en plus dure. Ton record est ton temps de survie.'},
+        {c:'#ff6b7e',t:'Mode Hardcore',d:'Une seule vie et aucun casque. Disponible dès le début.'},
+        {c:'#7cc4ff',t:'Mode Discret',d:'Bouton œil sur l’accueil : masque les queues et rend les noms de zones neutres.'},
+      ].map(m=>(
+        <div key={m.t} style={{...card,padding:'12px 14px',marginBottom:8,borderColor:`${m.c}44`,background:`linear-gradient(180deg,${m.c}14,${m.c}05)`}}>
+          <div style={{fontSize:13.5,fontWeight:800,color:m.c}}>{m.t}</div>
+          <div style={{fontSize:12,lineHeight:'18px',color:'rgba(255,225,215,0.66)',marginTop:3}}>{m.d}</div>
+        </div>
+      ))}
+
+      <Sec color="#ff8fa8">GAGNER DES mL</Sec>
+      <div style={{...card,padding:'12px 14px'}}>
+        <div style={{fontSize:12,lineHeight:'19px',color:'rgba(255,225,215,0.7)'}}>Chaque partie rapporte des mL : <b style={{color:'#fff'}}>1 pour 10 rivaux</b> éliminés et <b style={{color:'#fff'}}>15 pour une victoire</b>. Les succès et les défis en rapportent aussi. Dépense-les dans la boutique pour débloquer de nouveaux skins.</div>
+      </div>
+    </ModalShell>
+  );
+}
+
+const StatTile=({label,value,sub,c='#fff'})=>(
+  <div style={{...card,flex:'1 1 calc(50% - 5px)',minWidth:0,boxSizing:'border-box',padding:'12px 12px 11px',position:'relative',overflow:'hidden'}}>
+    <div style={{position:'absolute',left:0,top:12,bottom:12,width:3,borderRadius:2,background:c}}/>
+    <div style={{fontSize:9.5,fontWeight:700,letterSpacing:1.4,color:'rgba(255,225,215,0.55)',paddingLeft:6}}>{label}</div>
+    <div style={{fontSize:24,fontWeight:800,color:c,marginTop:5,paddingLeft:6,letterSpacing:-0.5}}>{value}</div>
+    {sub&&<div style={{fontSize:10.5,color:'rgba(255,225,215,0.45)',marginTop:2,paddingLeft:6}}>{sub}</div>}
+  </div>
+);
+
+function StatsModal({onClose,SAT,SAB,stats,bestScore,bestInf}){
+  const games=stats.games||0,wins=stats.wins||0,losses=Math.max(0,games-wins);
+  const rate=games>0?wins/games:0;
+  const tN=stats.timeNorm||0,tI=stats.timeInf||0,tT=tN+tI;
+  const R=34,C=2*Math.PI*R;
+  const none='—';
+  return(
+    <ModalShell onClose={onClose} title="Statistiques" sub="Sauvegardées sur cet appareil" SAT={SAT} SAB={SAB}>
+      {/* Win rate */}
+      <div style={{...card,padding:'16px 16px',display:'flex',alignItems:'center',gap:16}}>
+        <svg viewBox="-44 -44 88 88" style={{width:92,height:92,flexShrink:0,display:'block'}}>
+          <circle r={R} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8"/>
+          <circle r={R} fill="none" stroke="url(#goldMetal)" strokeWidth="8" strokeLinecap="round" strokeDasharray={`${C*rate} ${C}`} transform="rotate(-90)"/>
+          <text y="2" textAnchor="middle" fill="#fff" fontSize="19" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{Math.round(rate*100)}%</text>
+          <text y="15" textAnchor="middle" fill="rgba(255,225,215,0.5)" fontSize="7" fontWeight="700" letterSpacing="1.2" fontFamily="Sora,Helvetica Neue,Arial">VICTOIRES</text>
+        </svg>
+        <div style={{flex:1}}>
+          <div style={{fontSize:30,fontWeight:800,letterSpacing:-1,lineHeight:'32px'}}>{games}</div>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:1.4,color:'rgba(255,225,215,0.55)',marginBottom:10}}>{games>1?'PARTIES JOUÉES':'PARTIE JOUÉE'}</div>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}><Chip c="#ffd25e">{wins} {wins>1?'victoires':'victoire'}</Chip><Chip c="#ff8fa8">{losses} {losses>1?'défaites':'défaite'}</Chip></div>
+        </div>
+      </div>
+      {games===0&&<div style={{textAlign:'center',fontSize:12,color:'rgba(255,225,215,0.5)',marginTop:12}}>Joue une première partie pour remplir tes statistiques.</div>}
+
+      <Sec color="#ffd25e">RECORDS</Sec>
+      <div style={{display:'flex',flexWrap:'wrap',gap:10}}>
+        <StatTile label="MEILLEUR SCORE" value={bestScore>0?bestScore:none} sub="rivaux en une partie" c="#ff8fa8"/>
+        <StatTile label="VICTOIRE RAPIDE" value={stats.bestWinTime?fmtTime(stats.bestWinTime):none} sub="meilleur temps, mode normal" c="#ffd25e"/>
+        <StatTile label="RECORD INFINI" value={bestInf>0?fmtTime(bestInf):none} sub="temps de survie" c="#c88bff"/>
+        <StatTile label="MEILLEURE SÉRIE" value={stats.bestStreak?`×${stats.bestStreak}`:none} sub="victoires d’affilée" c="#7cc4ff"/>
+      </div>
+
+      <Sec color="#ff8fa8">AU TOTAL</Sec>
+      <div style={{display:'flex',flexWrap:'wrap',gap:10}}>
+        <StatTile label="RIVAUX ÉLIMINÉS" value={(stats.rivals||0).toLocaleString('fr')} c="#ff8fa8"/>
+        <StatTile label="CASQUES RAMASSÉS" value={(stats.helmets||0).toLocaleString('fr')} c="#ffd25e"/>
+      </div>
+      {games>0&&<div style={{fontSize:11.5,color:'rgba(255,225,215,0.5)',textAlign:'center',marginTop:10}}>Soit en moyenne <b style={{color:'rgba(255,235,225,0.85)'}}>{Math.round((stats.rivals||0)/games)}</b> rivaux éliminés par partie.</div>}
+
+      <Sec color="#7cc4ff">TEMPS DE JEU</Sec>
+      <div style={{...card,padding:'14px 14px 12px'}}>
+        <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between'}}>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:1.4,color:'rgba(255,225,215,0.55)'}}>TOTAL</div>
+          <div style={{fontSize:22,fontWeight:800,letterSpacing:-0.5}}>{fmtDuration(tT)}</div>
+        </div>
+        <div style={{display:'flex',height:9,borderRadius:5,overflow:'hidden',background:'rgba(255,255,255,0.08)',margin:'10px 0 12px'}}>
+          {tT>0&&<div style={{width:`${tN/tT*100}%`,background:'linear-gradient(90deg,#ff9e8a,#ff6a8a)'}}/>}
+          {tT>0&&<div style={{width:`${tI/tT*100}%`,background:'linear-gradient(90deg,#ffe88f,#ffc43f)'}}/>}
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:12}}>
+          <div style={{display:'flex',alignItems:'center',gap:7}}><div style={{width:9,height:9,borderRadius:5,background:'#ff6a8a'}}/><span style={{color:'rgba(255,225,215,0.65)'}}>Normal</span><b>{fmtDuration(tN)}</b></div>
+          <div style={{display:'flex',alignItems:'center',gap:7}}><div style={{width:9,height:9,borderRadius:5,background:'#ffc43f'}}/><span style={{color:'rgba(255,225,215,0.65)'}}>Infini</span><b>{fmtDuration(tI)}</b></div>
+        </div>
+      </div>
+    </ModalShell>
+  );
 }
 
 function Game(){
@@ -1694,10 +1933,10 @@ function Game(){
 
         <Ptcl list={g.ptcl}/>
 
-        {g.mucus.map(m=><Mucus key={m.id} x={m.x} y={m.y} pulse={m.pulse} r={m.r}/>)}
-        {g.wbcs.map(w=><WBC key={w.id} x={w.x} y={w.y} pulse={w.pulse}/>)}
+        {g.mucus.map(m=><Mucus key={m.id} x={m.x} y={m.y} pulse={m.pulse} r={m.r} rot={hrnd(m.id+77)*360}/>)}
+        {g.wbcs.map(w=><WBC key={w.id} x={w.x} y={w.y} pulse={w.pulse} rot={(hrnd(w.id+77)-0.5)*70} flip={hrnd(w.id+5)>0.5}/>)}
         {g.abs.map(a=><Antibody key={a.id} x={a.x} y={a.y} angle={a.angle} pulse={a.pulse}/>)}
-        {g.sperms.map(e=><SpermEnemy key={e.id} x={e.x} y={e.y} wob={e.wob} vx={e.vx} svx={e.svx}/>)}
+        {g.sperms.map(e=><SpermEnemy key={e.id} x={e.x} y={e.y} wob={e.wob} vx={e.vx} svx={e.svx} v={vOf(e.id,N_RIVAL)}/>)}
         {g.helmets.map(h=><Helmet key={h.id} x={h.x} y={h.y} pulse={h.pulse}/>)}
 
         {/* Player & skin trail */}
@@ -1806,7 +2045,7 @@ function Game(){
             {/* bg decorative sperms — scattered, slower & desynced tails */}
             {[[GW*0.154,GH*0.199,-0.28,0.85,17],[GW*0.815,GH*0.231,0.32,0.95,71],[GW*0.097,GH*0.338,0.16,1.0,131],[GW*0.885,GH*0.373,-0.22,0.9,193],[GW*0.244,GH*0.377,0.25,0.88,257],[GW*0.718,GH*0.361,-0.18,1.05,313]].map((p,i)=>(
               <g key={i} transform={`scale(${p[3]})`} style={{transformOrigin:`${p[0]}px ${p[1]}px`}} opacity="0.55">
-                <SpermEnemy x={p[0]} y={p[1]} wob={g.wob*0.4+p[4]} vx={p[2]}/>
+                <SpermEnemy x={p[0]} y={p[1]} wob={g.wob*0.4+p[4]} vx={p[2]} v={i%N_RIVAL}/>
               </g>
             ))}
             <circle cx={GW/2} cy={GH*0.27} r="95" fill={`url(#${getSkin(equipped).glow?'sk_'+equipped:'glowRose'})`} opacity="0.55"/>
@@ -2307,156 +2546,8 @@ function Game(){
           </div>
         </div>
       )}
-      {/* Stats overlay — HTML outside SVG */}
-      {showStats&&(
-        <div onClick={()=>setShowStats(false)} style={{position:'absolute',inset:0,background:'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',zIndex:10}}>
-          <div className="modal-wrap" style={{color:'white',fontFamily:'Sora,Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
-            <div style={{textAlign:'center'}}>
-              <div style={{fontSize:28,fontWeight:800,color:P.skin1}}>Statistiques</div>
-              <div style={{fontSize:11,letterSpacing:2,color:'rgba(210,170,140,0.5)',marginTop:4}}>TAP N'IMPORTE OÙ POUR FERMER</div>
-            </div>
-            <div className="ach-scroll" style={{flex:1,overflowY:'auto',padding:'0 4px 30px',touchAction:'pan-y',WebkitOverflowScrolling:'touch'}}>
-              <div style={{marginTop:16,borderRadius:14,padding:'14px',textAlign:'center',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(220,160,120,0.15)'}}>
-                <div style={{fontSize:10.5,letterSpacing:1.8,color:'rgba(215,180,140,0.55)'}}>PARTIES JOUÉES</div>
-                <div style={{fontSize:34,fontWeight:800,color:P.skin1,marginTop:4}}>{stats.games}</div>
-              </div>
-              <div style={{display:'flex',gap:10,marginTop:10}}>
-                <div style={{flex:1,borderRadius:14,padding:'12px 8px',textAlign:'center',background:'rgba(245,200,66,0.06)',border:'1px solid rgba(245,200,66,0.2)'}}>
-                  <div style={{fontSize:10,letterSpacing:1.8,color:'rgba(245,200,100,0.6)'}}>VICTOIRES</div>
-                  <div style={{fontSize:28,fontWeight:800,color:P.gold,marginTop:4}}>{stats.wins}</div>
-                  <div style={{fontSize:10,color:'rgba(245,200,100,0.5)',marginTop:2}}>{stats.games>0?Math.round(stats.wins/stats.games*100):0}% de réussite</div>
-                </div>
-                <div style={{flex:1,borderRadius:14,padding:'12px 8px',textAlign:'center',background:'rgba(232,113,138,0.06)',border:'1px solid rgba(232,113,138,0.2)'}}>
-                  <div style={{fontSize:10,letterSpacing:1.8,color:'rgba(232,140,160,0.6)'}}>RIVAUX ÉLIMINÉS</div>
-                  <div style={{fontSize:28,fontWeight:800,color:P.rose,marginTop:4}}>{stats.rivals}</div>
-                  <div style={{fontSize:10,color:'rgba(232,140,160,0.5)',marginTop:2}}>total cumulé</div>
-                </div>
-              </div>
-              <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginTop:18,marginBottom:6}}>TEMPS DE JEU</div>
-              <div style={{borderRadius:12,padding:'10px 14px',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(220,160,120,0.12)',marginBottom:8}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div>
-                    <div style={{fontSize:10,letterSpacing:1.5,color:'rgba(215,180,140,0.55)'}}>MODE NORMAL</div>
-                    <div style={{fontSize:20,fontWeight:700,color:P.skin1,marginTop:4}}>{fmtDuration(stats.timeNorm)}</div>
-                  </div>
-                  <div style={{fontSize:22}}>🥚</div>
-                </div>
-              </div>
-              <div style={{borderRadius:12,padding:'10px 14px',background:'rgba(245,200,66,0.05)',border:'1px solid rgba(245,200,66,0.2)'}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div>
-                    <div style={{fontSize:10,letterSpacing:1.5,color:'rgba(245,200,100,0.6)'}}>MODE INFINI ∞</div>
-                    <div style={{fontSize:20,fontWeight:700,color:P.gold,marginTop:4}}>{fmtDuration(stats.timeInf)}</div>
-                  </div>
-                  <div style={{fontSize:22,fontWeight:800,color:P.gold}}>∞</div>
-                </div>
-              </div>
-              <div style={{borderTop:'1px solid rgba(220,160,120,0.15)',marginTop:12,paddingTop:10,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <div style={{fontSize:11,letterSpacing:1.5,color:'rgba(215,180,140,0.45)'}}>TEMPS TOTAL</div>
-                <div style={{fontSize:14,fontWeight:700,color:'rgba(230,200,180,0.85)'}}>{fmtDuration(stats.timeNorm+stats.timeInf)}</div>
-              </div>
-              <div style={{textAlign:'center',marginTop:14,fontSize:11,fontStyle:'italic',color:'rgba(220,170,140,0.4)'}}>Stats sauvegardées localement</div>
-              <div style={{height:20}}></div>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Info overlay — HTML outside SVG */}
-      {showInfo&&(
-        <div onClick={()=>setShowInfo(false)} style={{position:'absolute',inset:0,background:'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',zIndex:10}}>
-          <div className="modal-wrap" style={{color:'white',fontFamily:'Sora,Helvetica Neue,Arial',paddingTop:24+SAT,paddingBottom:8+SAB}}>
-            <div style={{textAlign:'center'}}>
-              <div style={{fontSize:28,fontWeight:800,color:P.skin1}}>Règles du jeu</div>
-              <div style={{fontSize:11,letterSpacing:2,color:'rgba(210,170,140,0.5)',marginTop:4}}>TAP N'IMPORTE OÙ POUR FERMER</div>
-            </div>
-            <div className="ach-scroll" style={{flex:1,overflowY:'auto',padding:'0 4px 30px',touchAction:'pan-y',WebkitOverflowScrolling:'touch'}}>
-              <div style={{marginTop:14}}>
-                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginBottom:6}}>OBJECTIF</div>
-                <div style={{fontSize:13,color:'rgba(230,200,180,0.85)'}}>{discreteMode?'Atteins la cible en premier —':'Atteins l\'ovule en premier —'}</div>
-                <div style={{fontSize:13,color:'rgba(230,200,180,0.85)'}}>{discreteMode?'tu joues le point blanc.':'tu joues le sperm blanc.'}</div>
-              </div>
-              <div style={{marginTop:14}}>
-                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginBottom:6}}>COMMANDES</div>
-                <div style={{fontSize:13,color:'rgba(230,200,180,0.85)'}}>Glisse ton doigt pour naviguer</div>
-                <div style={{fontSize:13,color:'rgba(230,200,180,0.85)'}}>librement dans le canal.</div>
-              </div>
-              <div style={{marginTop:14}}>
-                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginBottom:8}}>ENNEMIS</div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8}}>
-                    <svg viewBox="-18 -14 36 28" style={{width:36,height:28,flexShrink:0,display:'block'}}>
-                      <ellipse cx="0" cy="0" rx="14" ry="11" fill="rgba(160,210,35,0.5)" stroke="rgba(120,185,15,0.7)" strokeWidth="1.4"/>
-                    </svg>
-                    <div><div style={{fontSize:12,fontWeight:600,color:'rgba(230,200,180,0.85)'}}>Mucus</div><div style={{fontSize:10,color:'rgba(190,160,140,0.55)'}}>te ralentit</div></div>
-                  </div>
-                  <div style={{display:'flex',alignItems:'center',gap:8}}>
-                    <svg viewBox="-16 -14 32 28" style={{width:36,height:28,flexShrink:0,display:'block'}}>
-                      <circle cx="0" cy="0" r="12" fill="#e89870"/>
-                      <ellipse cx="-3.5" cy="-2" rx="3.5" ry="3.5" fill="white"/>
-                      <ellipse cx="3.5" cy="-2" rx="3.5" ry="3.5" fill="white"/>
-                      <circle cx="-3.5" cy="-2" r="2.2" fill="#b03050"/>
-                      <circle cx="3.5" cy="-2" r="2.2" fill="#b03050"/>
-                    </svg>
-                    <div><div style={{fontSize:12,fontWeight:600,color:'rgba(230,200,180,0.85)'}}>Rivaux</div><div style={{fontSize:10,color:'rgba(190,160,140,0.55)'}}>percute avant le haut !</div></div>
-                  </div>
-                  <div style={{display:'flex',alignItems:'center',gap:8}}>
-                    <svg viewBox="-18 -18 36 36" style={{width:36,height:36,flexShrink:0,display:'block'}}>
-                      {[0,1,2,3,4,5,6,7].map(i=>{const a=i/8*Math.PI*2;return<circle key={i} cx={Math.cos(a)*9} cy={Math.sin(a)*9} r="4" fill="#d4eaf7"/>;})}
-                      <circle cx="0" cy="0" r="10" fill="#f0f8ff"/>
-                      <ellipse cx="1.5" cy="1" rx="5" ry="3.5" fill="#c5dff0" transform="rotate(-25,1.5,1)"/>
-                    </svg>
-                    <div><div style={{fontSize:12,fontWeight:600,color:'rgba(230,200,180,0.85)'}}>Globule blanc</div><div style={{fontSize:10,color:'rgba(190,160,140,0.55)'}}>évite ! — 1 vie</div></div>
-                  </div>
-                  <div style={{display:'flex',alignItems:'center',gap:8}}>
-                    <svg viewBox="-14 -14 28 28" style={{width:36,height:36,flexShrink:0,display:'block'}}>
-                      <line x1="0" y1="0" x2="0" y2="10" stroke="#6090e0" strokeWidth="2.5" strokeLinecap="round"/>
-                      <line x1="0" y1="0" x2="-8" y2="-8" stroke="#6090e0" strokeWidth="2.5" strokeLinecap="round"/>
-                      <line x1="0" y1="0" x2="8" y2="-8" stroke="#6090e0" strokeWidth="2.5" strokeLinecap="round"/>
-                      <circle cx="-8" cy="-8" r="3" fill="#2848cc"/>
-                      <circle cx="8" cy="-8" r="3" fill="#2848cc"/>
-                      <circle cx="0" cy="10" r="3" fill="#2848cc"/>
-                    </svg>
-                    <div><div style={{fontSize:12,fontWeight:600,color:'rgba(230,200,180,0.85)'}}>Anticorps</div><div style={{fontSize:10,color:'rgba(190,160,140,0.55)'}}>évite ! — 1 vie</div></div>
-                  </div>
-                </div>
-              </div>
-              <div style={{marginTop:14}}>
-                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginBottom:8}}>BONUS</div>
-                <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <svg viewBox="-14 -18 28 26" style={{width:36,height:32,flexShrink:0,display:'block'}}>
-                    <path d="M -10 2 Q -12 -11 0 -15 Q 12 -11 10 2 Z" fill="#d49018" stroke="#a06808" strokeWidth="1.2"/>
-                    <ellipse cx="0" cy="-11" rx="7" ry="4" fill="#f0b030"/>
-                    <path d="M -9 0 Q -7 5 0 5 Q 7 5 9 0" fill="rgba(200,230,255,0.4)"/>
-                  </svg>
-                  <div><div style={{fontSize:12,fontWeight:600,color:'rgba(230,200,180,0.85)'}}>Casque</div><div style={{fontSize:10,color:'rgba(190,160,140,0.55)'}}>bouclier 8s</div></div>
-                </div>
-              </div>
-              <div style={{marginTop:14}}>
-                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.85)',marginBottom:6}}>5 ZONES À TRAVERSER</div>
-                {ZONES.map((zo,i)=>(
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:4,fontSize:13}}>
-                    <span>{discreteMode?zo.demoji:zo.emoji}</span>
-                    <span style={{color:'rgba(220,190,170,0.8)'}}>{discreteMode?zo.dname:zo.name}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{marginTop:20,padding:'12px 10px',background:'rgba(245,200,66,0.06)',border:'1px solid rgba(245,200,66,0.22)',borderRadius:12}}>
-                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(245,200,66,0.9)',marginBottom:6}}>∞ MODE INFINI</div>
-                <div style={{fontSize:12,color:'rgba(200,180,170,0.75)',lineHeight:1.6}}>Débloqué après ta <span style={{color:'rgba(245,200,66,0.9)',fontWeight:700}}>première victoire</span> (mode normal ou hardcore). Tu restes en zone 5 indéfiniment — la difficulté augmente au fil du temps. Pas de victoire possible, l'objectif est de survivre le plus longtemps.</div>
-              </div>
-              <div style={{marginTop:10,padding:'12px 10px',background:'rgba(220,40,40,0.07)',border:'1px solid rgba(220,60,60,0.28)',borderRadius:12}}>
-                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(255,100,100,0.9)',marginBottom:6}}>☠ MODE HARDCORE</div>
-                <div style={{fontSize:12,color:'rgba(200,180,170,0.75)',lineHeight:1.6}}>Une seule vie. Aucun casque. La moindre erreur est fatale. Disponible dès le début.</div>
-              </div>
-              <div style={{marginTop:10,padding:'12px 10px',background:'rgba(100,180,255,0.07)',border:'1px solid rgba(100,180,255,0.25)',borderRadius:12}}>
-                <div style={{fontSize:13,fontWeight:700,letterSpacing:1.5,color:'rgba(100,200,255,0.85)',marginBottom:6}}>👁 MODE DISCRET</div>
-                <div style={{fontSize:12,color:'rgba(200,180,170,0.75)',lineHeight:1.6}}>Active le mode discret avec le bouton 👁 sur l'écran principal pour jouer sans regards indiscrets — les queues des personnages sont masquées et les noms des zones deviennent neutres.</div>
-              </div>
-              <div style={{height:20}}></div>
-            </div>
-          </div>
-        </div>
-      )}
+      {showStats&&<StatsModal onClose={()=>setShowStats(false)} SAT={SAT} SAB={SAB} stats={stats} bestScore={highScores.reduce((m,h)=>Math.max(m,h.score||0),0)} bestInf={highScoresInf[0]?.time||0}/>}
+      {showInfo&&<InfoModal onClose={()=>setShowInfo(false)} SAT={SAT} SAB={SAB} discrete={discreteMode}/>}
       {/* Achievements overlay — HTML outside SVG, même pattern que le shop */}
       {showAch&&(
         <div onClick={()=>setShowAch(false)} style={{position:'absolute',inset:0,background:'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',zIndex:10}}>

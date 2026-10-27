@@ -486,48 +486,84 @@ function FxDefs({acc}){
   </>);
 }
 
-/* Living tunnel backdrop: parallax bokeh + undulating tissue walls + vignette */
-// wide: 0 = walls hug the play lane, 1 = walls hug the window edges (menu)
-function Backdrop({t,acc,ox,oy,vbW,vbH,wide=0}){
-  const wl=lerp(POX,-ox,wide),wr=lerp(POX+PW,GW+ox,wide);
-  const H=GH+240,X0=-ox,W=vbW;
-  const layer=(n,seed,sp,rMin,rMax,op,fill)=>Array.from({length:n},(_,i)=>{
-    const k=seed+i;
-    const yy=((hrnd(k*3+1)*H+t*sp)%H)-120;
-    const xx=X0+hrnd(k*3+2)*W+Math.sin(t*0.003+k)*14;
-    const r=rMin+hrnd(k*3)*(rMax-rMin);
-    return<circle key={k} cx={f1(xx)} cy={f1(yy)} r={f1(r)} fill={fill} opacity={op}/>;
-  });
-  const wall=(side,amp,ph,base)=>{
-    const pts=[];
-    for(let yy=-oy-40;yy<=GH+oy+40;yy+=24){
-      const w=base+Math.sin((yy-t)*0.011+ph)*amp+Math.sin((yy-t)*0.029+ph*2)*amp*0.45;
-      pts.push([side<0?wl+w:wr-w,yy]);
-    }
-    return pts;
-  };
-  const wallShape=(side,pts)=>{
-    const edgeX=side<0?X0:X0+W;
-    return smoothOpen(pts)+`L${f1(edgeX)} ${f1(pts[pts.length-1][1])}L${f1(edgeX)} ${f1(pts[0][1])}Z`;
-  };
-  const Lb=wall(-1,9,1.3,26),Lf=wall(-1,6,0,14),Rb=wall(1,9,2.1,26),Rf=wall(1,6,3.4,14);
-  return(<g>
-    {layer(6,100,0.22,55,115,0.22,'url(#bokeh)')}
-    {layer(9,200,0.55,9,22,0.38,'url(#bokeh)')}
-    <path d={wallShape(-1,Lb)} fill="url(#wallL)" opacity="0.55"/>
-    <path d={wallShape(1,Rb)} fill="url(#wallR)" opacity="0.55"/>
-    <path d={wallShape(-1,Lf)} fill="url(#wallL)"/>
-    <path d={wallShape(1,Rf)} fill="url(#wallR)"/>
-    <path d={smoothOpen(Lf)} fill="none" stroke={acc} strokeOpacity="0.14" strokeWidth="9"/>
-    <path d={smoothOpen(Rf)} fill="none" stroke={acc} strokeOpacity="0.14" strokeWidth="9"/>
-    <path d={smoothOpen(Lf)} fill="none" stroke={acc} strokeOpacity="0.6" strokeWidth="1.3"/>
-    <path d={smoothOpen(Rf)} fill="none" stroke={acc} strokeOpacity="0.6" strokeWidth="1.3"/>
-    {layer(16,300,1.25,0.8,2.2,0.5,'#ffe9e2')}
-    <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="url(#vign)"/>
-  </g>);
+const FxDefsM=React.memo(FxDefs);
+// Visual quality level: 0 = full, 1 = lighter (no bokeh / glows), 2 = minimal. Lowered automatically on slow phones.
+let FX=0;
+try{FX=Math.min(2,Math.max(0,Number(localStorage.getItem('theone_fx'))||0));}catch(e){}
+
+/* Living tunnel backdrop, split into GPU-composited layers.
+   Every layer is painted once (React.memo) and is afterwards only *moved* with a CSS transform by applyLayers():
+   the decor costs no SVG repaint and no React diffing while the game runs. */
+const BP=640;                                   // vertical period of the repeating decor
+const WALL_W=64;                                // width of one wall layer
+const WK1=2*Math.PI/BP,WK2=6*Math.PI/BP;        // periodic versions of the old 0.011 / 0.029 wave numbers
+const LAYER_EL={};                              // DOM nodes moved by applyLayers()
+const setEl=k=>el=>{if(el)LAYER_EL[k]=el;else delete LAYER_EL[k];};
+
+function wallPts(side,amp,ph,base,top,bottom){
+  const pts=[];
+  for(let u=top;u<=bottom;u+=20){
+    const w=base+Math.sin(u*WK1+ph)*amp+Math.sin(u*WK2+ph*2)*amp*0.45;
+    pts.push([side<0?w:WALL_W-w,u]);
+  }
+  return pts;
+}
+function wallShape(side,pts){
+  const edge=side<0?0:WALL_W;
+  return smoothOpen(pts)+`L${edge} ${f1(pts[pts.length-1][1])}L${edge} ${f1(pts[0][1])}Z`;
 }
 
-function HelmetShape(){
+const Layers=React.memo(function Layers({acc,vbW,vbH,ox,S,fx}){
+  const m=Math.ceil(vbH/BP)+1,H3=m*BP;
+  // n circles per period, repeated m times so the layer can scroll seamlessly
+  const dots=(n,seed,rMin,rMax,op,fill)=>{
+    const out=[];
+    for(let c=0;c<m;c++)for(let i=0;i<n;i++){
+      const k=seed+i;
+      out.push(<circle key={c*64+i} cx={f1(hrnd(k*3+2)*vbW)} cy={f1(hrnd(k*3+1)*BP+c*BP)} r={f1(rMin+hrnd(k*3)*(rMax-rMin))} fill={fill} opacity={op}/>);
+    }
+    return out;
+  };
+  const bokeh=(id,n,seed,rMin,rMax,op)=>(
+    <svg viewBox={`0 0 ${vbW} ${H3}`} style={{display:'block',width:vbW,height:H3}}>
+      <defs><radialGradient id={id}><stop offset="0%" stopColor={acc} stopOpacity="0.55"/><stop offset="50%" stopColor={acc} stopOpacity="0.2"/><stop offset="100%" stopColor={acc} stopOpacity="0"/></radialGradient></defs>
+      {dots(n,seed,rMin,rMax,op,`url(#${id})`)}
+    </svg>);
+  const wallH=vbH+BP+40;
+  const wall=(side)=>{
+    const id=side<0?'bdWl':'bdWr';
+    const back=wallPts(side,9,side<0?1.3:2.1,26,-BP-20,vbH+20),front=wallPts(side,6,side<0?0:3.4,14,-BP-20,vbH+20);
+    const x1=side<0?0:WALL_W,x2=side<0?48:WALL_W-48;
+    return(
+      <svg viewBox={`0 ${-BP-20} ${WALL_W} ${wallH}`} style={{display:'block',width:WALL_W,height:wallH}}>
+        <defs><linearGradient id={id} gradientUnits="userSpaceOnUse" x1={x1} y1="0" x2={x2} y2="0">
+          <stop offset="0%" stopColor="#000" stopOpacity="0.5"/><stop offset="80%" stopColor={acc} stopOpacity="0.16"/><stop offset="100%" stopColor={acc} stopOpacity="0.4"/>
+        </linearGradient></defs>
+        <path d={wallShape(side,back)} fill={`url(#${id})`} opacity="0.55"/>
+        <path d={wallShape(side,front)} fill={`url(#${id})`}/>
+        <path d={smoothOpen(front)} fill="none" stroke={acc} strokeOpacity="0.14" strokeWidth="9"/>
+        <path d={smoothOpen(front)} fill="none" stroke={acc} strokeOpacity="0.6" strokeWidth="1.3"/>
+      </svg>);
+  };
+  const lay={position:'absolute',left:0,top:0,willChange:'transform'};
+  const rightX=POX+PW+ox;
+  return(
+    <div ref={setEl('root')} aria-hidden="true" style={{position:'absolute',left:0,top:0,width:vbW,height:vbH,overflow:'hidden',pointerEvents:'none',transformOrigin:'0 0',transform:S!==1?`scale(${S})`:undefined}}>
+      {fx<1&&<div ref={setEl('far')} style={lay}>{bokeh('bdBkA',4,100,55,115,0.22)}</div>}
+      {fx<1&&<div ref={setEl('near')} style={lay}>{bokeh('bdBkB',6,200,9,22,0.38)}</div>}
+      <div ref={setEl('wallL')} style={lay}>{wall(-1)}</div>
+      <div ref={setEl('wallR')} style={lay}>{wall(1)}</div>
+      {fx<1&&<div ref={setEl('spk')} style={lay}>
+        <svg viewBox={`0 0 ${vbW} ${H3}`} style={{display:'block',width:vbW,height:H3}}>{dots(10,300,0.8,2.2,0.5,'#ffe9e2')}</svg>
+      </div>}
+      {/* Darkening outside the play lane (desktop windows wider than the lane); faded out while the canal is window-wide */}
+      {POX+ox>0&&<div ref={setEl('sideL')} style={{position:'absolute',left:0,top:0,width:POX+ox,height:vbH,background:'rgba(0,0,0,0.45)'}}/>}
+      {POX+ox>0&&<div ref={setEl('sideR')} style={{position:'absolute',left:rightX,top:0,width:Math.max(0,vbW-rightX),height:vbH,background:'rgba(0,0,0,0.45)'}}/>}
+      <div style={{position:'absolute',left:0,top:0,width:'100%',height:'100%',background:'radial-gradient(ellipse 75% 75% at 50% 50%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.72) 100%)'}}/>
+    </div>);
+});
+
+const HelmetShape=React.memo(function HelmetShape(){
   return(<g>
     <path d="M -21 -5 C -22 -24 -12 -33 0 -33 C 12 -33 22 -24 21 -5 Q 0 -10 -21 -5 Z" fill="url(#goldMetal)" stroke="#7a4805" strokeWidth="1"/>
     <path d="M -21.5 -5.5 Q 0 -10.5 21.5 -5.5 L 21 -1.5 Q 0 -6.5 -21 -1.5 Z" fill="#b8770a" stroke="#7a4805" strokeWidth="0.8"/>
@@ -535,7 +571,7 @@ function HelmetShape(){
     <path d="M -15 -12 C -15.5 -23 -9 -29 -2.5 -30.5" stroke="#fff" strokeOpacity="0.8" strokeWidth="2.6" fill="none" strokeLinecap="round"/>
     <circle cx="12" cy="-20" r="1.6" fill="#fff" opacity="0.7"/>
   </g>);
-}
+});
 
 function SpermPlayer({x,y,wob,hit,shield,tilt,skin}){
   const sk=skin||SKINS[0];
@@ -564,7 +600,7 @@ function SpermPlayer({x,y,wob,hit,shield,tilt,skin}){
     <g transform={`translate(${x},${y}) rotate(${td})`}>
       {sk.glow&&<circle cx="0" cy="0" r={PR+30+Math.sin(ph*2)*3} fill={`url(#sk_${sk.id})`} opacity={glowPulse}/>}
       {/* Fire embers */}
-      {sk.id==='fire'&&[0,1,2,3,4,5,6].map(i=>{
+      {sk.id==='fire'&&(FX>=1?[0,1,2]:[0,1,2,3,4,5,6]).map(i=>{
         const cyc=ph*0.16+i*0.43;
         const tick=Math.floor(cyc);
         const seed=tick*17.3+i*9.1;
@@ -579,7 +615,7 @@ function SpermPlayer({x,y,wob,hit,shield,tilt,skin}){
         </g>;
       })}
       {/* Ice crystals */}
-      {sk.id==='ice'&&[0,1,2,3,4,5,6].map(i=>{
+      {sk.id==='ice'&&(FX>=1?[0,1,2]:[0,1,2,3,4,5,6]).map(i=>{
         const cyc=ph*0.22+i*0.37;
         const tick=Math.floor(cyc);
         const seed=tick*19.7+i*11.3;
@@ -600,7 +636,7 @@ function SpermPlayer({x,y,wob,hit,shield,tilt,skin}){
       })}
       {/* Tail: soft glow + tapered body + specular line */}
       {!DISCRETE_MODE&&<g>
-        <path d={ribbon(pts,16,4)} fill={tailFill} opacity="0.16"/>
+        {FX<1&&<path d={ribbon(pts,16,4)} fill={tailFill} opacity="0.16"/>}
         <path d={ribbon(pts,8.5,0.9)} fill={tailFill}/>
         <path d={polyD(pts.slice(0,12))} stroke="#fff" strokeOpacity="0.5" strokeWidth="1.3" fill="none" strokeLinecap="round"/>
       </g>}
@@ -612,7 +648,7 @@ function SpermPlayer({x,y,wob,hit,shield,tilt,skin}){
         {sk.id==='fire'&&<ellipse cx="0" cy="0" rx={PR} ry={PR+1.5} fill={`rgba(255,210,60,${flameAmt*0.3})`}/>}
       </g>
       {/* Galaxy: twinkling stars inside the head */}
-      {sk.galaxy&&Array.from({length:14},(_,i)=>{
+      {sk.galaxy&&Array.from({length:FX>=1?7:14},(_,i)=>{
         const a=hrnd(i+3)*Math.PI*2+ph*0.08,d=3+hrnd(i+17)*15;
         const tw=0.35+Math.max(0,Math.sin(ph*1.6+i*2.3))*0.65;
         return<circle key={i} cx={f1(Math.cos(a)*d)} cy={f1(Math.sin(a)*d*1.05)} r={i%4===0?1.3:0.7} fill={i%3===0?'#ffd6f5':'#fff'} opacity={tw}/>;
@@ -632,7 +668,7 @@ function SpermPlayer({x,y,wob,hit,shield,tilt,skin}){
       <path d="M -16.5 -11 Q 0 -31 16.5 -11 Q 0 -19 -16.5 -11 Z" fill="#fff" opacity="0.14"/>
       <ellipse cx="0" cy="0" rx={PR-0.8} ry={PR+0.7} fill="none" stroke="url(#rimIri)" strokeOpacity="0.75" strokeWidth="1.6"/>
       {/* Diamond sparkles */}
-      {sk.sparkle&&[0,1,2,3,4,5,6,7].map(i=>{
+      {sk.sparkle&&(FX>=1?[0,1,2,3]:[0,1,2,3,4,5,6,7]).map(i=>{
         const cyc=ph*0.55+i*0.31;
         const tick=Math.floor(cyc);
         const seed=tick*23.7+i*13.5;
@@ -665,10 +701,7 @@ function SpermPlayer({x,y,wob,hit,shield,tilt,skin}){
   );
 }
 
-function SpermEnemy({x,y,wob,vx,svx}){
-  const pts=[];
-  for(let i=0;i<=16;i++){const f=i/16;pts.push([Math.sin(wob*0.13+f*3)*f*8,9+f*63]);}
-  const rot=clamp((svx!==undefined?svx:vx)*8,-30,30);
+function EnemyHead(){
   const eye=cx=>(
     <g transform={`translate(${cx},-2)`}>
       <ellipse rx="3.9" ry="4.5" fill="url(#eyeWhite)"/>
@@ -678,12 +711,7 @@ function SpermEnemy({x,y,wob,vx,svx}){
       <circle cx={cx<0?1.6:0.6} cy="-0.8" r="0.95" fill="#fff"/>
     </g>);
   return(
-    <g transform={`translate(${x},${y}) rotate(${rot})`}>
-      {!DISCRETE_MODE&&<g>
-        <path d={ribbon(pts,11,3)} fill="#ff8fa8" opacity="0.14"/>
-        <path d={ribbon(pts,5.8,0.8)} fill="#f7a0b4" opacity="0.92"/>
-        <path d={polyD(pts.slice(0,8))} stroke="#fff" strokeOpacity="0.4" strokeWidth="1" fill="none" strokeLinecap="round"/>
-      </g>}
+    <g>
       <ellipse cx="0" cy="3.5" rx="15" ry="16" fill="#000" opacity="0.26"/>
       <ellipse cx="0" cy="0" rx="15" ry="16" fill="#f59c7c"/>
       <ellipse cx="0" cy="0" rx="15" ry="16" fill="url(#headShade)"/>
@@ -694,6 +722,22 @@ function SpermEnemy({x,y,wob,vx,svx}){
       <path d="M 2 -5.8 L 9 -8.6" stroke="#8e1840" strokeWidth="2" strokeLinecap="round"/>
       <path d="M -3.2 6.2 Q 0 4.6 3.2 6.2" stroke="#8e1840" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
       <ellipse cx="-5.5" cy="-9.5" rx="4.6" ry="2.3" fill="#fff" opacity="0.7" transform="rotate(-30,-5.5,-9.5)"/>
+    </g>
+  );
+}
+
+function SpermEnemy({x,y,wob,vx,svx}){
+  const pts=[];
+  for(let i=0;i<=16;i++){const f=i/16;pts.push([Math.sin(wob*0.13+f*3)*f*8,9+f*63]);}
+  const rot=clamp((svx!==undefined?svx:vx)*8,-30,30);
+  return(
+    <g transform={`translate(${f1(x)},${f1(y)}) rotate(${rot.toFixed(1)})`}>
+      {!DISCRETE_MODE&&<g>
+        {FX<1&&<path d={ribbon(pts,11,3)} fill="#ff8fa8" opacity="0.14"/>}
+        <path d={ribbon(pts,5.8,0.8)} fill="#f7a0b4" opacity="0.92"/>
+        {FX<1&&<path d={polyD(pts.slice(0,8))} stroke="#fff" strokeOpacity="0.4" strokeWidth="1" fill="none" strokeLinecap="round"/>}
+      </g>}
+      {SPR.enemy?<Img k="enemy" x={0} y={0}/>:<EnemyHead/>}
     </g>
   );
 }
@@ -764,7 +808,18 @@ function RivalVictor({wob}){
   );
 }
 
-function WBC({x,y,pulse}){
+/* ── Baked sprites ──
+   The static artwork of the busiest objects is rasterised once into a bitmap (see bakeSprites) and drawn as an <image>,
+   so every frame the browser blits a texture instead of re-shading gradients. Until a sprite is ready (or if baking fails)
+   the *Vec components below draw the very same art as live vectors. */
+const SPR={};
+function Img({k,x,y,sx=1,sy=1,rot=0,op}){
+  const s=SPR[k];
+  const tf=`translate(${f1(x)},${f1(y)})`+(rot?` rotate(${f1(rot)})`:'')+(sx!==1||sy!==1?` scale(${sx.toFixed(3)},${sy.toFixed(3)})`:'');
+  return<image href={s.href} xlinkHref={s.href} x={-s.cx} y={-s.cy} width={s.w} height={s.h} transform={tf} opacity={op}/>;
+}
+
+function WBCVec({x,y,pulse}){
   const r=27+Math.sin(pulse*0.09)*2;
   const mem=smoothClosed(blobPts(x,y,14,i=>r+Math.sin(pulse*0.07+i*2.1)*2.2+Math.sin(pulse*0.035+i*0.9)*1.6));
   const nr=pulse*0.012;
@@ -788,8 +843,13 @@ function WBC({x,y,pulse}){
     </g>
   );
 }
+function WBC(p){
+  if(!SPR.wbc)return<WBCVec {...p}/>;
+  const a=Math.sin(p.pulse*0.09),b=Math.sin(p.pulse*0.09+1.3);   // squash & stretch instead of a re-drawn membrane
+  return<Img k="wbc" x={p.x} y={p.y} sx={1+a*0.05} sy={1-b*0.05}/>;
+}
 
-function Mucus({x,y,pulse,r}){
+function MucusVec({x,y,pulse,r}){
   const w1=Math.sin(pulse*0.08)*3;
   const blob=smoothClosed(blobPts(x,y,10,i=>r+Math.sin(pulse*0.05+i*1.9)*3+(i%2?w1:-w1)*0.5));
   const drip=Math.sin(pulse*0.04)*0.5+0.5;
@@ -808,8 +868,13 @@ function Mucus({x,y,pulse,r}){
     </g>
   );
 }
+function Mucus(p){
+  if(!SPR.mucus)return<MucusVec {...p}/>;
+  const k=p.r/25,a=Math.sin(p.pulse*0.08)*0.06;
+  return<Img k="mucus" x={p.x} y={p.y} sx={k*(1+a)} sy={k*(1-a)}/>;
+}
 
-function Antibody({x,y,angle,pulse}){
+function AntibodyVec({x,y,angle,pulse}){
   const gl=0.55+Math.sin(pulse*0.1)*0.2;
   const arm=(x2,y2,k)=>(
     <g key={k}>
@@ -831,16 +896,28 @@ function Antibody({x,y,angle,pulse}){
     </g>
   );
 }
+function Antibody(p){
+  if(!SPR.ab)return<AntibodyVec {...p}/>;
+  return<Img k="ab" x={p.x} y={p.y} rot={p.angle} op={f1(0.85+Math.sin(p.pulse*0.1)*0.15)}/>;
+}
 
+function HelmetBody(){
+  return(
+    <g>
+      <circle cx="0" cy="0" r="36" fill="url(#glowGold)" opacity="0.75"/>
+      <circle cx="0" cy="0" r="23" fill="url(#orbFill)" stroke="#ffe28c" strokeOpacity="0.7" strokeWidth="1.2"/>
+      <g transform="translate(0,13.5) scale(0.72)"><HelmetShape/></g>
+      <ellipse cx="-9" cy="-13" rx="7" ry="3.2" fill="#fff" opacity="0.55" transform="rotate(-38,-9,-13)"/>
+    </g>
+  );
+}
+const HelmetRing=({pulse})=><circle cx="0" cy="0" r="27.5" fill="none" stroke="#ffd25e" strokeWidth="1.6" strokeDasharray="9 13" strokeLinecap="round" transform={`rotate(${(pulse*1.2)%360})`} opacity="0.8"/>;
 function Helmet({x,y,pulse}){
   const s=1+Math.sin(pulse*0.08)*0.06;
   return(
-    <g transform={`translate(${x},${y}) scale(${s})`}>
-      <circle cx="0" cy="0" r="36" fill="url(#glowGold)" opacity="0.75"/>
-      <circle cx="0" cy="0" r="23" fill="url(#orbFill)" stroke="#ffe28c" strokeOpacity="0.7" strokeWidth="1.2"/>
-      <circle cx="0" cy="0" r="27.5" fill="none" stroke="#ffd25e" strokeWidth="1.6" strokeDasharray="9 13" strokeLinecap="round" transform={`rotate(${(pulse*1.2)%360})`} opacity="0.8"/>
-      <g transform="translate(0,13.5) scale(0.72)"><HelmetShape/></g>
-      <ellipse cx="-9" cy="-13" rx="7" ry="3.2" fill="#fff" opacity="0.55" transform="rotate(-38,-9,-13)"/>
+    <g transform={`translate(${f1(x)},${f1(y)}) scale(${s.toFixed(3)})`}>
+      {SPR.helmet?<Img k="helmet" x={0} y={0}/>:<HelmetBody/>}
+      {FX<2&&<HelmetRing pulse={pulse}/>}
     </g>
   );
 }
@@ -851,27 +928,27 @@ function arcPath(r,startA,endA){
   const sweep=((endA-startA)+Math.PI*4)%(Math.PI*2);
   return`M ${x1} ${y1} A ${r} ${r} 0 ${sweep>Math.PI?1:0} 1 ${x2} ${y2}`;
 }
-function Ovule({x,y,pulse,angle}){
-  const entryA=angle||0;
+/* Ovule = glow + shell (corona + zona, rotates with the entry) + core (cytoplasm, nucleus, highlight — fixed light) + entry portal */
+function OvuleShell({angle,pulse}){
   const gapH=Math.PI/3.2;
-  const a0=entryA+gapH,a1=entryA-gapH+Math.PI*2;
-  const entryX=Math.cos(entryA)*58,entryY=Math.sin(entryA)*58;
-  const pg=0.6+Math.sin(pulse*0.15)*0.3;
+  const a0=angle+gapH,a1=angle-gapH+Math.PI*2;
   const N=24,span=a1-a0-0.24;
   return(
-    <g transform={`translate(${x},${y})`}>
-      <circle cx="0" cy="0" r={125+Math.sin(pulse*0.05)*8} fill="url(#glowGold)" opacity="0.6"/>
-      {/* Corona radiata */}
+    <g>
       {Array.from({length:N},(_,i)=>{
         const a=a0+0.12+(i/(N-1))*span;
         const rr=69+Math.sin(pulse*0.05+i*1.3)*2.5+(i%2)*4;
         return<circle key={i} cx={f1(Math.cos(a)*rr)} cy={f1(Math.sin(a)*rr)} r={6+(i*7%3)} fill="url(#corona)"/>;
       })}
-      {/* Zona pellucida */}
       <path d={arcPath(54,a0,a1)} fill="none" stroke="#ffe8b0" strokeOpacity="0.3" strokeWidth="11" strokeLinecap="round"/>
       <path d={arcPath(59.5,a0,a1)} fill="none" stroke="#fff4d6" strokeOpacity="0.8" strokeWidth="1.3" strokeLinecap="round"/>
       <path d={arcPath(48.5,a0,a1)} fill="none" stroke="#fff4d6" strokeOpacity="0.55" strokeWidth="1" strokeLinecap="round"/>
-      {/* Cytoplasm */}
+    </g>
+  );
+}
+function OvuleCore(){
+  return(
+    <g>
       <circle cx="0" cy="0" r="46" fill="url(#ovCyto)"/>
       {Array.from({length:18},(_,i)=>{const a=hrnd(i+7)*Math.PI*2,d=8+hrnd(i+31)*30;
         return<circle key={i} cx={f1(Math.cos(a)*d)} cy={f1(Math.sin(a)*d)} r={0.8+hrnd(i+53)*1.4} fill="#e7a647" opacity="0.35"/>;
@@ -879,24 +956,97 @@ function Ovule({x,y,pulse,angle}){
       <circle cx="9" cy="-4" r="13" fill="url(#ovNuc)"/>
       <circle cx="11" cy="-6" r="3.4" fill="#eaa53c" opacity="0.7"/>
       <ellipse cx="-17" cy="-23" rx="14" ry="5.5" fill="#fff" opacity="0.6" transform="rotate(-38,-17,-23)"/>
-      {/* Entry portal */}
-      <circle cx={entryX} cy={entryY} r={22+Math.sin(pulse*0.18)*4} fill="url(#glowWhite)" opacity={pg}/>
-      <circle cx={entryX} cy={entryY} r={9+Math.sin(pulse*0.18)*1.5} fill="none" stroke="#fff" strokeOpacity="0.7" strokeWidth="1.2"/>
-      <circle cx={entryX} cy={entryY} r="4.5" fill="#fff"/>
+    </g>
+  );
+}
+function OvulePortal({angle,pulse}){
+  const ex=Math.cos(angle)*58,ey=Math.sin(angle)*58;
+  const pg=0.6+Math.sin(pulse*0.15)*0.3;
+  return(
+    <g>
+      <circle cx={f1(ex)} cy={f1(ey)} r={22+Math.sin(pulse*0.18)*4} fill="url(#glowWhite)" opacity={pg}/>
+      <circle cx={f1(ex)} cy={f1(ey)} r={9+Math.sin(pulse*0.18)*1.5} fill="none" stroke="#fff" strokeOpacity="0.7" strokeWidth="1.2"/>
+      <circle cx={f1(ex)} cy={f1(ey)} r="4.5" fill="#fff"/>
+    </g>
+  );
+}
+const OvuleGlow=()=><circle cx="0" cy="0" r="125" fill="url(#glowGold)" opacity="0.6"/>;
+function OvuleVec({x,y,pulse,angle}){
+  const a=angle||0;
+  return(
+    <g transform={`translate(${x},${y})`}>
+      <circle cx="0" cy="0" r={125+Math.sin(pulse*0.05)*8} fill="url(#glowGold)" opacity="0.6"/>
+      <OvuleShell angle={a} pulse={pulse}/>
+      <OvuleCore/>
+      <OvulePortal angle={a} pulse={pulse}/>
+    </g>
+  );
+}
+function Ovule(p){
+  if(!SPR.ovCore||!SPR.ovShell||!SPR.ovGlow)return<OvuleVec {...p}/>;
+  const a=p.angle||0;
+  return(
+    <g transform={`translate(${f1(p.x)},${f1(p.y)})`}>
+      {FX<2&&<Img k="ovGlow" x={0} y={0} sx={1+Math.sin(p.pulse*0.05)*0.06} sy={1+Math.sin(p.pulse*0.05)*0.06}/>}
+      <Img k="ovShell" x={0} y={0} rot={a*180/Math.PI} sx={1+Math.sin(p.pulse*0.05)*0.012} sy={1+Math.sin(p.pulse*0.05)*0.012}/>
+      <Img k="ovCore" x={0} y={0}/>
+      <OvulePortal angle={a} pulse={p.pulse}/>
     </g>
   );
 }
 
+const SPR_DEFS={
+  enemy:  {w:48, h:52, cx:24, cy:26, el:()=><EnemyHead/>},
+  wbc:    {w:100,h:100,cx:50, cy:50, el:()=><WBCVec x={0} y={0} pulse={0}/>},
+  mucus:  {w:100,h:100,cx:50, cy:50, el:()=><MucusVec x={0} y={0} pulse={0} r={25}/>},
+  ab:     {w:84, h:84, cx:42, cy:42, el:()=><AntibodyVec x={0} y={0} angle={0} pulse={0}/>},
+  helmet: {w:80, h:80, cx:40, cy:40, el:()=><HelmetBody/>},
+  ovGlow: {w:272,h:272,cx:136,cy:136,el:()=><OvuleGlow/>},
+  ovCore: {w:112,h:112,cx:56, cy:56, el:()=><OvuleCore/>},
+  ovShell:{w:176,h:176,cx:88, cy:88, el:()=><OvuleShell angle={0} pulse={0}/>},
+};
+// Rasterises every sprite once (one per timer tick so the main thread is never blocked for long)
+function bakeSprites(){
+  if(bakeSprites.started)return;bakeSprites.started=true;
+  const SS=Math.min(window.devicePixelRatio||1,2.5);
+  const keys=Object.keys(SPR_DEFS);let i=0;
+  const next=()=>{
+    if(i>=keys.length)return;
+    const k=keys[i++],d=SPR_DEFS[k];
+    try{
+      const host=document.createElement('div');const root=ReactDOM.createRoot(host);
+      ReactDOM.flushSync(()=>root.render(
+        <svg xmlns="http://www.w3.org/2000/svg" width={d.w} height={d.h} viewBox={`${-d.cx} ${-d.cy} ${d.w} ${d.h}`}>
+          <defs><FxDefs acc="#ffd06b"/></defs>{d.el()}
+        </svg>));
+      const markup=host.innerHTML;root.unmount();
+      const im=new Image();
+      im.onload=()=>{
+        try{
+          const c=document.createElement('canvas');c.width=Math.round(d.w*SS);c.height=Math.round(d.h*SS);
+          c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+          SPR[k]={href:c.toDataURL('image/png'),w:d.w,h:d.h,cx:d.cx,cy:d.cy};
+        }catch(e){}
+        setTimeout(next,0);
+      };
+      im.onerror=()=>setTimeout(next,0);
+      im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(markup);
+    }catch(e){setTimeout(next,0);}
+  };
+  next();
+}
+
 function Ptcl({list}){
-  return<g>{list.map(p=>{const a=clamp(p.life/p.ml,0,1);return<g key={p.id}>
-    <circle cx={p.x} cy={p.y} r={11*a} fill={p.color} opacity={a*0.2}/>
+  const glow=FX<1;
+  return<g>{list.map(p=>{const a=clamp(p.life/p.ml,0,1);return<React.Fragment key={p.id}>
+    {glow&&<circle cx={p.x} cy={p.y} r={11*a} fill={p.color} opacity={a*0.2}/>}
     <circle cx={p.x} cy={p.y} r={3.6*a+0.6} fill={p.color} opacity={a}/>
-    <circle cx={p.x} cy={p.y} r={1.4*a} fill="#fff" opacity={a*0.85}/>
-  </g>;})}</g>;
+    {glow&&<circle cx={p.x} cy={p.y} r={1.4*a} fill="#fff" opacity={a*0.85}/>}
+  </React.Fragment>;})}</g>;
 }
 
 /* ── UI atoms ── */
-function LifeIcon({x,y,on,hard}){
+const LifeIcon=React.memo(function LifeIcon({x,y,on,hard}){
   return(
     <g transform={`translate(${x},${y})`} opacity={on?1:0.2}>
       <path d={ribbon([[6,0],[11,1.8],[16,-1.2],[21,1.2],[26,-0.4]],5,1)} fill={hard?'#ff7a8a':'#ffffff'} opacity="0.85"/>
@@ -906,7 +1056,7 @@ function LifeIcon({x,y,on,hard}){
       <circle cx="3" cy="-0.6" r="1.8" fill={hard?'#3a0010':'#3d6fb0'}/>
     </g>
   );
-}
+});
 function RankBadge({i,x,y}){
   return(
     <g transform={`translate(${x},${y})`}>
@@ -916,7 +1066,7 @@ function RankBadge({i,x,y}){
     </g>
   );
 }
-function Crown(){
+const Crown=React.memo(function Crown(){
   return(
     <g>
       <path d="M -18 0 L -15 -15 L -8 -5 L 0 -18 L 8 -5 L 15 -15 L 18 0 Z" fill="url(#goldMetal)" stroke="#7a4805" strokeWidth="1" strokeLinejoin="round"/>
@@ -928,16 +1078,16 @@ function Crown(){
       <path d="M -12 -4 L -10.5 -10" stroke="#fff" strokeOpacity="0.8" strokeWidth="1.4" strokeLinecap="round"/>
     </g>
   );
-}
+});
 // Glass pill / button
-function Pill({x,y,w,h,fill,stroke,glow}){
+const Pill=React.memo(function Pill({x,y,w,h,fill,stroke,glow}){
   return(<g>
     {glow&&<rect x={x-6} y={y-2} width={w+12} height={h+14} rx={(h+14)/2} fill={glow} opacity="0.35" filter="url(#sg)"/>}
     <rect x={x} y={y} width={w} height={h} rx={h/2} fill={fill||'url(#glass)'}/>
     {fill&&<rect x={x} y={y} width={w} height={h} rx={h/2} fill="url(#btnSheen)"/>}
     <rect x={x+0.5} y={y+0.5} width={w-1} height={h-1} rx={(h-1)/2} fill="none" stroke={stroke||'url(#glassStroke)'} strokeWidth="1"/>
   </g>);
-}
+});
 function IconBtn({cx,cy,onClick,active,children}){
   return(
     <g onClick={onClick} style={{cursor:'pointer'}}>
@@ -1052,7 +1202,12 @@ function Game(){
     return()=>{mq.removeEventListener?mq.removeEventListener('change',h):mq.removeListener(h);};
   },[]);
 
-  function setScreenBoth(s){screenRef.current=s;setScreen(s);if(s==='win'||s==='dead'||s==='start')stopAmbient();}
+  function setScreenBoth(s){
+    screenRef.current=s;setScreen(s);
+    if(s==='win'||s==='dead'||s==='start')stopAmbient();
+    // Back to the home menu: drop the finished run (enemies, ovule, zone colours) so none of it shows behind the menu
+    if(s==='start')gs.current=initState();
+  }
 
   function getPos(e){
     const el=svgRef.current;if(!el)return null;
@@ -1192,6 +1347,7 @@ function Game(){
   }
 
   function burst(g,x,y,color,n=10){
+    n=Math.min(n,Math.max(0,(FX>=2?24:70)-g.ptcl.length));   // cap live particles (each one is DOM nodes)
     for(let i=0;i<n;i++){
       const a=Math.random()*Math.PI*2,sp=1.5+Math.random()*3;
       g.ptcl.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:24+Math.random()*12,ml:36,color,id:uid()});
@@ -1247,19 +1403,62 @@ function Game(){
     return()=>el.removeEventListener('touchmove',h);
   },[]);
 
+  // Moves the composited decor layers (cheap: only CSS transforms, no repaint)
+  function applyLayers(g){
+    const L=LAYER_EL;if(!L.root)return;
+    const {ox,vbW}=vpRef.current;
+    const t=(g.bgT||0)+(g.drift||0);
+    const wm=g.wallMix===undefined?1:g.wallMix;
+    const off=sp=>(t*sp)%BP;
+    const tr=(el,x,y)=>{if(el)el.style.transform=`translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;};
+    tr(L.far,0,off(0.22)-BP);
+    tr(L.near,0,off(0.55)-BP);
+    tr(L.spk,0,off(1.25)-BP);
+    const wy=off(1)-BP-20;
+    tr(L.wallL,lerp(POX+ox,0,wm),wy);
+    tr(L.wallR,lerp(POX+PW+ox,vbW,wm)-WALL_W,wy);
+    if(L.sideL){const o=(1-wm).toFixed(2);L.sideL.style.opacity=o;L.sideR.style.opacity=o;}
+  }
+  // Adaptive quality: if the phone cannot hold ~40 fps for a few seconds, drop to a lighter look (remembered for next launches)
+  // Rasterise the sprite bitmaps shortly after launch (vector fallbacks are drawn until each one is ready)
+  React.useEffect(()=>{const t=setTimeout(bakeSprites,350);return()=>clearTimeout(t);},[]);
+  const fpsRef=React.useRef({n:0,sum:0,skip:90});
+  const frameRef=React.useRef(0);
+  const modalRef=React.useRef(0);          // 0 none, 1 shop open (animated previews), 2 other static window open
+  function watchFps(rawDt){
+    const f=fpsRef.current;
+    if(f.skip>0){f.skip--;return;}            // ignore warm-up frames
+    if(rawDt>120)return;                       // ignore tab switches / hiccups
+    f.sum+=rawDt;f.n++;
+    if(f.n>=90){
+      const avg=f.sum/f.n;f.n=0;f.sum=0;
+      if(avg>25&&FX<2){
+        FX++;f.skip=45;
+        try{localStorage.setItem('theone_fx',String(FX));}catch(e){}
+      }
+    }
+  }
   React.useEffect(()=>{
     let last=0;
     function tick(now){
       raf.current=requestAnimationFrame(tick); // ALWAYS re-queue first
-      const dt=Math.min(now-last,40);last=now;
+      const rawDt=now-last;
+      const dt=Math.min(rawDt,40);last=now;
+      if(document.hidden)return;               // nothing to draw for a backgrounded page
       const g=gs.current;
       // Always animate wob/pulse for menu/shop animations
       g.wob+=dt*0.1;g.pulse+=dt*0.08;g.drift=(g.drift||0)+dt*0.03;
       // Canal width eases between window-wide (home menu) and play-lane width
       const wideT=screenRef.current==='start'?1:0;
       g.wallMix=g.wallMix===undefined?1:lerp(g.wallMix,wideT,clamp(dt/180,0,1));
-      if(g.phase!=='playing'){re();return;}
-      if(tutoRef.current!==null||landRef.current){re();return;}
+      applyLayers(g);
+      // Menus / paused screens only need ~30 fps
+      if(g.phase!=='playing'||tutoRef.current!==null||landRef.current){
+        // Menus run at ~30 fps; behind an open window: shop previews at ~15 fps, static windows not at all
+        const m=modalRef.current;if(m===2)return;
+        if((frameRef.current++%(m===1?4:2))===0)re();return;
+      }
+      watchFps(rawDt);
       if(g.inv>0)g.inv-=dt;
       if(g.hitFlash>0)g.hitFlash-=2;
       if(g.slowed>0)g.slowed-=dt;
@@ -1278,7 +1477,7 @@ function Game(){
       g.pvx=lerp(g.pvx||0,rawVx,clamp(0.12*(dt/16),0,1));
       // Skin trail particles
       const skTrail=(equippedRef.current&&getSkin(equippedRef.current).trail)||null;
-      if(skTrail){
+      if(skTrail&&FX<2){
         const speed=Math.abs(rawVx)+Math.abs(g.py-py0);
         const rate=0.5+Math.min(speed*0.1,1.5);
         if(Math.random()<rate*(dt/100)){
@@ -1406,7 +1605,8 @@ function Game(){
       if(g.zone===4&&!g.infinite){
         if(g.tiz>5)g.ovuleY=clamp(-160+(g.tiz-5)*22,-160,100);
         g.ovuleAngle=(g.ovuleAngle+0.0018*dt)%(Math.PI*2);
-        if(g.ovuleY>=80){
+        // Solid as soon as it reaches the playable area (not only once parked), so the entry can be hit while it descends
+        if(g.ovuleY>-37){
           const dd=d2(g.px,g.py,GW/2,g.ovuleY);
           const gapH=Math.PI/3.2;
           const pA=Math.atan2(g.py-g.ovuleY,g.px-GW/2);
@@ -1449,7 +1649,8 @@ function Game(){
   const totalProg=g.infinite&&g.zone===4?1:clamp((g.zone+(z.dur===999?0.99:fz))/ZONES.length,0,1);
   const bgl=lerpHex(pz.bg1,z.bg1,g.zoneBlend||1);
   const bgd=lerpHex(pz.bg2,z.bg2,g.zoneBlend||1);
-  const bgLines=Array.from({length:16},(_,i)=>((g.bg+i*(GH/16))%GH));
+  const fxLevel=FX;
+  modalRef.current=showShop?1:((showStats||showAch||showDaily||showInfo)?2:0);
 
   // CSS filter for hit flash
   const hitCss='none'; // hit feedback is now an in-SVG red vignette (cheaper than a CSS filter)
@@ -1480,19 +1681,13 @@ function Game(){
       onMouseDown={onTS} onMouseMove={onTM} onMouseUp={onTE}
       onTouchStart={onTS} onTouchEnd={onTE}
     >
-      <svg ref={svgRef} viewBox={`${-ox} ${-oy} ${vbW} ${vbH}`} preserveAspectRatio="none" style={{touchAction:screen==='playing'?'none':'auto'}}>
+      {/* Background colour + composited decor layers (moved by applyLayers, never repainted) */}
+      <div style={{position:'absolute',left:0,top:0,right:0,bottom:0,background:`linear-gradient(to bottom,${bgl},${bgd})`}}/>
+      <Layers acc={z.acc} vbW={vbW} vbH={vbH} ox={ox} S={_vpS} fx={fxLevel}/>
+      <svg ref={svgRef} viewBox={`${-ox} ${-oy} ${vbW} ${vbH}`} preserveAspectRatio="none" style={{touchAction:screen==='playing'?'none':'auto',position:'relative'}}>
         <defs>
-          <linearGradient id="bgG" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={bgl}/><stop offset="100%" stopColor={bgd}/>
-          </linearGradient>
-          <FxDefs acc={z.acc}/>
+          <FxDefsM acc={z.acc}/>
         </defs>
-
-        <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="url(#bgG)"/>
-        <Backdrop t={(g.bgT||0)+(g.drift||0)} acc={z.acc} ox={ox} oy={oy} vbW={vbW} vbH={vbH} wide={g.wallMix??1}/>
-        {/* Side darkening outside play zone (fades out while the canal is window-wide) */}
-        {POX+ox>0&&<rect x={-ox} y={-oy} width={POX+ox} height={vbH} fill="rgba(0,0,0,0.45)" opacity={1-(g.wallMix??1)}/>}
-        {POX+ox>0&&<rect x={POX+PW} y={-oy} width={ox+GW-(POX+PW)} height={vbH} fill="rgba(0,0,0,0.45)" opacity={1-(g.wallMix??1)}/>}
 
         {/* Ovule */}
         {g.zone===4&&g.ovuleY>-130&&<Ovule x={GW/2} y={g.ovuleY} pulse={g.pulse} angle={g.ovuleAngle}/>}
@@ -1525,15 +1720,6 @@ function Game(){
             <SpermPlayer x={g.px} y={g.py} wob={g.wob} hit={false} shield={g.shield} tilt={g.pvx} skin={getSkin(equipped)}/>
           </g>
         </React.Fragment>)}
-
-        {/* Hit flash — red edge pulse */}
-        {screen==='playing'&&g.hitFlash>0&&(
-          <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="url(#hitVign)" opacity={clamp(g.hitFlash/30,0,1)}/>
-        )}
-        {/* Slowed — mucus tint */}
-        {screen==='playing'&&g.slowed>0&&(
-          <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="url(#slowVign)" opacity={clamp(g.slowed/700,0,1)}/>
-        )}
 
         {/* Escape warning: rivals close to the top edge cost a life if they get out */}
         {screen==='playing'&&g.sperms.map(e=>{
@@ -1942,6 +2128,9 @@ function Game(){
           </g>
         )}
       </svg>
+      {/* Hit flash / mucus slow tint: CSS overlays (compositor-only opacity) instead of full-screen SVG rects */}
+      <div style={{position:'absolute',left:0,top:0,right:0,bottom:0,pointerEvents:'none',willChange:'opacity',opacity:screen==='playing'?clamp(g.hitFlash/30,0,1):0,background:'radial-gradient(ellipse 75% 75% at 50% 50%,rgba(255,30,70,0) 45%,rgba(255,30,70,0.6) 100%)'}}/>
+      <div style={{position:'absolute',left:0,top:0,right:0,bottom:0,pointerEvents:'none',willChange:'opacity',opacity:screen==='playing'&&g.slowed>0?clamp(g.slowed/700,0,1):0,background:'radial-gradient(ellipse 75% 75% at 50% 50%,rgba(182,232,58,0) 50%,rgba(182,232,58,0.3) 100%)'}}/>
       {/* Progress bar — HTML overlay, toujours collé au bas absolu de l'écran */}
       {screen==='playing'&&(
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:'5px',background:'rgba(255,255,255,0.07)',pointerEvents:'none'}}>

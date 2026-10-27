@@ -1494,99 +1494,207 @@ function FxDefs({
     stdDeviation: "10"
   })));
 }
-function Backdrop({
-  t,
+const FxDefsM = React.memo(FxDefs);
+let FX = 0;
+try {
+  FX = Math.min(2, Math.max(0, Number(localStorage.getItem('theone_fx')) || 0));
+} catch (e) {}
+const BP = 640;
+const WALL_W = 64;
+const WK1 = 2 * Math.PI / BP,
+  WK2 = 6 * Math.PI / BP;
+const LAYER_EL = {};
+const setEl = k => el => {
+  if (el) LAYER_EL[k] = el;else delete LAYER_EL[k];
+};
+function wallPts(side, amp, ph, base, top, bottom) {
+  const pts = [];
+  for (let u = top; u <= bottom; u += 20) {
+    const w = base + Math.sin(u * WK1 + ph) * amp + Math.sin(u * WK2 + ph * 2) * amp * 0.45;
+    pts.push([side < 0 ? w : WALL_W - w, u]);
+  }
+  return pts;
+}
+function wallShape(side, pts) {
+  const edge = side < 0 ? 0 : WALL_W;
+  return smoothOpen(pts) + `L${edge} ${f1(pts[pts.length - 1][1])}L${edge} ${f1(pts[0][1])}Z`;
+}
+const Layers = React.memo(function Layers({
   acc,
-  ox,
-  oy,
   vbW,
   vbH,
-  wide = 0
+  ox,
+  S,
+  fx
 }) {
-  const wl = lerp(POX, -ox, wide),
-    wr = lerp(POX + PW, GW + ox, wide);
-  const H = GH + 240,
-    X0 = -ox,
-    W = vbW;
-  const layer = (n, seed, sp, rMin, rMax, op, fill) => Array.from({
-    length: n
-  }, (_, i) => {
-    const k = seed + i;
-    const yy = (hrnd(k * 3 + 1) * H + t * sp) % H - 120;
-    const xx = X0 + hrnd(k * 3 + 2) * W + Math.sin(t * 0.003 + k) * 14;
-    const r = rMin + hrnd(k * 3) * (rMax - rMin);
-    return React.createElement("circle", {
-      key: k,
-      cx: f1(xx),
-      cy: f1(yy),
-      r: f1(r),
-      fill: fill,
-      opacity: op
-    });
-  });
-  const wall = (side, amp, ph, base) => {
-    const pts = [];
-    for (let yy = -oy - 40; yy <= GH + oy + 40; yy += 24) {
-      const w = base + Math.sin((yy - t) * 0.011 + ph) * amp + Math.sin((yy - t) * 0.029 + ph * 2) * amp * 0.45;
-      pts.push([side < 0 ? wl + w : wr - w, yy]);
+  const m = Math.ceil(vbH / BP) + 1,
+    H3 = m * BP;
+  const dots = (n, seed, rMin, rMax, op, fill) => {
+    const out = [];
+    for (let c = 0; c < m; c++) for (let i = 0; i < n; i++) {
+      const k = seed + i;
+      out.push(React.createElement("circle", {
+        key: c * 64 + i,
+        cx: f1(hrnd(k * 3 + 2) * vbW),
+        cy: f1(hrnd(k * 3 + 1) * BP + c * BP),
+        r: f1(rMin + hrnd(k * 3) * (rMax - rMin)),
+        fill: fill,
+        opacity: op
+      }));
     }
-    return pts;
+    return out;
   };
-  const wallShape = (side, pts) => {
-    const edgeX = side < 0 ? X0 : X0 + W;
-    return smoothOpen(pts) + `L${f1(edgeX)} ${f1(pts[pts.length - 1][1])}L${f1(edgeX)} ${f1(pts[0][1])}Z`;
+  const bokeh = (id, n, seed, rMin, rMax, op) => React.createElement("svg", {
+    viewBox: `0 0 ${vbW} ${H3}`,
+    style: {
+      display: 'block',
+      width: vbW,
+      height: H3
+    }
+  }, React.createElement("defs", null, React.createElement("radialGradient", {
+    id: id
+  }, React.createElement("stop", {
+    offset: "0%",
+    stopColor: acc,
+    stopOpacity: "0.55"
+  }), React.createElement("stop", {
+    offset: "50%",
+    stopColor: acc,
+    stopOpacity: "0.2"
+  }), React.createElement("stop", {
+    offset: "100%",
+    stopColor: acc,
+    stopOpacity: "0"
+  }))), dots(n, seed, rMin, rMax, op, `url(#${id})`));
+  const wallH = vbH + BP + 40;
+  const wall = side => {
+    const id = side < 0 ? 'bdWl' : 'bdWr';
+    const back = wallPts(side, 9, side < 0 ? 1.3 : 2.1, 26, -BP - 20, vbH + 20),
+      front = wallPts(side, 6, side < 0 ? 0 : 3.4, 14, -BP - 20, vbH + 20);
+    const x1 = side < 0 ? 0 : WALL_W,
+      x2 = side < 0 ? 48 : WALL_W - 48;
+    return React.createElement("svg", {
+      viewBox: `0 ${-BP - 20} ${WALL_W} ${wallH}`,
+      style: {
+        display: 'block',
+        width: WALL_W,
+        height: wallH
+      }
+    }, React.createElement("defs", null, React.createElement("linearGradient", {
+      id: id,
+      gradientUnits: "userSpaceOnUse",
+      x1: x1,
+      y1: "0",
+      x2: x2,
+      y2: "0"
+    }, React.createElement("stop", {
+      offset: "0%",
+      stopColor: "#000",
+      stopOpacity: "0.5"
+    }), React.createElement("stop", {
+      offset: "80%",
+      stopColor: acc,
+      stopOpacity: "0.16"
+    }), React.createElement("stop", {
+      offset: "100%",
+      stopColor: acc,
+      stopOpacity: "0.4"
+    }))), React.createElement("path", {
+      d: wallShape(side, back),
+      fill: `url(#${id})`,
+      opacity: "0.55"
+    }), React.createElement("path", {
+      d: wallShape(side, front),
+      fill: `url(#${id})`
+    }), React.createElement("path", {
+      d: smoothOpen(front),
+      fill: "none",
+      stroke: acc,
+      strokeOpacity: "0.14",
+      strokeWidth: "9"
+    }), React.createElement("path", {
+      d: smoothOpen(front),
+      fill: "none",
+      stroke: acc,
+      strokeOpacity: "0.6",
+      strokeWidth: "1.3"
+    }));
   };
-  const Lb = wall(-1, 9, 1.3, 26),
-    Lf = wall(-1, 6, 0, 14),
-    Rb = wall(1, 9, 2.1, 26),
-    Rf = wall(1, 6, 3.4, 14);
-  return React.createElement("g", null, layer(6, 100, 0.22, 55, 115, 0.22, 'url(#bokeh)'), layer(9, 200, 0.55, 9, 22, 0.38, 'url(#bokeh)'), React.createElement("path", {
-    d: wallShape(-1, Lb),
-    fill: "url(#wallL)",
-    opacity: "0.55"
-  }), React.createElement("path", {
-    d: wallShape(1, Rb),
-    fill: "url(#wallR)",
-    opacity: "0.55"
-  }), React.createElement("path", {
-    d: wallShape(-1, Lf),
-    fill: "url(#wallL)"
-  }), React.createElement("path", {
-    d: wallShape(1, Rf),
-    fill: "url(#wallR)"
-  }), React.createElement("path", {
-    d: smoothOpen(Lf),
-    fill: "none",
-    stroke: acc,
-    strokeOpacity: "0.14",
-    strokeWidth: "9"
-  }), React.createElement("path", {
-    d: smoothOpen(Rf),
-    fill: "none",
-    stroke: acc,
-    strokeOpacity: "0.14",
-    strokeWidth: "9"
-  }), React.createElement("path", {
-    d: smoothOpen(Lf),
-    fill: "none",
-    stroke: acc,
-    strokeOpacity: "0.6",
-    strokeWidth: "1.3"
-  }), React.createElement("path", {
-    d: smoothOpen(Rf),
-    fill: "none",
-    stroke: acc,
-    strokeOpacity: "0.6",
-    strokeWidth: "1.3"
-  }), layer(16, 300, 1.25, 0.8, 2.2, 0.5, '#ffe9e2'), React.createElement("rect", {
-    x: -ox,
-    y: -oy,
-    width: vbW,
-    height: vbH,
-    fill: "url(#vign)"
+  const lay = {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    willChange: 'transform'
+  };
+  const rightX = POX + PW + ox;
+  return React.createElement("div", {
+    ref: setEl('root'),
+    "aria-hidden": "true",
+    style: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      width: vbW,
+      height: vbH,
+      overflow: 'hidden',
+      pointerEvents: 'none',
+      transformOrigin: '0 0',
+      transform: S !== 1 ? `scale(${S})` : undefined
+    }
+  }, fx < 1 && React.createElement("div", {
+    ref: setEl('far'),
+    style: lay
+  }, bokeh('bdBkA', 4, 100, 55, 115, 0.22)), fx < 1 && React.createElement("div", {
+    ref: setEl('near'),
+    style: lay
+  }, bokeh('bdBkB', 6, 200, 9, 22, 0.38)), React.createElement("div", {
+    ref: setEl('wallL'),
+    style: lay
+  }, wall(-1)), React.createElement("div", {
+    ref: setEl('wallR'),
+    style: lay
+  }, wall(1)), fx < 1 && React.createElement("div", {
+    ref: setEl('spk'),
+    style: lay
+  }, React.createElement("svg", {
+    viewBox: `0 0 ${vbW} ${H3}`,
+    style: {
+      display: 'block',
+      width: vbW,
+      height: H3
+    }
+  }, dots(10, 300, 0.8, 2.2, 0.5, '#ffe9e2'))), POX + ox > 0 && React.createElement("div", {
+    ref: setEl('sideL'),
+    style: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      width: POX + ox,
+      height: vbH,
+      background: 'rgba(0,0,0,0.45)'
+    }
+  }), POX + ox > 0 && React.createElement("div", {
+    ref: setEl('sideR'),
+    style: {
+      position: 'absolute',
+      left: rightX,
+      top: 0,
+      width: Math.max(0, vbW - rightX),
+      height: vbH,
+      background: 'rgba(0,0,0,0.45)'
+    }
+  }), React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      width: '100%',
+      height: '100%',
+      background: 'radial-gradient(ellipse 75% 75% at 50% 50%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.72) 100%)'
+    }
   }));
-}
-function HelmetShape() {
+});
+const HelmetShape = React.memo(function HelmetShape() {
   return React.createElement("g", null, React.createElement("path", {
     d: "M -21 -5 C -22 -24 -12 -33 0 -33 C 12 -33 22 -24 21 -5 Q 0 -10 -21 -5 Z",
     fill: "url(#goldMetal)",
@@ -1615,7 +1723,7 @@ function HelmetShape() {
     fill: "#fff",
     opacity: "0.7"
   }));
-}
+});
 function SpermPlayer({
   x,
   y,
@@ -1680,7 +1788,7 @@ function SpermPlayer({
     r: PR + 30 + Math.sin(ph * 2) * 3,
     fill: `url(#sk_${sk.id})`,
     opacity: glowPulse
-  }), sk.id === 'fire' && [0, 1, 2, 3, 4, 5, 6].map(i => {
+  }), sk.id === 'fire' && (FX >= 1 ? [0, 1, 2] : [0, 1, 2, 3, 4, 5, 6]).map(i => {
     const cyc = ph * 0.16 + i * 0.43;
     const tick = Math.floor(cyc);
     const seed = tick * 17.3 + i * 9.1;
@@ -1703,7 +1811,7 @@ function SpermPlayer({
       d: "M 0 -3.2 C 1.4 -1.4 1.8 0.4 1.2 1.8 C 0.6 2.8 -0.6 2.8 -1.2 1.8 C -1.8 0.4 -1.4 -1.4 0 -3.2 Z",
       fill: "#ffe27a"
     }));
-  }), sk.id === 'ice' && [0, 1, 2, 3, 4, 5, 6].map(i => {
+  }), sk.id === 'ice' && (FX >= 1 ? [0, 1, 2] : [0, 1, 2, 3, 4, 5, 6]).map(i => {
     const cyc = ph * 0.22 + i * 0.37;
     const tick = Math.floor(cyc);
     const seed = tick * 19.7 + i * 11.3;
@@ -1738,7 +1846,7 @@ function SpermPlayer({
       r: "1",
       fill: "#fff"
     }));
-  }), !DISCRETE_MODE && React.createElement("g", null, React.createElement("path", {
+  }), !DISCRETE_MODE && React.createElement("g", null, FX < 1 && React.createElement("path", {
     d: ribbon(pts, 16, 4),
     fill: tailFill,
     opacity: "0.16"
@@ -1776,7 +1884,7 @@ function SpermPlayer({
     ry: PR + 1.5,
     fill: `rgba(255,210,60,${flameAmt * 0.3})`
   })), sk.galaxy && Array.from({
-    length: 14
+    length: FX >= 1 ? 7 : 14
   }, (_, i) => {
     const a = hrnd(i + 3) * Math.PI * 2 + ph * 0.08,
       d = 3 + hrnd(i + 17) * 15;
@@ -1840,7 +1948,7 @@ function SpermPlayer({
     stroke: "url(#rimIri)",
     strokeOpacity: "0.75",
     strokeWidth: "1.6"
-  }), sk.sparkle && [0, 1, 2, 3, 4, 5, 6, 7].map(i => {
+  }), sk.sparkle && (FX >= 1 ? [0, 1, 2, 3] : [0, 1, 2, 3, 4, 5, 6, 7]).map(i => {
     const cyc = ph * 0.55 + i * 0.31;
     const tick = Math.floor(cyc);
     const seed = tick * 23.7 + i * 13.5;
@@ -1918,19 +2026,7 @@ function SpermPlayer({
     opacity: "0.85"
   })));
 }
-function SpermEnemy({
-  x,
-  y,
-  wob,
-  vx,
-  svx
-}) {
-  const pts = [];
-  for (let i = 0; i <= 16; i++) {
-    const f = i / 16;
-    pts.push([Math.sin(wob * 0.13 + f * 3) * f * 8, 9 + f * 63]);
-  }
-  const rot = clamp((svx !== undefined ? svx : vx) * 8, -30, 30);
+function EnemyHead() {
   const eye = cx => React.createElement("g", {
     transform: `translate(${cx},-2)`
   }, React.createElement("ellipse", {
@@ -1958,24 +2054,7 @@ function SpermEnemy({
     r: "0.95",
     fill: "#fff"
   }));
-  return React.createElement("g", {
-    transform: `translate(${x},${y}) rotate(${rot})`
-  }, !DISCRETE_MODE && React.createElement("g", null, React.createElement("path", {
-    d: ribbon(pts, 11, 3),
-    fill: "#ff8fa8",
-    opacity: "0.14"
-  }), React.createElement("path", {
-    d: ribbon(pts, 5.8, 0.8),
-    fill: "#f7a0b4",
-    opacity: "0.92"
-  }), React.createElement("path", {
-    d: polyD(pts.slice(0, 8)),
-    stroke: "#fff",
-    strokeOpacity: "0.4",
-    strokeWidth: "1",
-    fill: "none",
-    strokeLinecap: "round"
-  })), React.createElement("ellipse", {
+  return React.createElement("g", null, React.createElement("ellipse", {
     cx: "0",
     cy: "3.5",
     rx: "15",
@@ -2032,6 +2111,42 @@ function SpermEnemy({
     opacity: "0.7",
     transform: "rotate(-30,-5.5,-9.5)"
   }));
+}
+function SpermEnemy({
+  x,
+  y,
+  wob,
+  vx,
+  svx
+}) {
+  const pts = [];
+  for (let i = 0; i <= 16; i++) {
+    const f = i / 16;
+    pts.push([Math.sin(wob * 0.13 + f * 3) * f * 8, 9 + f * 63]);
+  }
+  const rot = clamp((svx !== undefined ? svx : vx) * 8, -30, 30);
+  return React.createElement("g", {
+    transform: `translate(${f1(x)},${f1(y)}) rotate(${rot.toFixed(1)})`
+  }, !DISCRETE_MODE && React.createElement("g", null, FX < 1 && React.createElement("path", {
+    d: ribbon(pts, 11, 3),
+    fill: "#ff8fa8",
+    opacity: "0.14"
+  }), React.createElement("path", {
+    d: ribbon(pts, 5.8, 0.8),
+    fill: "#f7a0b4",
+    opacity: "0.92"
+  }), FX < 1 && React.createElement("path", {
+    d: polyD(pts.slice(0, 8)),
+    stroke: "#fff",
+    strokeOpacity: "0.4",
+    strokeWidth: "1",
+    fill: "none",
+    strokeLinecap: "round"
+  })), SPR.enemy ? React.createElement(Img, {
+    k: "enemy",
+    x: 0,
+    y: 0
+  }) : React.createElement(EnemyHead, null));
 }
 function RivalVictor({
   wob
@@ -2216,7 +2331,30 @@ function RivalVictor({
     fill: "#fff"
   })));
 }
-function WBC({
+const SPR = {};
+function Img({
+  k,
+  x,
+  y,
+  sx = 1,
+  sy = 1,
+  rot = 0,
+  op
+}) {
+  const s = SPR[k];
+  const tf = `translate(${f1(x)},${f1(y)})` + (rot ? ` rotate(${f1(rot)})` : '') + (sx !== 1 || sy !== 1 ? ` scale(${sx.toFixed(3)},${sy.toFixed(3)})` : '');
+  return React.createElement("image", {
+    href: s.href,
+    xlinkHref: s.href,
+    x: -s.cx,
+    y: -s.cy,
+    width: s.w,
+    height: s.h,
+    transform: tf,
+    opacity: op
+  });
+}
+function WBCVec({
   x,
   y,
   pulse
@@ -2294,7 +2432,19 @@ function WBC({
     transform: `rotate(-30,${x - 9},${y - 16})`
   }));
 }
-function Mucus({
+function WBC(p) {
+  if (!SPR.wbc) return React.createElement(WBCVec, p);
+  const a = Math.sin(p.pulse * 0.09),
+    b = Math.sin(p.pulse * 0.09 + 1.3);
+  return React.createElement(Img, {
+    k: "wbc",
+    x: p.x,
+    y: p.y,
+    sx: 1 + a * 0.05,
+    sy: 1 - b * 0.05
+  });
+}
+function MucusVec({
   x,
   y,
   pulse,
@@ -2349,7 +2499,19 @@ function Mucus({
     transform: `rotate(-25,${x - r * 0.32},${y - r * 0.48})`
   }));
 }
-function Antibody({
+function Mucus(p) {
+  if (!SPR.mucus) return React.createElement(MucusVec, p);
+  const k = p.r / 25,
+    a = Math.sin(p.pulse * 0.08) * 0.06;
+  return React.createElement(Img, {
+    k: "mucus",
+    x: p.x,
+    y: p.y,
+    sx: k * (1 + a),
+    sy: k * (1 - a)
+  });
+}
+function AntibodyVec({
   x,
   y,
   angle,
@@ -2416,15 +2578,18 @@ function Antibody({
     strokeWidth: "1"
   }))));
 }
-function Helmet({
-  x,
-  y,
-  pulse
-}) {
-  const s = 1 + Math.sin(pulse * 0.08) * 0.06;
-  return React.createElement("g", {
-    transform: `translate(${x},${y}) scale(${s})`
-  }, React.createElement("circle", {
+function Antibody(p) {
+  if (!SPR.ab) return React.createElement(AntibodyVec, p);
+  return React.createElement(Img, {
+    k: "ab",
+    x: p.x,
+    y: p.y,
+    rot: p.angle,
+    op: f1(0.85 + Math.sin(p.pulse * 0.1) * 0.15)
+  });
+}
+function HelmetBody() {
+  return React.createElement("g", null, React.createElement("circle", {
     cx: "0",
     cy: "0",
     r: "36",
@@ -2438,17 +2603,6 @@ function Helmet({
     stroke: "#ffe28c",
     strokeOpacity: "0.7",
     strokeWidth: "1.2"
-  }), React.createElement("circle", {
-    cx: "0",
-    cy: "0",
-    r: "27.5",
-    fill: "none",
-    stroke: "#ffd25e",
-    strokeWidth: "1.6",
-    strokeDasharray: "9 13",
-    strokeLinecap: "round",
-    transform: `rotate(${pulse * 1.2 % 360})`,
-    opacity: "0.8"
   }), React.createElement("g", {
     transform: "translate(0,13.5) scale(0.72)"
   }, React.createElement(HelmetShape, null)), React.createElement("ellipse", {
@@ -2461,6 +2615,36 @@ function Helmet({
     transform: "rotate(-38,-9,-13)"
   }));
 }
+const HelmetRing = ({
+  pulse
+}) => React.createElement("circle", {
+  cx: "0",
+  cy: "0",
+  r: "27.5",
+  fill: "none",
+  stroke: "#ffd25e",
+  strokeWidth: "1.6",
+  strokeDasharray: "9 13",
+  strokeLinecap: "round",
+  transform: `rotate(${pulse * 1.2 % 360})`,
+  opacity: "0.8"
+});
+function Helmet({
+  x,
+  y,
+  pulse
+}) {
+  const s = 1 + Math.sin(pulse * 0.08) * 0.06;
+  return React.createElement("g", {
+    transform: `translate(${f1(x)},${f1(y)}) scale(${s.toFixed(3)})`
+  }, SPR.helmet ? React.createElement(Img, {
+    k: "helmet",
+    x: 0,
+    y: 0
+  }) : React.createElement(HelmetBody, null), FX < 2 && React.createElement(HelmetRing, {
+    pulse: pulse
+  }));
+}
 function arcPath(r, startA, endA) {
   const x1 = Math.cos(startA) * r,
     y1 = Math.sin(startA) * r;
@@ -2469,30 +2653,16 @@ function arcPath(r, startA, endA) {
   const sweep = (endA - startA + Math.PI * 4) % (Math.PI * 2);
   return `M ${x1} ${y1} A ${r} ${r} 0 ${sweep > Math.PI ? 1 : 0} 1 ${x2} ${y2}`;
 }
-function Ovule({
-  x,
-  y,
-  pulse,
-  angle
+function OvuleShell({
+  angle,
+  pulse
 }) {
-  const entryA = angle || 0;
   const gapH = Math.PI / 3.2;
-  const a0 = entryA + gapH,
-    a1 = entryA - gapH + Math.PI * 2;
-  const entryX = Math.cos(entryA) * 58,
-    entryY = Math.sin(entryA) * 58;
-  const pg = 0.6 + Math.sin(pulse * 0.15) * 0.3;
+  const a0 = angle + gapH,
+    a1 = angle - gapH + Math.PI * 2;
   const N = 24,
     span = a1 - a0 - 0.24;
-  return React.createElement("g", {
-    transform: `translate(${x},${y})`
-  }, React.createElement("circle", {
-    cx: "0",
-    cy: "0",
-    r: 125 + Math.sin(pulse * 0.05) * 8,
-    fill: "url(#glowGold)",
-    opacity: "0.6"
-  }), Array.from({
+  return React.createElement("g", null, Array.from({
     length: N
   }, (_, i) => {
     const a = a0 + 0.12 + i / (N - 1) * span;
@@ -2525,7 +2695,10 @@ function Ovule({
     strokeOpacity: "0.55",
     strokeWidth: "1",
     strokeLinecap: "round"
-  }), React.createElement("circle", {
+  }));
+}
+function OvuleCore() {
+  return React.createElement("g", null, React.createElement("circle", {
     cx: "0",
     cy: "0",
     r: "46",
@@ -2562,35 +2735,225 @@ function Ovule({
     fill: "#fff",
     opacity: "0.6",
     transform: "rotate(-38,-17,-23)"
-  }), React.createElement("circle", {
-    cx: entryX,
-    cy: entryY,
+  }));
+}
+function OvulePortal({
+  angle,
+  pulse
+}) {
+  const ex = Math.cos(angle) * 58,
+    ey = Math.sin(angle) * 58;
+  const pg = 0.6 + Math.sin(pulse * 0.15) * 0.3;
+  return React.createElement("g", null, React.createElement("circle", {
+    cx: f1(ex),
+    cy: f1(ey),
     r: 22 + Math.sin(pulse * 0.18) * 4,
     fill: "url(#glowWhite)",
     opacity: pg
   }), React.createElement("circle", {
-    cx: entryX,
-    cy: entryY,
+    cx: f1(ex),
+    cy: f1(ey),
     r: 9 + Math.sin(pulse * 0.18) * 1.5,
     fill: "none",
     stroke: "#fff",
     strokeOpacity: "0.7",
     strokeWidth: "1.2"
   }), React.createElement("circle", {
-    cx: entryX,
-    cy: entryY,
+    cx: f1(ex),
+    cy: f1(ey),
     r: "4.5",
     fill: "#fff"
   }));
 }
+const OvuleGlow = () => React.createElement("circle", {
+  cx: "0",
+  cy: "0",
+  r: "125",
+  fill: "url(#glowGold)",
+  opacity: "0.6"
+});
+function OvuleVec({
+  x,
+  y,
+  pulse,
+  angle
+}) {
+  const a = angle || 0;
+  return React.createElement("g", {
+    transform: `translate(${x},${y})`
+  }, React.createElement("circle", {
+    cx: "0",
+    cy: "0",
+    r: 125 + Math.sin(pulse * 0.05) * 8,
+    fill: "url(#glowGold)",
+    opacity: "0.6"
+  }), React.createElement(OvuleShell, {
+    angle: a,
+    pulse: pulse
+  }), React.createElement(OvuleCore, null), React.createElement(OvulePortal, {
+    angle: a,
+    pulse: pulse
+  }));
+}
+function Ovule(p) {
+  if (!SPR.ovCore || !SPR.ovShell || !SPR.ovGlow) return React.createElement(OvuleVec, p);
+  const a = p.angle || 0;
+  return React.createElement("g", {
+    transform: `translate(${f1(p.x)},${f1(p.y)})`
+  }, FX < 2 && React.createElement(Img, {
+    k: "ovGlow",
+    x: 0,
+    y: 0,
+    sx: 1 + Math.sin(p.pulse * 0.05) * 0.06,
+    sy: 1 + Math.sin(p.pulse * 0.05) * 0.06
+  }), React.createElement(Img, {
+    k: "ovShell",
+    x: 0,
+    y: 0,
+    rot: a * 180 / Math.PI,
+    sx: 1 + Math.sin(p.pulse * 0.05) * 0.012,
+    sy: 1 + Math.sin(p.pulse * 0.05) * 0.012
+  }), React.createElement(Img, {
+    k: "ovCore",
+    x: 0,
+    y: 0
+  }), React.createElement(OvulePortal, {
+    angle: a,
+    pulse: p.pulse
+  }));
+}
+const SPR_DEFS = {
+  enemy: {
+    w: 48,
+    h: 52,
+    cx: 24,
+    cy: 26,
+    el: () => React.createElement(EnemyHead, null)
+  },
+  wbc: {
+    w: 100,
+    h: 100,
+    cx: 50,
+    cy: 50,
+    el: () => React.createElement(WBCVec, {
+      x: 0,
+      y: 0,
+      pulse: 0
+    })
+  },
+  mucus: {
+    w: 100,
+    h: 100,
+    cx: 50,
+    cy: 50,
+    el: () => React.createElement(MucusVec, {
+      x: 0,
+      y: 0,
+      pulse: 0,
+      r: 25
+    })
+  },
+  ab: {
+    w: 84,
+    h: 84,
+    cx: 42,
+    cy: 42,
+    el: () => React.createElement(AntibodyVec, {
+      x: 0,
+      y: 0,
+      angle: 0,
+      pulse: 0
+    })
+  },
+  helmet: {
+    w: 80,
+    h: 80,
+    cx: 40,
+    cy: 40,
+    el: () => React.createElement(HelmetBody, null)
+  },
+  ovGlow: {
+    w: 272,
+    h: 272,
+    cx: 136,
+    cy: 136,
+    el: () => React.createElement(OvuleGlow, null)
+  },
+  ovCore: {
+    w: 112,
+    h: 112,
+    cx: 56,
+    cy: 56,
+    el: () => React.createElement(OvuleCore, null)
+  },
+  ovShell: {
+    w: 176,
+    h: 176,
+    cx: 88,
+    cy: 88,
+    el: () => React.createElement(OvuleShell, {
+      angle: 0,
+      pulse: 0
+    })
+  }
+};
+function bakeSprites() {
+  if (bakeSprites.started) return;
+  bakeSprites.started = true;
+  const SS = Math.min(window.devicePixelRatio || 1, 2.5);
+  const keys = Object.keys(SPR_DEFS);
+  let i = 0;
+  const next = () => {
+    if (i >= keys.length) return;
+    const k = keys[i++],
+      d = SPR_DEFS[k];
+    try {
+      const host = document.createElement('div');
+      const root = ReactDOM.createRoot(host);
+      ReactDOM.flushSync(() => root.render(React.createElement("svg", {
+        xmlns: "http://www.w3.org/2000/svg",
+        width: d.w,
+        height: d.h,
+        viewBox: `${-d.cx} ${-d.cy} ${d.w} ${d.h}`
+      }, React.createElement("defs", null, React.createElement(FxDefs, {
+        acc: "#ffd06b"
+      })), d.el())));
+      const markup = host.innerHTML;
+      root.unmount();
+      const im = new Image();
+      im.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          c.width = Math.round(d.w * SS);
+          c.height = Math.round(d.h * SS);
+          c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+          SPR[k] = {
+            href: c.toDataURL('image/png'),
+            w: d.w,
+            h: d.h,
+            cx: d.cx,
+            cy: d.cy
+          };
+        } catch (e) {}
+        setTimeout(next, 0);
+      };
+      im.onerror = () => setTimeout(next, 0);
+      im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(markup);
+    } catch (e) {
+      setTimeout(next, 0);
+    }
+  };
+  next();
+}
 function Ptcl({
   list
 }) {
+  const glow = FX < 1;
   return React.createElement("g", null, list.map(p => {
     const a = clamp(p.life / p.ml, 0, 1);
-    return React.createElement("g", {
+    return React.createElement(React.Fragment, {
       key: p.id
-    }, React.createElement("circle", {
+    }, glow && React.createElement("circle", {
       cx: p.x,
       cy: p.y,
       r: 11 * a,
@@ -2602,7 +2965,7 @@ function Ptcl({
       r: 3.6 * a + 0.6,
       fill: p.color,
       opacity: a
-    }), React.createElement("circle", {
+    }), glow && React.createElement("circle", {
       cx: p.x,
       cy: p.y,
       r: 1.4 * a,
@@ -2611,7 +2974,7 @@ function Ptcl({
     }));
   }));
 }
-function LifeIcon({
+const LifeIcon = React.memo(function LifeIcon({
   x,
   y,
   on,
@@ -2647,7 +3010,7 @@ function LifeIcon({
     r: "1.8",
     fill: hard ? '#3a0010' : '#3d6fb0'
   }));
-}
+});
 function RankBadge({
   i,
   x,
@@ -2673,7 +3036,7 @@ function RankBadge({
     fontFamily: "Sora,Helvetica Neue,Arial"
   }, i + 1));
 }
-function Crown() {
+const Crown = React.memo(function Crown() {
   return React.createElement("g", null, React.createElement("path", {
     d: "M -18 0 L -15 -15 L -8 -5 L 0 -18 L 8 -5 L 15 -15 L 18 0 Z",
     fill: "url(#goldMetal)",
@@ -2735,8 +3098,8 @@ function Crown() {
     strokeWidth: "1.4",
     strokeLinecap: "round"
   }));
-}
-function Pill({
+});
+const Pill = React.memo(function Pill({
   x,
   y,
   w,
@@ -2778,7 +3141,7 @@ function Pill({
     stroke: stroke || 'url(#glassStroke)',
     strokeWidth: "1"
   }));
-}
+});
 function IconBtn({
   cx,
   cy,
@@ -2973,6 +3336,7 @@ function Game() {
     screenRef.current = s;
     setScreen(s);
     if (s === 'win' || s === 'dead' || s === 'start') stopAmbient();
+    if (s === 'start') gs.current = initState();
   }
   function getPos(e) {
     const el = svgRef.current;
@@ -3238,6 +3602,7 @@ function Game() {
     }
   }
   function burst(g, x, y, color, n = 10) {
+    n = Math.min(n, Math.max(0, (FX >= 2 ? 24 : 70) - g.ptcl.length));
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2,
         sp = 1.5 + Math.random() * 3;
@@ -3334,26 +3699,86 @@ function Game() {
     });
     return () => el.removeEventListener('touchmove', h);
   }, []);
+  function applyLayers(g) {
+    const L = LAYER_EL;
+    if (!L.root) return;
+    const {
+      ox,
+      vbW
+    } = vpRef.current;
+    const t = (g.bgT || 0) + (g.drift || 0);
+    const wm = g.wallMix === undefined ? 1 : g.wallMix;
+    const off = sp => t * sp % BP;
+    const tr = (el, x, y) => {
+      if (el) el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;
+    };
+    tr(L.far, 0, off(0.22) - BP);
+    tr(L.near, 0, off(0.55) - BP);
+    tr(L.spk, 0, off(1.25) - BP);
+    const wy = off(1) - BP - 20;
+    tr(L.wallL, lerp(POX + ox, 0, wm), wy);
+    tr(L.wallR, lerp(POX + PW + ox, vbW, wm) - WALL_W, wy);
+    if (L.sideL) {
+      const o = (1 - wm).toFixed(2);
+      L.sideL.style.opacity = o;
+      L.sideR.style.opacity = o;
+    }
+  }
+  React.useEffect(() => {
+    const t = setTimeout(bakeSprites, 350);
+    return () => clearTimeout(t);
+  }, []);
+  const fpsRef = React.useRef({
+    n: 0,
+    sum: 0,
+    skip: 90
+  });
+  const frameRef = React.useRef(0);
+  const modalRef = React.useRef(0);
+  function watchFps(rawDt) {
+    const f = fpsRef.current;
+    if (f.skip > 0) {
+      f.skip--;
+      return;
+    }
+    if (rawDt > 120) return;
+    f.sum += rawDt;
+    f.n++;
+    if (f.n >= 90) {
+      const avg = f.sum / f.n;
+      f.n = 0;
+      f.sum = 0;
+      if (avg > 25 && FX < 2) {
+        FX++;
+        f.skip = 45;
+        try {
+          localStorage.setItem('theone_fx', String(FX));
+        } catch (e) {}
+      }
+    }
+  }
   React.useEffect(() => {
     let last = 0;
     function tick(now) {
       raf.current = requestAnimationFrame(tick);
-      const dt = Math.min(now - last, 40);
+      const rawDt = now - last;
+      const dt = Math.min(rawDt, 40);
       last = now;
+      if (document.hidden) return;
       const g = gs.current;
       g.wob += dt * 0.1;
       g.pulse += dt * 0.08;
       g.drift = (g.drift || 0) + dt * 0.03;
       const wideT = screenRef.current === 'start' ? 1 : 0;
       g.wallMix = g.wallMix === undefined ? 1 : lerp(g.wallMix, wideT, clamp(dt / 180, 0, 1));
-      if (g.phase !== 'playing') {
-        re();
+      applyLayers(g);
+      if (g.phase !== 'playing' || tutoRef.current !== null || landRef.current) {
+        const m = modalRef.current;
+        if (m === 2) return;
+        if (frameRef.current++ % (m === 1 ? 4 : 2) === 0) re();
         return;
       }
-      if (tutoRef.current !== null || landRef.current) {
-        re();
-        return;
-      }
+      watchFps(rawDt);
       if (g.inv > 0) g.inv -= dt;
       if (g.hitFlash > 0) g.hitFlash -= 2;
       if (g.slowed > 0) g.slowed -= dt;
@@ -3374,7 +3799,7 @@ function Game() {
       const rawVx = g.px - px0;
       g.pvx = lerp(g.pvx || 0, rawVx, clamp(0.12 * (dt / 16), 0, 1));
       const skTrail = equippedRef.current && getSkin(equippedRef.current).trail || null;
-      if (skTrail) {
+      if (skTrail && FX < 2) {
         const speed = Math.abs(rawVx) + Math.abs(g.py - py0);
         const rate = 0.5 + Math.min(speed * 0.1, 1.5);
         if (Math.random() < rate * (dt / 100)) {
@@ -3566,7 +3991,7 @@ function Game() {
       if (g.zone === 4 && !g.infinite) {
         if (g.tiz > 5) g.ovuleY = clamp(-160 + (g.tiz - 5) * 22, -160, 100);
         g.ovuleAngle = (g.ovuleAngle + 0.0018 * dt) % (Math.PI * 2);
-        if (g.ovuleY >= 80) {
+        if (g.ovuleY > -37) {
           const dd = d2(g.px, g.py, GW / 2, g.ovuleY);
           const gapH = Math.PI / 3.2;
           const pA = Math.atan2(g.py - g.ovuleY, g.px - GW / 2);
@@ -3621,9 +4046,8 @@ function Game() {
   const totalProg = g.infinite && g.zone === 4 ? 1 : clamp((g.zone + (z.dur === 999 ? 0.99 : fz)) / ZONES.length, 0, 1);
   const bgl = lerpHex(pz.bg1, z.bg1, g.zoneBlend || 1);
   const bgd = lerpHex(pz.bg2, z.bg2, g.zoneBlend || 1);
-  const bgLines = Array.from({
-    length: 16
-  }, (_, i) => (g.bg + i * (GH / 16)) % GH);
+  const fxLevel = FX;
+  modalRef.current = showShop ? 1 : showStats || showAch || showDaily || showInfo ? 2 : 0;
   const hitCss = 'none';
   const _vpS = Math.min(window.innerWidth / GW, window.innerHeight / GH);
   const _vpW = window.innerWidth / _vpS,
@@ -3682,56 +4106,33 @@ function Game() {
     onMouseUp: onTE,
     onTouchStart: onTS,
     onTouchEnd: onTE
-  }, React.createElement("svg", {
+  }, React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      background: `linear-gradient(to bottom,${bgl},${bgd})`
+    }
+  }), React.createElement(Layers, {
+    acc: z.acc,
+    vbW: vbW,
+    vbH: vbH,
+    ox: ox,
+    S: _vpS,
+    fx: fxLevel
+  }), React.createElement("svg", {
     ref: svgRef,
     viewBox: `${-ox} ${-oy} ${vbW} ${vbH}`,
     preserveAspectRatio: "none",
     style: {
-      touchAction: screen === 'playing' ? 'none' : 'auto'
+      touchAction: screen === 'playing' ? 'none' : 'auto',
+      position: 'relative'
     }
-  }, React.createElement("defs", null, React.createElement("linearGradient", {
-    id: "bgG",
-    x1: "0",
-    y1: "0",
-    x2: "0",
-    y2: "1"
-  }, React.createElement("stop", {
-    offset: "0%",
-    stopColor: bgl
-  }), React.createElement("stop", {
-    offset: "100%",
-    stopColor: bgd
-  })), React.createElement(FxDefs, {
+  }, React.createElement("defs", null, React.createElement(FxDefsM, {
     acc: z.acc
-  })), React.createElement("rect", {
-    x: -ox,
-    y: -oy,
-    width: vbW,
-    height: vbH,
-    fill: "url(#bgG)"
-  }), React.createElement(Backdrop, {
-    t: (g.bgT || 0) + (g.drift || 0),
-    acc: z.acc,
-    ox: ox,
-    oy: oy,
-    vbW: vbW,
-    vbH: vbH,
-    wide: g.wallMix ?? 1
-  }), POX + ox > 0 && React.createElement("rect", {
-    x: -ox,
-    y: -oy,
-    width: POX + ox,
-    height: vbH,
-    fill: "rgba(0,0,0,0.45)",
-    opacity: 1 - (g.wallMix ?? 1)
-  }), POX + ox > 0 && React.createElement("rect", {
-    x: POX + PW,
-    y: -oy,
-    width: ox + GW - (POX + PW),
-    height: vbH,
-    fill: "rgba(0,0,0,0.45)",
-    opacity: 1 - (g.wallMix ?? 1)
-  }), g.zone === 4 && g.ovuleY > -130 && React.createElement(Ovule, {
+  })), g.zone === 4 && g.ovuleY > -130 && React.createElement(Ovule, {
     x: GW / 2,
     y: g.ovuleY,
     pulse: g.pulse,
@@ -3919,21 +4320,7 @@ function Game() {
     shield: g.shield,
     tilt: g.pvx,
     skin: getSkin(equipped)
-  }))), screen === 'playing' && g.hitFlash > 0 && React.createElement("rect", {
-    x: -ox,
-    y: -oy,
-    width: vbW,
-    height: vbH,
-    fill: "url(#hitVign)",
-    opacity: clamp(g.hitFlash / 30, 0, 1)
-  }), screen === 'playing' && g.slowed > 0 && React.createElement("rect", {
-    x: -ox,
-    y: -oy,
-    width: vbW,
-    height: vbH,
-    fill: "url(#slowVign)",
-    opacity: clamp(g.slowed / 700, 0, 1)
-  }), screen === 'playing' && g.sperms.map(e => {
+  }))), screen === 'playing' && g.sperms.map(e => {
     const a = clamp((170 - e.y) / 140, 0, 1);
     if (a <= 0) return null;
     const p = 0.55 + Math.sin(g.pulse * 0.18) * 0.45;
@@ -5173,7 +5560,31 @@ function Game() {
     fill: "rgba(220,190,150,0.7)",
     fontSize: "12",
     fontFamily: "Sora,Helvetica Neue,Arial"
-  }, "Appui long sur l'image pour sauvegarder \u2014 tap pour fermer"))), screen === 'playing' && React.createElement("div", {
+  }, "Appui long sur l'image pour sauvegarder \u2014 tap pour fermer"))), React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      pointerEvents: 'none',
+      willChange: 'opacity',
+      opacity: screen === 'playing' ? clamp(g.hitFlash / 30, 0, 1) : 0,
+      background: 'radial-gradient(ellipse 75% 75% at 50% 50%,rgba(255,30,70,0) 45%,rgba(255,30,70,0.6) 100%)'
+    }
+  }), React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      pointerEvents: 'none',
+      willChange: 'opacity',
+      opacity: screen === 'playing' && g.slowed > 0 ? clamp(g.slowed / 700, 0, 1) : 0,
+      background: 'radial-gradient(ellipse 75% 75% at 50% 50%,rgba(182,232,58,0) 50%,rgba(182,232,58,0.3) 100%)'
+    }
+  }), screen === 'playing' && React.createElement("div", {
     style: {
       position: 'absolute',
       bottom: 0,

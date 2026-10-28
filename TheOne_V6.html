@@ -149,7 +149,7 @@ const ZONES = [{
   minGaps: 1,
   spermSpd: 0.7
 }];
-const APP_VERSION = "v80";
+const APP_VERSION = "v82";
 const TUTO_KEY = 'theone_tuto',
   TUTO_STEPS = 3;
 let DISCRETE_MODE = false;
@@ -424,6 +424,7 @@ Object.assign(EN, {
   "Confettis": "Confetti",
   "Étoiles": "Stars",
   "Comète": "Comet",
+  "Bling-bling": "Bling",
   "Couronne": "Crown",
   "Feux d’artifice": "Fireworks",
   "Pluie de cœurs": "Rain of hearts",
@@ -4839,7 +4840,7 @@ const TRAILS = [{
   cost: 900
 }, {
   id: 'comet',
-  name: 'Comète',
+  name: 'Bling-bling',
   cost: 1300
 }];
 const VICS = [{
@@ -5041,21 +5042,29 @@ function TrailDot({
       opacity: a
     });
   }
-  if (p.type === 'comet') return React.createElement("g", {
-    opacity: a
-  }, React.createElement("ellipse", {
-    cx: p.x,
-    cy: p.y + 3,
-    rx: 1.5 * a + 0.5,
-    ry: 7 * a + 2,
-    fill: "#bfe3ff",
-    opacity: "0.7"
-  }), React.createElement("circle", {
-    cx: p.x,
-    cy: p.y,
-    r: 4 * a + 1.2,
-    fill: "url(#glowWhite)"
-  }));
+  if (p.type === 'comet') {
+    const c = ['#fff6c8', '#ffd25e', '#ffc2e8', '#9fe8ff', '#ffffff'][Math.floor(p.seed) % 5];
+    const tw = 0.72 + 0.28 * Math.sin(p.seed * 10 + (1 - a) * 16),
+      sc = (0.55 + a * 1.0) * tw;
+    return React.createElement("g", {
+      transform: `translate(${p.x},${p.y}) rotate(${p.seed * 30 + (1 - a) * 110}) scale(${sc.toFixed(2)})`,
+      opacity: Math.min(1, a * 1.4)
+    }, React.createElement("circle", {
+      r: "9",
+      fill: "url(#glowWhite)",
+      opacity: "0.6"
+    }), React.createElement("path", {
+      d: "M 0 -8.5 Q 0.9 -0.9 8.5 0 Q 0.9 0.9 0 8.5 Q -0.9 0.9 -8.5 0 Q -0.9 -0.9 0 -8.5 Z",
+      fill: c
+    }), React.createElement("path", {
+      d: "M 0 -4.2 L 0.7 -0.7 L 4.2 0 L 0.7 0.7 L 0 4.2 L -0.7 0.7 L -4.2 0 L -0.7 -0.7 Z",
+      fill: "#fff",
+      transform: "rotate(45)"
+    }), React.createElement("circle", {
+      r: "1.5",
+      fill: "#fff"
+    }));
+  }
   return null;
 }
 const TRAIL_FX = {
@@ -5081,9 +5090,10 @@ const TRAIL_FX = {
     vy: 0.5
   },
   comet: {
-    life: 20,
-    rate: 2.4,
-    vy: 0.05
+    life: 38,
+    rate: 2.6,
+    vy: 0.12,
+    vx: 0.35
   }
 };
 function VictoryFx({
@@ -5257,7 +5267,7 @@ function SkinPreview({
     ref: ref,
     style: {
       width: '100%',
-      height: 122,
+      height: 172,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
@@ -5265,8 +5275,8 @@ function SkinPreview({
   }, vis && React.createElement("svg", {
     viewBox: "-36 -32 72 112",
     style: {
-      width: 70,
-      height: 109,
+      width: 100,
+      height: 156,
       display: 'block',
       overflow: 'visible'
     }
@@ -5292,16 +5302,16 @@ function TrailPreview({
     ref: ref,
     style: {
       width: '100%',
-      height: 122,
+      height: 172,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     }
   }, vis && React.createElement("svg", {
-    viewBox: "-50 -20 100 122",
+    viewBox: "-36 -14 72 100",
     style: {
-      width: 86,
-      height: 105,
+      width: 122,
+      height: 169,
       display: 'block',
       overflow: 'visible'
     }
@@ -5354,7 +5364,7 @@ function VicPreview({
     ref: ref,
     style: {
       width: '100%',
-      height: 122,
+      height: 172,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
@@ -5362,8 +5372,8 @@ function VicPreview({
   }, vis && React.createElement("svg", {
     viewBox: "0 0 120 112",
     style: {
-      width: 112,
-      height: 104,
+      width: 148,
+      height: 138,
       display: 'block',
       borderRadius: 14,
       background: 'radial-gradient(90% 80% at 50% 30%,rgba(255,210,94,0.18),rgba(8,2,10,0.5))'
@@ -5425,9 +5435,9 @@ function ShopCard({
     style: {
       position: 'absolute',
       left: '50%',
-      top: 6,
-      width: 130,
-      height: 130,
+      top: 8,
+      width: 180,
+      height: 180,
       transform: 'translateX(-50%)',
       borderRadius: '50%',
       background: `radial-gradient(circle,${accent}40,transparent 68%)`,

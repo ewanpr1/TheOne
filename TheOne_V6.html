@@ -21,6 +21,7 @@
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;background:#080208;overflow:hidden;font-family:Sora,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
   button{font-family:inherit}
+  @keyframes cdpop{from{transform:scale(1.7);opacity:0}to{transform:scale(1);opacity:1}}
   #root{width:100%;height:100%}
   :root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
   .gw{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;background:#080208}
@@ -129,7 +130,7 @@ const ZONES = [{
   spd: [3.23, 4.86],
   ms: [285, 166],
   scr: [5.5, 7.5],
-  spermSpd: 0.765,
+  spermSpd: 0.75,
   minGaps: 2
 }, {
   id: 5,
@@ -148,9 +149,373 @@ const ZONES = [{
   minGaps: 1,
   spermSpd: 0.7
 }];
+const APP_VERSION = "v80";
 const TUTO_KEY = 'theone_tuto',
   TUTO_STEPS = 3;
 let DISCRETE_MODE = false;
+const SET_KEY = 'theone_settings';
+let SET = {
+  music: 1,
+  sfx: 1,
+  vib: true,
+  quality: 'auto',
+  offset: 0,
+  lang: null,
+  trail: 'auto',
+  vic: 'classic'
+};
+try {
+  Object.assign(SET, JSON.parse(localStorage.getItem(SET_KEY) || '{}'));
+} catch (e) {}
+if (SET.lang !== 'fr' && SET.lang !== 'en') SET.lang = (navigator.language || 'fr').toLowerCase().indexOf('fr') === 0 ? 'fr' : 'en';
+function saveSettings() {
+  try {
+    localStorage.setItem(SET_KEY, JSON.stringify(SET));
+  } catch (e) {}
+}
+let LANG = SET.lang;
+const EN = {};
+const EN_RULES = [];
+const MISS = new Set();
+let ENV = null;
+function tr(s) {
+  if (LANG !== 'en' || typeof s !== 'string' || !s) return s;
+  const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(s),
+    core = m[2];
+  if (!core) return s;
+  let out = EN[core];
+  if (out === undefined) {
+    for (let i = 0; i < EN_RULES.length; i++) {
+      const r = EN_RULES[i][0].exec(core);
+      if (r) {
+        out = EN_RULES[i][1].replace(/\$(\d)/g, (x, k) => r[k]);
+        break;
+      }
+    }
+  }
+  if (out === undefined) {
+    if (/[A-Za-zÀ-ÿ]{3,}/.test(core)) {
+      if (!ENV) ENV = new Set(Object.values(EN));
+      if (!ENV.has(core)) MISS.add(core);
+    }
+    return s;
+  }
+  return m[1] + out + m[3];
+}
+const trf = (s, v) => tr(s).replace(/\{(\w+)\}/g, (m, k) => v && v[k] !== undefined ? v[k] : m);
+if (LANG === 'en') {
+  window.__miss = MISS;
+  const _ce = React.createElement;
+  React.createElement = function (type, props, ...kids) {
+    if (props && typeof props.title === 'string') props = Object.assign({}, props, {
+      title: tr(props.title)
+    });
+    for (let i = 0; i < kids.length; i++) if (typeof kids[i] === 'string') kids[i] = tr(kids[i]);
+    return _ce.call(React, type, props, ...kids);
+  };
+}
+Object.assign(EN, {
+  "SOIS LE PREMIER": "BE THE FIRST",
+  "Glisse pour naviguer — évite, percute, survis": "Drag to steer — dodge, ram, survive",
+  "MEILLEURS SCORES": "BEST SCORES",
+  "RIVAUX": "RIVALS",
+  "Aucun score encore — à toi de jouer !": "No score yet — your turn to play!",
+  "MEILLEUR TEMPS ∞": "BEST TIME ∞",
+  "MEILLEURS TEMPS": "BEST TIMES",
+  "Mode Infini": "Infinite Mode",
+  "Mode Infini ∞": "Infinite Mode ∞",
+  "JOUER": "PLAY",
+  "∞ Infini": "∞ Infinite",
+  "Infini": "Infinite",
+  "Hardcore": "Hardcore",
+  "Mode Hardcore": "Hardcore Mode",
+  "Mode Discret": "Discreet Mode",
+  "Éliminé": "Eliminated",
+  "RÉESSAYER": "RETRY",
+  "← Menu principal": "← Main menu",
+  "∞ Mode Infini": "∞ Infinite Mode",
+  "Victoire": "Victory",
+  "Victoires": "Victories",
+  "REJOUER": "REPLAY",
+  "RIVAUX ÉLIMINÉS": "RIVALS ELIMINATED",
+  "TEMPS DE SURVIE": "SURVIVAL TIME",
+  "TEMPS": "TIME",
+  "Mode Hardcore accompli !": "Hardcore mode complete!",
+  "Tu as atteint l'ovule en premier !": "You reached the egg first!",
+  "Tu as atteint la cible en premier !": "You reached the target first!",
+  "Touche pour continuer": "Tap to continue",
+  "NOUVELLE RÉCOMPENSE": "NEW REWARD",
+  "NOUVELLES RÉCOMPENSES": "NEW REWARDS",
+  "DÉFI RÉUSSI": "CHALLENGE COMPLETE",
+  "DÉFIS RÉUSSIS": "CHALLENGES COMPLETE",
+  "Appui long sur l'image pour sauvegarder — tap pour fermer": "Long-press the image to save — tap to close",
+  "Tourne ton téléphone": "Rotate your phone",
+  "TheOne se joue uniquement en mode portrait.": "TheOne is played in portrait mode only.",
+  "La partie est en pause.": "The game is paused.",
+  "Fécondation !": "Fertilization!",
+  "Une nouvelle vie commence…": "A new life begins…",
+  "Touche pour passer": "Tap to skip",
+  "Col de l'Utérus": "Cervix",
+  "Utérus": "Uterus",
+  "Trompes": "Fallopian Tubes",
+  "Approche Finale": "Final Approach",
+  "L'Ovule": "The Egg",
+  "Couloir 1": "Corridor 1",
+  "Couloir 2": "Corridor 2",
+  "Couloir 3": "Corridor 3",
+  "Approche": "Approach",
+  "La Cible": "The Target",
+  "Glisse ton doigt": "Drag your finger",
+  "Ton spermatozoïde suit ton doigt : glisse n’importe où sur l’écran pour le diriger.": "Your sperm follows your finger: drag anywhere on the screen to steer it.",
+  "Percute les rivaux": "Ram the rivals",
+  "Fonce dans les rivaux qui remontent pour les éliminer. S’ils atteignent le haut de l’écran, tu perds une vie !": "Charge into the rivals rising up to eliminate them. If they reach the top of the screen, you lose a life!",
+  "Évite les défenses": "Avoid the defenses",
+  "Globules blancs et anticorps te font perdre une vie. Le mucus te ralentit. Le casque te protège d’un coup.": "White blood cells and antibodies cost you a life. Mucus slows you down. The helmet protects you from one hit.",
+  "SUIVANT": "NEXT",
+  "C’EST PARTI !": "LET'S GO!",
+  "Passer": "Skip",
+  "Pause": "Pause",
+  "Reprendre": "Resume",
+  "Recommencer": "Restart",
+  "Quitter la partie": "Quit game",
+  "Comment jouer": "How to play",
+  "Touche n’importe où pour fermer": "Tap anywhere to close",
+  "Touche en dehors pour fermer": "Tap outside to close",
+  "Atteins l’ovule en premier": "Reach the egg first",
+  "Atteins la cible en premier": "Reach the target first",
+  "Traverse 5 zones sans perdre tes 3 vies.": "Cross 5 zones without losing your 3 lives.",
+  "Tu joues le point blanc.": "You play the white dot.",
+  "Tu joues le spermatozoïde blanc.": "You play the white sperm.",
+  "EN 4 ÉTAPES": "IN 4 STEPS",
+  "Ton personnage suit ton doigt, n’importe où sur l’écran.": "Your character follows your finger, anywhere on the screen.",
+  "Élimine les rivaux": "Eliminate rivals",
+  "Fonce dans les rivaux pour les éliminer. Si l’un d’eux atteint le haut de l’écran, tu perds 1 vie.": "Ram rivals to eliminate them. If one reaches the top of the screen, you lose 1 life.",
+  "Globules blancs et anticorps te font perdre 1 vie. Le mucus te ralentit.": "White blood cells and antibodies cost you 1 life. Mucus slows you down.",
+  "Entre dans l’ovule": "Enter the egg",
+  "Dans la dernière zone, passe par l’ouverture qui tourne. Toucher la membrane coûte 1 vie.": "In the last zone, go through the rotating opening. Touching the membrane costs 1 life.",
+  "CE QUE TU CROISES": "WHAT YOU WILL MEET",
+  "Rival": "Rival",
+  "À ÉLIMINER": "ELIMINATE",
+  "Il remonte vers le haut : percute-le avant qu’il sorte.": "It rises toward the top: ram it before it gets out.",
+  "Mucus": "Mucus",
+  "RALENTIT": "SLOWS YOU",
+  "Il te ralentit pendant 1,4 s. Il disparaît quand tu le touches.": "It slows you for 1.4 s. It disappears when you touch it.",
+  "Globule blanc": "White blood cell",
+  "Globules blancs": "White blood cells",
+  "−1 VIE": "−1 LIFE",
+  "Il te suit lentement. Garde tes distances.": "It slowly follows you. Keep your distance.",
+  "Anticorps": "Antibody",
+  "Il fonce vers toi : change de direction au dernier moment.": "It rushes at you: change direction at the last moment.",
+  "Casque": "Helmet",
+  "BOUCLIER 8 S": "8 S SHIELD",
+  "Ramasse-le : il absorbe le prochain coup. Absent en mode Hardcore.": "Pick it up: it absorbs the next hit. Not available in Hardcore mode.",
+  "TON PARCOURS": "YOUR JOURNEY",
+  "Rivaux et mucus": "Rivals and mucus",
+  "Tout à la fois, en plus rapide": "Everything at once, faster",
+  "Trouve l’ouverture de l’ovule": "Find the egg's opening",
+  "MODES DE JEU": "GAME MODES",
+  "Débloqué après ta première victoire. Tu restes dans la dernière zone, de plus en plus dure. Ton record est ton temps de survie.": "Unlocked after your first victory. You stay in the last zone, which gets harder and harder. Your record is your survival time.",
+  "Une seule vie et aucun casque. Disponible dès le début.": "One life and no helmet. Available from the start.",
+  "Bouton œil sur l’accueil : masque les queues et rend les noms de zones neutres.": "Eye button on the home screen: hides the tails and makes zone names neutral.",
+  "GAGNER DES mL": "EARN mL",
+  "Chaque partie rapporte des mL :": "Every game earns mL:",
+  "1 pour 10 rivaux": "1 per 10 rivals",
+  "éliminés et": "eliminated and",
+  "15 pour une victoire": "15 for a win",
+  ". Les succès et les défis en rapportent aussi. Dépense-les dans la boutique pour débloquer de nouveaux skins.": ". Achievements and challenges earn some too. Spend them in the shop to unlock new skins.",
+  "Statistiques": "Statistics",
+  "Sauvegardées sur cet appareil": "Saved on this device",
+  "PARTIES JOUÉES": "GAMES PLAYED",
+  "PARTIE JOUÉE": "GAME PLAYED",
+  "victoire": "win",
+  "victoires": "wins",
+  "défaite": "loss",
+  "défaites": "losses",
+  "Joue une première partie pour remplir tes statistiques.": "Play a first game to fill in your statistics.",
+  "RECORDS": "RECORDS",
+  "MEILLEUR SCORE": "BEST SCORE",
+  "rivaux en une partie": "rivals in one game",
+  "VICTOIRE RAPIDE": "FASTEST WIN",
+  "meilleur temps, mode normal": "best time, normal mode",
+  "RECORD INFINI": "INFINITE RECORD",
+  "temps de survie": "survival time",
+  "MEILLEURE SÉRIE": "BEST STREAK",
+  "victoires d’affilée": "wins in a row",
+  "AU TOTAL": "OVERALL",
+  "CASQUES RAMASSÉS": "HELMETS COLLECTED",
+  "Soit en moyenne": "That is an average of",
+  "rivaux éliminés par partie.": "rivals eliminated per game.",
+  "TEMPS DE JEU": "PLAY TIME",
+  "TOTAL": "TOTAL",
+  "Normal": "Normal",
+  "Défis": "Challenges",
+  "Nouveaux défis chaque jour": "New challenges every day",
+  "Nouveaux défis chaque lundi": "New challenges every Monday",
+  "Du jour": "Daily",
+  "De la semaine": "Weekly",
+  "Tous les défis sont réussis !": "All challenges complete!",
+  "sur": "of",
+  "Renouvellement dans": "Renews in",
+  "HEBDOMADAIRE": "WEEKLY",
+  "Récompense obtenue": "Reward earned",
+  "À réussir en une seule partie": "Must be done in a single game",
+  "Progression": "Progress",
+  "Récompenses": "Rewards",
+  "Succès à débloquer": "Achievements to unlock",
+  "déjà gagnés :": "already earned:",
+  "Débloqué": "Unlocked",
+  "Tous": "All",
+  "Facile": "Easy",
+  "Moyen": "Medium",
+  "Difficile": "Hard",
+  "Extrême": "Extreme",
+  "FACILE": "EASY",
+  "MOYEN": "MEDIUM",
+  "DIFFICILE": "HARD",
+  "EXTRÊME": "EXTREME",
+  "En réserve": "In reserve",
+  "succès débloqué": "achievement unlocked",
+  "succès débloqués": "achievements unlocked",
+  "Boutique": "Shop",
+  "Skins": "Skins",
+  "Traînées": "Trails",
+  "Possédés": "Owned",
+  "À débloquer": "To unlock",
+  "Commun": "Common",
+  "Rare": "Rare",
+  "Épique": "Epic",
+  "Légendaire": "Legendary",
+  "ÉQUIPÉ": "EQUIPPED",
+  "POSSÉDÉ": "OWNED",
+  "Équipé": "Equipped",
+  "Équiper": "Equip",
+  "il te manque {n} mL": "you need {n} more mL",
+  "{a} / {b} skins débloqués": "{a} / {b} skins unlocked",
+  "Anime ton écran de victoire": "Animate your victory screen",
+  "Un sillage derrière toi": "A wake behind you",
+  "Aucun skin possédé pour le moment.": "No skins owned yet.",
+  "Aucun objet possédé pour le moment.": "Nothing owned yet.",
+  "Tu as tout débloqué, bravo !": "You have unlocked everything, well done!",
+  "Tu as tous les skins, bravo !": "You own every skin, well done!",
+  "SKIN": "SKIN",
+  "Classique": "Classic",
+  "Rosé": "Rosé",
+  "Menthe": "Mint",
+  "Doré": "Golden",
+  "Ninja": "Ninja",
+  "Fantôme": "Ghost",
+  "Néon": "Neon",
+  "Arc-en-ciel": "Rainbow",
+  "Glace": "Ice",
+  "Feu": "Fire",
+  "Diamant": "Diamond",
+  "Perle": "Pearl",
+  "Toxique": "Toxic",
+  "Chrome": "Chrome",
+  "Aurore": "Aurora",
+  "Galaxie": "Galaxy",
+  "Royal": "Royal",
+  "Holographique": "Holographic",
+  "Celle du skin": "Skin's own",
+  "Aucune": "None",
+  "Bulles": "Bubbles",
+  "Cœurs": "Hearts",
+  "Pétales": "Petals",
+  "Confettis": "Confetti",
+  "Étoiles": "Stars",
+  "Comète": "Comet",
+  "Couronne": "Crown",
+  "Feux d’artifice": "Fireworks",
+  "Pluie de cœurs": "Rain of hearts",
+  "Pluie d’or": "Rain of gold",
+  "Cosmos": "Cosmos",
+  "Réglages": "Settings",
+  "LANGUE": "LANGUAGE",
+  "Français": "Français",
+  "English": "English",
+  "SON": "SOUND",
+  "Musique": "Music",
+  "Effets sonores": "Sound effects",
+  "Vibrations": "Vibration",
+  "Retour haptique quand tu touches un obstacle": "Haptic feedback when you hit an obstacle",
+  "COMMANDES": "CONTROLS",
+  "Aucun": "None",
+  "Petit": "Small",
+  "Grand": "Large",
+  "Décalage du doigt : place le spermatozoïde au-dessus de ton doigt pour qu’il reste visible.": "Finger offset: places the sperm above your finger so it stays visible.",
+  "QUALITÉ GRAPHIQUE": "GRAPHICS QUALITY",
+  "Auto": "Auto",
+  "Élevée": "High",
+  "Économe": "Saver",
+  "Auto allège le rendu si ton téléphone peine. Économe désactive lueurs, particules et traînées.": "Auto lightens the rendering if your phone struggles. Saver turns off glows, particles and trails.",
+  "DONNÉES": "DATA",
+  "Exporter": "Export",
+  "Importer un fichier": "Import file",
+  "Coller": "Paste",
+  "Sauvegarde copiée dans le presse-papiers.": "Save copied to the clipboard.",
+  "Fichier de sauvegarde téléchargé.": "Save file downloaded.",
+  "Sauvegarde invalide.": "Invalid save.",
+  "Remplacer ta progression actuelle par cette sauvegarde ?": "Replace your current progress with this save?",
+  "Colle ici ta sauvegarde": "Paste your save here",
+  "Ta progression (scores, mL, skins, succès) est enregistrée uniquement sur cet appareil : exporte-la pour ne pas la perdre.": "Your progress (scores, mL, skins, achievements) is stored only on this device: export it so you don't lose it.",
+  "Premier pas": "First steps",
+  "Jouer 1 partie": "Play 1 game",
+  "Première victime": "First victim",
+  "Éliminer 10 rivaux au total": "Eliminate 10 rivals in total",
+  "Crash test": "Crash test",
+  "Mourir 5 fois": "Die 5 times",
+  "Casqué": "Helmeted",
+  "Ramasser un casque": "Pick up a helmet",
+  "Persistant": "Persistent",
+  "Jouer 10 parties": "Play 10 games",
+  "Échauffement": "Warm-up",
+  "5 minutes de jeu cumulé": "5 minutes of total play time",
+  "The One": "The One",
+  "Première victoire": "First victory",
+  "Tactique": "Tactical",
+  "Ramasser 25 casques": "Pick up 25 helmets",
+  "Bourreau": "Executioner",
+  "1000 rivaux éliminés": "1000 rivals eliminated",
+  "Apprenti infini": "Infinite apprentice",
+  "2 min en mode infini": "2 min in infinite mode",
+  "Marathonien": "Marathoner",
+  "30 min de jeu cumulé": "30 min of total play time",
+  "Légende": "Legend",
+  "10 victoires": "10 victories",
+  "Cible privilégiée": "Prime target",
+  "2500 rivaux éliminés": "2500 rivals eliminated",
+  "Endurance": "Endurance",
+  "1 h de jeu cumulé": "1 h of total play time",
+  "Maître infini": "Infinite master",
+  "3 min en mode infini": "3 min in infinite mode",
+  "Speedrun": "Speedrun",
+  "Gagner en moins de 2:50": "Win in under 2:50",
+  "À mains nues": "Bare hands",
+  "Gagner sans ramasser de casque (hors mode hardcore)": "Win without picking up a helmet (outside hardcore mode)",
+  "Sans égratignure": "Flawless",
+  "Gagner sans perdre de vie": "Win without losing a life",
+  "Massacre": "Massacre",
+  "10000 rivaux éliminés": "10000 rivals eliminated",
+  "L'Élu": "The Chosen One",
+  "50 victoires": "50 victories",
+  "Légende infinie": "Infinite legend",
+  "5 min en mode infini": "5 min in infinite mode",
+  "Streak": "Streak",
+  "3 victoires d'affilée": "3 victories in a row",
+  "Gagner sans utiliser de casque": "Win without using a helmet",
+  "TheOne": "TheOne",
+  "dev": "dev",
+  "VICTOIRES": "WINS",
+  "☠ MODE HARDCORE": "☠ HARDCORE MODE",
+  "Victoire !": "Victory!",
+  "Peux-tu faire mieux ?": "Can you do better?",
+  "TheOne — la course du sperme": "TheOne — the sperm race",
+  "S O I S   L E   P R E M I E R": "B E   T H E   F I R S T",
+  "TheOne ∞ — {t} de survie 🏆": "TheOne ∞ — survived {t} 🏆",
+  "TheOne — Victoire avec {n} rivaux ! 🥚": "TheOne — Victory with {n} rivals! 🥚",
+  "TheOne — {n} rivaux éliminés": "TheOne — {n} rivals eliminated"
+});
+EN_RULES.push([/^Éliminer (\d+) rivaux en une partie$/, 'Eliminate $1 rivals in one game'], [/^Ramasser (\d+) casques aujourd'hui$/, 'Collect $1 helmets today'], [/^Jouer (\d+) min aujourd'hui$/, 'Play $1 min today'], [/^Éliminer (\d+) rivaux aujourd'hui$/, 'Eliminate $1 rivals today'], [/^Atteindre la zone (\d+) en une partie$/, 'Reach zone $1 in one game'], [/^Gagner 1 partie aujourd'hui$/, 'Win 1 game today'], [/^Gagner (\d+) parties aujourd'hui$/, 'Win $1 games today'], [/^Survivre (\d+)s en mode infini$/, 'Survive $1s in infinite mode'], [/^Survivre (\d+) min en mode infini$/, 'Survive $1 min in infinite mode'], [/^Gagner en moins de (\d+:\d+)$/, 'Win in under $1'], [/^Éliminer (\d+) rivaux cette semaine$/, 'Eliminate $1 rivals this week'], [/^Ramasser (\d+) casques cette semaine$/, 'Collect $1 helmets this week'], [/^Jouer (\d+) min cette semaine$/, 'Play $1 min this week'], [/^Gagner (\d+) parties cette semaine$/, 'Win $1 games this week'], [/^Atteindre (\d+) fois la zone 5$/, 'Reach zone 5 $1 times'], [/^ZONE (\d+) \/ (\d+)$/, 'ZONE $1 / $2'], [/^1 défi à réussir$/, '1 challenge to complete'], [/^(\d+) défis à réussir$/, '$1 challenges to complete'], [/^Record (\S+) · cible (\S+)$/, 'Record $1 · target $2'], [/^Cible : (\S+)$/, 'Target: $1'], [/^(\d+) j (\d+) h$/, '$1 d $2 h'], [/^1 succès débloqué$/, '1 achievement unlocked'], [/^(\d+) succès débloqués?$/, '$1 achievements unlocked']);
 let _muted = localStorage.getItem('theone_muted') === '1';
 let _audioReady = false;
 const _sfxVol = {
@@ -195,12 +560,17 @@ function _initAudio() {
 }
 function playSound(type) {
   if (!_sounds[type]) return;
+  _sounds[type].volume(_sfxVol[type] * SET.sfx);
   _sounds[type].play();
 }
 function startAmbient() {
   if (!_ambient) return;
+  _ambient.volume(_sfxVol.ambient * SET.music);
   _ambient.stop();
   _ambient.play();
+}
+function applyAudioSettings() {
+  if (_ambient) _ambient.volume(_sfxVol.ambient * SET.music);
 }
 function stopAmbient() {
   if (!_ambient) return;
@@ -208,7 +578,7 @@ function stopAmbient() {
 }
 function vibrate(ms) {
   try {
-    if (navigator.vibrate) navigator.vibrate(ms);
+    if (SET.vib && navigator.vibrate) navigator.vibrate(ms);
   } catch (e) {}
 }
 const HS_KEY = 'theone_hs';
@@ -1341,6 +1711,10 @@ function FxDefs({
     r: '68%'
   }), rg('vign', [['50%', '#000', 0], ['100%', '#000', 0.72]], {
     r: '75%'
+  }), rg('fertBg', [['0%', '#6a4310', 0.55], ['60%', '#2a1806', 0.35], ['100%', '#0c0602', 0]], {
+    cx: '50%',
+    cy: '40%',
+    r: '70%'
   }), rg('hitVign', [['45%', '#ff1e46', 0], ['100%', '#ff1e46', 0.6]], {
     r: '75%'
   }), rg('slowVign', [['50%', '#b6e83a', 0], ['100%', '#b6e83a', 0.3]], {
@@ -1499,6 +1873,7 @@ let FX = 0;
 try {
   FX = Math.min(2, Math.max(0, Number(localStorage.getItem('theone_fx')) || 0));
 } catch (e) {}
+if (SET.quality === 'high') FX = 0;else if (SET.quality === 'eco') FX = 2;
 const BP = 640;
 const WALL_W = 64;
 const WK1 = 2 * Math.PI / BP,
@@ -1731,14 +2106,15 @@ function SpermPlayer({
   hit,
   shield,
   tilt,
-  skin
+  skin,
+  tailK = 1
 }) {
   const sk = skin || SKINS[0];
   const td = clamp(tilt * 20, -35, 35);
   const pts = [];
   for (let i = 0; i <= 22; i++) {
     const f = i / 22;
-    pts.push([Math.sin(wob * 0.12 + f * 3.8) * (f * 12 + 1.5), 14 + f * 86]);
+    pts.push([Math.sin(wob * 0.12 + f * 3.8) * (f * 12 + 1.5), 14 + f * 86 * tailK]);
   }
   const bc = hit ? '#ffc0c0' : sk.body;
   const tailFill = sk.rainbow ? 'url(#rbGradV)' : hit ? 'rgba(255,180,180,0.8)' : sk.tail;
@@ -1846,7 +2222,7 @@ function SpermPlayer({
       r: "1",
       fill: "#fff"
     }));
-  }), !DISCRETE_MODE && React.createElement("g", null, FX < 1 && React.createElement("path", {
+  }), !DISCRETE_MODE && tailK > 0.04 && React.createElement("g", null, FX < 1 && React.createElement("path", {
     d: ribbon(pts, 16, 4),
     fill: tailFill,
     opacity: "0.16"
@@ -2028,8 +2404,8 @@ function SpermPlayer({
 }
 const vOf = (id, n) => Math.floor(hrnd((id | 0) + 1) * n);
 const N_RIVAL = 1,
-  N_WBC = 1,
-  N_MUCUS = 1;
+  N_WBC = 3,
+  N_MUCUS = 3;
 function EnemyHead({
   v = 0
 }) {
@@ -2457,22 +2833,9 @@ function WBCVec({
 }) {
   const r = 27 + Math.sin(pulse * 0.09) * 2;
   const wob = i => Math.sin(pulse * 0.07 + i * 2.1) * 2.2 + Math.sin(pulse * 0.035 + i * 0.9) * 1.6;
-  let rf, nuclei;
-  if (v === 1) {
-    rf = (i, t) => {
-      const rx = r + 3,
-        ry = r - 4;
-      return 1 / Math.sqrt((Math.cos(t) / rx) ** 2 + (Math.sin(t) / ry) ** 2) + wob(i) * 0.6;
-    };
-    nuclei = [[-6, 7, 6.4], [6.5, 7.5, 6.4]];
-  } else if (v === 2) {
-    rf = (i, t) => r - 2 + Math.cos(t * 6 + 0.4) * 3.8 + wob(i) * 0.3;
-    nuclei = [[0, 5.5, 4.6], [5.4, 9, 4.6], [-5.4, 9, 4.6], [0, 12.6, 4.6]];
-  } else {
-    rf = i => r + wob(i);
-    nuclei = [[1 + 5, 7, 6.4], [1 + 5 * Math.cos(2.1), 7 + 3.5 * Math.sin(2.1), 6.4], [1 + 5 * Math.cos(4.2), 7 + 3.5 * Math.sin(4.2), 6.4]];
-  }
-  const mem = smoothClosed(blobPts(x, y, v === 2 ? 24 : 14, rf));
+  const rf = v === 1 ? (i, t) => 1 / Math.sqrt((Math.cos(t) / (r + 4)) ** 2 + (Math.sin(t) / (r - 3)) ** 2) + wob(i) * 0.5 : v === 2 ? (i, t) => r * (1 - 0.17 * Math.exp(-((t - Math.PI / 2) ** 2) / 0.3)) + wob(i) * 0.5 : i => r + wob(i);
+  const mem = smoothClosed(blobPts(x, y, v === 0 ? 14 : 20, rf));
+  const nr = pulse * 0.012;
   return React.createElement("g", null, React.createElement("circle", {
     cx: x,
     cy: y,
@@ -2491,7 +2854,7 @@ function WBCVec({
     strokeOpacity: "0.85",
     strokeWidth: "1.4"
   }), [0, 1, 2, 3, 4, 5, 6, 7].map(i => {
-    const a = i * 0.83,
+    const a = i * 0.83 + pulse * 0.004,
       d = 9 + i % 3 * 5.5;
     return React.createElement("circle", {
       key: i,
@@ -2501,13 +2864,16 @@ function WBCVec({
       fill: "#8fa6d8",
       opacity: "0.5"
     });
-  }), nuclei.map(([nx, ny, nr], i) => React.createElement("circle", {
-    key: i,
-    cx: f1(x + nx),
-    cy: f1(y + ny),
-    r: nr,
-    fill: "url(#wbcNuc)"
-  })), React.createElement("ellipse", {
+  }), [0, 1, 2].map(i => {
+    const a = nr + i * 2.1;
+    return React.createElement("circle", {
+      key: i,
+      cx: f1(x + 1 + Math.cos(a) * 5),
+      cy: f1(y + 7 + Math.sin(a) * 3.5),
+      r: "6.4",
+      fill: "url(#wbcNuc)"
+    });
+  }), React.createElement("ellipse", {
     cx: x - 1.5,
     cy: y + 4.5,
     rx: "2.8",
@@ -2541,24 +2907,20 @@ function WBCVec({
   }));
 }
 function WBC(p) {
-  const v = p.v || 0,
-    rot = p.rot || 0,
-    fl = p.flip ? -1 : 1;
-  if (!SPR["wbc" + v]) return React.createElement("g", {
-    transform: `translate(${p.x},${p.y}) rotate(${rot}) scale(${fl},1) translate(${-p.x},${-p.y})`
-  }, React.createElement(WBCVec, p));
+  const v = p.v || 0;
+  if (!SPR["wbc" + v]) return React.createElement(WBCVec, p);
   const a = Math.sin(p.pulse * 0.09),
     b = Math.sin(p.pulse * 0.09 + 1.3);
   return React.createElement(Img, {
     k: "wbc" + v,
     x: p.x,
     y: p.y,
-    rot: rot,
-    sx: fl * (1 + a * 0.05),
+    sx: 1 + a * 0.05,
     sy: 1 - b * 0.05
   });
 }
-const MUCUS_BUBBLES = [[[-0.34, 0.2, 0.2], [0.32, 0.28, 0.12], [0.06, -0.08, 0.08], [-0.05, 0.52, 0.07]], [[-0.5, 0.08, 0.17], [0.12, 0.24, 0.12], [0.55, -0.06, 0.09], [0, -0.2, 0.07]], [[-0.22, 0.3, 0.18], [0.32, -0.1, 0.13], [0.08, 0.1, 0.07], [-0.38, -0.15, 0.06]]];
+const MUCUS_BUBBLES = [[[-0.34, 0.2, 0.2], [0.32, 0.28, 0.12], [0.06, -0.08, 0.08], [-0.05, 0.52, 0.07]], [[-0.28, 0.2, 0.2], [0.3, 0.28, 0.12], [0.05, -0.25, 0.08], [-0.1, 0.5, 0.07]], [[-0.28, 0.22, 0.2], [0.26, 0.3, 0.12], [0.08, -0.15, 0.08], [0.1, -0.55, 0.06]]];
+const MUCUS_DRIP_X = [0.18, 0.12, 0.2];
 function MucusVec({
   x,
   y,
@@ -2568,10 +2930,10 @@ function MucusVec({
 }) {
   const w1 = Math.sin(pulse * 0.08) * 3;
   const base = i => (i % 2 ? w1 : -w1) * 0.5 + Math.sin(pulse * 0.05 + i * 1.9) * 3;
-  const rf = v === 1 ? (i, t) => r * (1 + 0.27 * Math.cos(2 * t)) * 0.94 + base(i) : v === 2 ? (i, t) => r * (1 + 0.2 * Math.cos(3 * t + 0.5)) + base(i) : i => r + base(i);
-  const blob = smoothClosed(blobPts(x, y, v === 0 ? 10 : 14, rf));
+  const rt = v === 1 ? t => r * (1 + 0.09 * Math.cos(2 * t + 0.7) + 0.06 * Math.cos(3 * t - 0.3) + 0.06 * Math.cos(t + Math.PI / 2)) : v === 2 ? t => r * (0.97 + 0.12 * Math.cos(t + Math.PI / 2 + 0.45) + 0.05 * Math.cos(2 * t + 0.9)) : null;
+  const blob = smoothClosed(blobPts(x, y, v === 0 ? 10 : 40, (i, t) => rt ? rt(t) : r + base(i)));
+  const bottom = rt ? rt(Math.PI / 2) : r * 0.95;
   const drip = Math.sin(pulse * 0.04) * 0.5 + 0.5;
-  const dx = [0.18, -0.32, 0.38][v] || 0.18;
   return React.createElement("g", null, React.createElement("circle", {
     cx: x,
     cy: y,
@@ -2579,8 +2941,8 @@ function MucusVec({
     fill: "url(#glowLime)",
     opacity: "0.4"
   }), React.createElement("ellipse", {
-    cx: x + r * dx,
-    cy: y + r * (v === 1 ? 0.62 : 0.92) + drip * 5,
+    cx: x + r * MUCUS_DRIP_X[v],
+    cy: y + (rt ? bottom * 0.97 : r * 0.92) + drip * (rt ? 5 : 5),
     rx: 2.6 + drip,
     ry: 3.6 + drip * 2,
     fill: "#a6dc3a",
@@ -2619,18 +2981,14 @@ function MucusVec({
   }));
 }
 function Mucus(p) {
-  const v = p.v || 0,
-    rot = p.rot || 0;
-  if (!SPR["mucus" + v]) return React.createElement("g", {
-    transform: `rotate(${rot},${p.x},${p.y})`
-  }, React.createElement(MucusVec, p));
+  const v = p.v || 0;
+  if (!SPR["mucus" + v]) return React.createElement(MucusVec, p);
   const k = p.r / 25,
     a = Math.sin(p.pulse * 0.08) * 0.06;
   return React.createElement(Img, {
     k: "mucus" + v,
     x: p.x,
     y: p.y,
-    rot: rot,
     sx: k * (1 + a),
     sy: k * (1 - a)
   });
@@ -3342,14 +3700,66 @@ function initState() {
     zoneAnn: null
   };
 }
+function MenuBtn({
+  kind,
+  onClick,
+  children
+}) {
+  const primary = kind === 'primary';
+  return React.createElement("div", {
+    onClick: onClick,
+    style: {
+      width: 220,
+      textAlign: 'center',
+      padding: '13px 0',
+      borderRadius: 99,
+      fontSize: 15,
+      fontWeight: 800,
+      letterSpacing: 1,
+      cursor: 'pointer',
+      background: primary ? 'linear-gradient(135deg,#ff9e8a,#ff6a8a 55%,#d4407f)' : 'rgba(255,255,255,0.08)',
+      border: primary ? '1px solid rgba(255,255,255,0.35)' : '1px solid rgba(255,255,255,0.18)',
+      boxShadow: primary ? '0 8px 26px rgba(255,106,138,0.4)' : 'none'
+    }
+  }, children);
+}
+const FADE_BG = 'rgba(14,3,16,0.94)';
 function ModalShell({
   onClose,
   title,
   sub,
   SAT,
   SAB,
+  left,
+  fixed,
   children
 }) {
+  const scRef = React.useRef(null),
+    tRef = React.useRef(null),
+    bRef = React.useRef(null);
+  const sync = () => {
+    const s = scRef.current;
+    if (!s) return;
+    const max = s.scrollHeight - s.clientHeight;
+    if (tRef.current) tRef.current.style.opacity = String(Math.min(1, s.scrollTop / 22));
+    if (bRef.current) bRef.current.style.opacity = String(max <= 2 ? 0 : Math.min(1, (max - s.scrollTop) / 22));
+  };
+  React.useEffect(sync);
+  const edge = top => ({
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    [top ? 'top' : 'bottom']: 0,
+    height: top ? 26 : 20,
+    pointerEvents: 'none',
+    zIndex: 2,
+    opacity: 0,
+    background: `linear-gradient(${top ? '180deg' : '0deg'},${FADE_BG},rgba(14,3,16,0))`,
+    backdropFilter: 'blur(6px)',
+    WebkitBackdropFilter: 'blur(6px)',
+    WebkitMaskImage: `linear-gradient(${top ? '180deg' : '0deg'},#000 25%,transparent)`,
+    maskImage: `linear-gradient(${top ? '180deg' : '0deg'},#000 25%,transparent)`
+  });
   return React.createElement("div", {
     onClick: onClose,
     style: {
@@ -3372,11 +3782,18 @@ function ModalShell({
     style: {
       position: 'relative',
       textAlign: 'center',
-      padding: '0 44px'
+      padding: '0 88px',
+      minHeight: 34
     }
-  }, React.createElement("div", {
+  }, left && React.createElement("div", {
     style: {
-      fontSize: 25,
+      position: 'absolute',
+      left: 0,
+      top: 2
+    }
+  }, left), React.createElement("div", {
+    style: {
+      fontSize: 23,
       fontWeight: 800,
       letterSpacing: -0.5,
       background: 'linear-gradient(180deg,#fff9f4,#ffcdb5 55%,#ff8fa8)',
@@ -3389,7 +3806,7 @@ function ModalShell({
     style: {
       fontSize: 11.5,
       color: 'rgba(255,225,215,0.55)',
-      marginTop: 4
+      marginTop: 3
     }
   }, sub), React.createElement("div", {
     style: {
@@ -3417,17 +3834,69 @@ function ModalShell({
     stroke: "#fff",
     strokeWidth: "1.6",
     strokeLinecap: "round"
-  })))), React.createElement("div", {
+  })))), fixed && React.createElement("div", {
+    style: {
+      padding: '12px 4px 0'
+    }
+  }, fixed), React.createElement("div", {
+    style: {
+      position: 'relative',
+      flex: 1,
+      minHeight: 0,
+      marginTop: fixed ? 8 : 10
+    }
+  }, React.createElement("div", {
+    ref: scRef,
+    onScroll: sync,
     className: "ach-scroll",
     style: {
-      flex: 1,
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
       overflowY: 'auto',
-      padding: '14px 4px 30px',
+      padding: '14px 4px 34px',
       touchAction: 'pan-y',
       WebkitOverflowScrolling: 'touch'
     }
-  }, children)));
+  }, children), React.createElement("div", {
+    ref: tRef,
+    style: edge(true)
+  }), React.createElement("div", {
+    ref: bRef,
+    style: edge(false)
+  }))));
 }
+const ReservePill = ({
+  mL
+}) => React.createElement("div", {
+  style: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    height: 30,
+    padding: '0 11px 0 9px',
+    borderRadius: 99,
+    background: 'linear-gradient(180deg,rgba(255,143,168,0.18),rgba(255,143,168,0.06))',
+    border: '1px solid rgba(255,143,168,0.42)'
+  },
+  title: "En r\xE9serve"
+}, React.createElement(Drop, {
+  s: 14
+}), React.createElement("span", {
+  style: {
+    fontSize: 12.5,
+    fontWeight: 800,
+    letterSpacing: -0.2
+  }
+}, mL.toLocaleString('fr')), React.createElement("span", {
+  style: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: 'rgba(255,200,215,0.8)'
+  }
+}, "mL"));
 const Sec = ({
   children,
   color = '#ff8fa8',
@@ -4148,6 +4617,1966 @@ function StatsModal({
     }
   }, "Infini"), React.createElement("b", null, fmtDuration(tI))))));
 }
+const Drop = ({
+  s = 12,
+  c = '#ff8fa8'
+}) => React.createElement("svg", {
+  viewBox: "-6 -8 12 16",
+  style: {
+    width: s * 0.75,
+    height: s,
+    display: 'block',
+    flexShrink: 0
+  }
+}, React.createElement("path", {
+  d: "M 0 -7 C 3 -2 5.2 1 5.2 3.2 A 5.2 5.2 0 0 1 -5.2 3.2 C -5.2 1 -3 -2 0 -7 Z",
+  fill: c
+}), React.createElement("ellipse", {
+  cx: "-1.6",
+  cy: "2",
+  rx: "1.1",
+  ry: "1.8",
+  fill: "#fff",
+  opacity: "0.55"
+}));
+const MlChip = ({
+  v,
+  c = '#ff8fa8',
+  big
+}) => React.createElement("span", {
+  style: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    fontSize: big ? 13 : 11,
+    fontWeight: 800,
+    color: c,
+    whiteSpace: 'nowrap'
+  }
+}, React.createElement(Drop, {
+  s: big ? 15 : 12,
+  c: c
+}), v, " mL");
+const Check = ({
+  c = '#fff',
+  s = 12
+}) => React.createElement("svg", {
+  viewBox: "-7 -7 14 14",
+  style: {
+    width: s,
+    height: s,
+    display: 'block'
+  }
+}, React.createElement("path", {
+  d: "M -4.5 0.5 L -1.5 3.6 L 4.8 -3.4",
+  stroke: c,
+  strokeWidth: "2.2",
+  fill: "none",
+  strokeLinecap: "round",
+  strokeLinejoin: "round"
+}));
+const Lock = ({
+  c = '#fff',
+  s = 13
+}) => React.createElement("svg", {
+  viewBox: "-7 -8 14 16",
+  style: {
+    width: s,
+    height: s * 1.14,
+    display: 'block'
+  }
+}, React.createElement("rect", {
+  x: "-5",
+  y: "-1",
+  width: "10",
+  height: "8",
+  rx: "2",
+  fill: c
+}), React.createElement("path", {
+  d: "M -3 -1 V -3 A 3 3 0 0 1 3 -3 V -1",
+  stroke: c,
+  strokeWidth: "1.8",
+  fill: "none"
+}));
+function Bar({
+  p,
+  c,
+  h = 6
+}) {
+  return React.createElement("div", {
+    style: {
+      height: h,
+      borderRadius: h / 2,
+      background: 'rgba(255,255,255,0.09)',
+      overflow: 'hidden'
+    }
+  }, React.createElement("div", {
+    style: {
+      height: '100%',
+      width: `${clamp(p, 0, 1) * 100}%`,
+      borderRadius: h / 2,
+      background: `linear-gradient(90deg,${c}aa,${c})`,
+      boxShadow: `0 0 8px ${c}66`
+    }
+  }));
+}
+function Seg({
+  items,
+  value,
+  onChange
+}) {
+  return React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    style: {
+      display: 'flex',
+      gap: 4,
+      padding: 3,
+      borderRadius: 99,
+      background: 'rgba(255,255,255,0.07)',
+      border: '1px solid rgba(255,255,255,0.1)'
+    }
+  }, items.map(([k, label]) => React.createElement("div", {
+    key: k,
+    onClick: () => onChange(k),
+    style: {
+      flex: 1,
+      textAlign: 'center',
+      padding: '7px 4px',
+      borderRadius: 99,
+      fontSize: 11.5,
+      fontWeight: 700,
+      cursor: 'pointer',
+      color: value === k ? '#3a1d02' : 'rgba(255,235,225,0.7)',
+      background: value === k ? 'linear-gradient(135deg,#ffe88f,#ffc43f)' : 'transparent',
+      boxShadow: value === k ? '0 3px 12px rgba(255,196,63,0.35)' : 'none',
+      transition: 'background .15s'
+    }
+  }, label)));
+}
+const BalancePill = ({
+  mL,
+  label = 'EN RÉSERVE'
+}) => React.createElement("div", {
+  style: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    margin: '0 auto',
+    width: 'fit-content',
+    padding: '8px 20px',
+    borderRadius: 99,
+    background: 'linear-gradient(180deg,rgba(255,143,168,0.16),rgba(255,143,168,0.05))',
+    border: '1px solid rgba(255,143,168,0.4)'
+  }
+}, React.createElement(Drop, {
+  s: 20
+}), React.createElement("div", null, React.createElement("div", {
+  style: {
+    fontSize: 8.5,
+    fontWeight: 700,
+    letterSpacing: 2,
+    color: 'rgba(255,200,215,0.7)'
+  }
+}, label), React.createElement("div", {
+  style: {
+    fontSize: 19,
+    fontWeight: 800,
+    letterSpacing: -0.3,
+    lineHeight: '20px'
+  }
+}, mL.toLocaleString('fr'), " ", React.createElement("span", {
+  style: {
+    fontSize: 12,
+    color: 'rgba(255,200,215,0.8)'
+  }
+}, "mL"))));
+const RARITY = [{
+  max: 500,
+  name: 'Commun',
+  c: '#9fb4c8'
+}, {
+  max: 1500,
+  name: 'Rare',
+  c: '#5aa9ff'
+}, {
+  max: 3000,
+  name: 'Épique',
+  c: '#c88bff'
+}, {
+  max: 1e9,
+  name: 'Légendaire',
+  c: '#ffc94d'
+}];
+const rarityOf = cost => RARITY.find(r => cost < r.max) || RARITY[RARITY.length - 1];
+const TRAILS = [{
+  id: 'auto',
+  name: 'Celle du skin',
+  cost: 0
+}, {
+  id: 'none',
+  name: 'Aucune',
+  cost: 0
+}, {
+  id: 'bubbles',
+  name: 'Bulles',
+  cost: 150
+}, {
+  id: 'hearts',
+  name: 'Cœurs',
+  cost: 300
+}, {
+  id: 'petals',
+  name: 'Pétales',
+  cost: 450
+}, {
+  id: 'confetti',
+  name: 'Confettis',
+  cost: 700
+}, {
+  id: 'stars',
+  name: 'Étoiles',
+  cost: 900
+}, {
+  id: 'comet',
+  name: 'Comète',
+  cost: 1300
+}];
+const VICS = [{
+  id: 'classic',
+  name: 'Classique',
+  cost: 0
+}, {
+  id: 'fireworks',
+  name: 'Feux d’artifice',
+  cost: 500
+}, {
+  id: 'hearts',
+  name: 'Pluie de cœurs',
+  cost: 700
+}, {
+  id: 'gold',
+  name: 'Pluie d’or',
+  cost: 1100
+}, {
+  id: 'cosmos',
+  name: 'Cosmos',
+  cost: 1600
+}];
+const trailOwned = (owned, id) => TRAILS.find(t => t.id === id)?.cost === 0 || owned.has('trail:' + id);
+const vicOwned = (owned, id) => VICS.find(t => t.id === id)?.cost === 0 || owned.has('vic:' + id);
+const HEART_D = 'M 0 3.2 C -5.4 -0.6 -3.8 -5.4 0 -2.6 C 3.8 -5.4 5.4 -0.6 0 3.2 Z';
+function TrailDot({
+  p,
+  a
+}) {
+  if (p.type === 'fire') return React.createElement("g", {
+    opacity: a * 0.9
+  }, React.createElement("circle", {
+    cx: p.x,
+    cy: p.y,
+    r: 7 * a + 2,
+    fill: "url(#sk_fire)"
+  }), React.createElement("ellipse", {
+    cx: p.x,
+    cy: p.y,
+    rx: 2.6 * a + 1,
+    ry: 4.4 * a + 1,
+    fill: "#ff7a2a"
+  }), React.createElement("ellipse", {
+    cx: p.x,
+    cy: p.y - 0.5,
+    rx: 1.2 * a,
+    ry: 2.2 * a,
+    fill: "#ffe27a"
+  }));
+  if (p.type === 'ice') return React.createElement("g", {
+    transform: `translate(${p.x},${p.y}) rotate(${p.seed * 7})`,
+    opacity: a * 0.9
+  }, [0, 60, 120].map(an => React.createElement("g", {
+    key: an,
+    transform: `rotate(${an})`
+  }, React.createElement("line", {
+    x1: "0",
+    y1: "-2.6",
+    x2: "0",
+    y2: "2.6",
+    stroke: "#eef7ff",
+    strokeWidth: 1.1 * a + 0.3,
+    strokeLinecap: "round"
+  }))));
+  if (p.type === 'diamond') return React.createElement("g", {
+    transform: `translate(${p.x},${p.y}) scale(${0.6 + a * 0.5})`,
+    opacity: a
+  }, React.createElement("circle", {
+    r: "4",
+    fill: "url(#glowWhite)"
+  }), React.createElement("path", {
+    d: "M 0 -3.2 Q 0.4 -0.4 3.2 0 Q 0.4 0.4 0 3.2 Q -0.4 0.4 -3.2 0 Q -0.4 -0.4 0 -3.2 Z",
+    fill: "#fff"
+  }));
+  if (p.type === 'neon') return React.createElement("g", null, React.createElement("circle", {
+    cx: p.x,
+    cy: p.y,
+    r: 6 * a + 1,
+    fill: "url(#sk_neon)",
+    opacity: a
+  }), React.createElement("circle", {
+    cx: p.x,
+    cy: p.y,
+    r: 1.8 * a + 0.6,
+    fill: "#c8fff4",
+    opacity: a
+  }));
+  if (p.type === 'toxic') return React.createElement("g", {
+    opacity: a
+  }, React.createElement("circle", {
+    cx: p.x,
+    cy: p.y,
+    r: 3.5 * (1.4 - a) + 1.5,
+    fill: "#c4f24a",
+    fillOpacity: "0.15",
+    stroke: "#d8fa7a",
+    strokeWidth: "1"
+  }), React.createElement("circle", {
+    cx: p.x - 1,
+    cy: p.y - 1,
+    r: "0.8",
+    fill: "#fff"
+  }));
+  if (p.type === 'aurora') return React.createElement("circle", {
+    cx: p.x,
+    cy: p.y,
+    r: 7 * a + 2,
+    fill: Math.floor(p.seed) % 2 ? 'url(#sk_aurora)' : 'url(#glowBlue)',
+    opacity: a
+  });
+  if (p.type === 'stars') return React.createElement("g", {
+    transform: `translate(${p.x},${p.y}) scale(${0.5 + a * 0.6}) rotate(${p.seed * 9})`,
+    opacity: a
+  }, React.createElement("circle", {
+    r: "4",
+    fill: "url(#sk_galaxy)"
+  }), React.createElement("path", {
+    d: "M 0 -3.5 Q 0.4 -0.4 3.5 0 Q 0.4 0.4 0 3.5 Q -0.4 0.4 -3.5 0 Q -0.4 -0.4 0 -3.5 Z",
+    fill: Math.floor(p.seed) % 3 ? '#fff' : '#ffb8f0'
+  }));
+  if (p.type === 'gold') return React.createElement("g", {
+    transform: `translate(${p.x},${p.y}) scale(${0.5 + a * 0.6})`,
+    opacity: a
+  }, React.createElement("circle", {
+    r: "5",
+    fill: "url(#glowGold)"
+  }), React.createElement("path", {
+    d: "M 0 -3.2 L 1 -1 L 3.2 0 L 1 1 L 0 3.2 L -1 1 L -3.2 0 L -1 -1 Z",
+    fill: "#ffe08a"
+  }));
+  if (p.type === 'holo') {
+    const c = ['#ffc6ec', '#c6e8ff', '#d8ffd6', '#e2c9ff', '#ffd9c2'];
+    return React.createElement("g", null, React.createElement("circle", {
+      cx: p.x,
+      cy: p.y,
+      r: 6 * a + 1,
+      fill: "url(#glowWhite)",
+      opacity: a * 0.6
+    }), React.createElement("circle", {
+      cx: p.x,
+      cy: p.y,
+      r: 2.4 * a + 0.8,
+      fill: c[Math.floor(p.seed) % 5],
+      opacity: a
+    }));
+  }
+  if (p.type === 'rainbow') {
+    const c = ['#ff5a7a', '#ffa45c', '#ffd95e', '#7ee0a0', '#5fb4ff', '#8a7bff', '#d77bff'];
+    return React.createElement("circle", {
+      cx: p.x,
+      cy: p.y,
+      r: 2.5 * a + 1,
+      fill: c[Math.floor(p.seed) % 7],
+      opacity: a * 0.85
+    });
+  }
+  if (p.type === 'bubbles') return React.createElement("g", {
+    opacity: a
+  }, React.createElement("circle", {
+    cx: p.x,
+    cy: p.y,
+    r: 2.2 + (1 - a) * 3.8,
+    fill: "rgba(200,235,255,0.14)",
+    stroke: "#d8f0ff",
+    strokeOpacity: "0.85",
+    strokeWidth: "0.9"
+  }), React.createElement("circle", {
+    cx: p.x - 1,
+    cy: p.y - 1.1,
+    r: "0.8",
+    fill: "#fff"
+  }));
+  if (p.type === 'hearts') return React.createElement("path", {
+    d: HEART_D,
+    transform: `translate(${p.x},${p.y}) scale(${0.5 + a * 0.6}) rotate(${Math.sin(p.seed) * 18})`,
+    fill: Math.floor(p.seed) % 2 ? '#ff6f91' : '#ff9ab3',
+    opacity: a
+  });
+  if (p.type === 'petals') return React.createElement("ellipse", {
+    cx: p.x,
+    cy: p.y,
+    rx: 3.4 * (0.5 + a * 0.5),
+    ry: "1.7",
+    transform: `rotate(${p.seed * 17 + (1 - a) * 80},${p.x},${p.y})`,
+    fill: Math.floor(p.seed) % 2 ? '#ffb3c9' : '#ff8fb0',
+    opacity: a * 0.95
+  });
+  if (p.type === 'confetti') {
+    const c = ['#ffd25e', '#ff6f91', '#8ff0ff', '#b77bff', '#7ee0a0'];
+    return React.createElement("rect", {
+      x: p.x - 1.6,
+      y: p.y - 2.6,
+      width: "3.2",
+      height: "5.2",
+      rx: "0.8",
+      transform: `rotate(${p.seed * 23 + (1 - a) * 200},${p.x},${p.y})`,
+      fill: c[Math.floor(p.seed) % 5],
+      opacity: a
+    });
+  }
+  if (p.type === 'comet') return React.createElement("g", {
+    opacity: a
+  }, React.createElement("ellipse", {
+    cx: p.x,
+    cy: p.y + 3,
+    rx: 1.5 * a + 0.5,
+    ry: 7 * a + 2,
+    fill: "#bfe3ff",
+    opacity: "0.7"
+  }), React.createElement("circle", {
+    cx: p.x,
+    cy: p.y,
+    r: 4 * a + 1.2,
+    fill: "url(#glowWhite)"
+  }));
+  return null;
+}
+const TRAIL_FX = {
+  bubbles: {
+    life: 42,
+    rate: 0.9,
+    vy: -0.35
+  },
+  hearts: {
+    life: 40,
+    rate: 0.9,
+    vy: -0.3
+  },
+  petals: {
+    life: 46,
+    rate: 1,
+    vy: 0.25,
+    vx: 0.3
+  },
+  confetti: {
+    life: 38,
+    rate: 1.3,
+    vy: 0.5
+  },
+  comet: {
+    life: 20,
+    rate: 2.4,
+    vy: 0.05
+  }
+};
+function VictoryFx({
+  type,
+  t,
+  W,
+  H
+}) {
+  const sc = W / 375;
+  if (type === 'fireworks') {
+    const pal = [['#ffd25e', '#fff3b0'], ['#ff6f91', '#ffc0d0'], ['#8ff0ff', '#dffaff'], ['#b77bff', '#e6d4ff'], ['#7ee0a0', '#d4ffe4']];
+    return React.createElement("g", null, [0, 1, 2, 3, 4].map(k => {
+      const cyc = (t + k * 0.62) / 2.3,
+        n = Math.floor(cyc),
+        ph = (cyc - n) * 2.3 / 1.5;
+      if (ph >= 1) return null;
+      const cx = (0.15 + hrnd(n * 5 + k) * 0.7) * W,
+        cy = (0.1 + hrnd(n * 7 + k + 3) * 0.45) * H,
+        e = 1 - Math.pow(1 - ph, 2.2),
+        c = pal[(n + k) % 5];
+      return React.createElement("g", {
+        key: k,
+        opacity: ph < 0.7 ? 1 : 1 - (ph - 0.7) / 0.3
+      }, Array.from({
+        length: 16
+      }, (_, i) => {
+        const a = i / 16 * Math.PI * 2 + k,
+          r = e * 78 * sc,
+          g2 = e * 8 * sc;
+        return React.createElement("g", {
+          key: i
+        }, React.createElement("line", {
+          x1: f1(cx + Math.cos(a) * r * 0.6),
+          y1: f1(cy + Math.sin(a) * r * 0.6 + g2 * 0.5),
+          x2: f1(cx + Math.cos(a) * r),
+          y2: f1(cy + Math.sin(a) * r + g2),
+          stroke: c[0],
+          strokeWidth: f1(2 * sc + 0.6),
+          strokeLinecap: "round",
+          opacity: "0.55"
+        }), React.createElement("circle", {
+          cx: f1(cx + Math.cos(a) * r),
+          cy: f1(cy + Math.sin(a) * r + g2),
+          r: f1((3.6 - ph * 1.8) * sc + 0.6),
+          fill: c[0]
+        }), React.createElement("circle", {
+          cx: f1(cx + Math.cos(a) * r * 0.78),
+          cy: f1(cy + Math.sin(a) * r * 0.78 + g2 * 0.7),
+          r: f1(1.4 * sc),
+          fill: c[1],
+          opacity: "0.7"
+        }));
+      }), React.createElement("circle", {
+        cx: cx,
+        cy: cy,
+        r: f1((1 - ph) * 22 * sc),
+        fill: c[0],
+        opacity: (1 - ph) * 0.25
+      }));
+    }));
+  }
+  if (type === 'hearts') {
+    return React.createElement("g", null, Array.from({
+      length: 20
+    }, (_, i) => {
+      const sp = 26 + hrnd(i + 9) * 34,
+        y = H + 20 - (t * sp + hrnd(i + 3) * (H + 40)) % (H + 40),
+        x = hrnd(i) * W + Math.sin(t * 1.3 + i) * 10 * sc,
+        s = (0.7 + hrnd(i + 17) * 1.1) * sc * 1.3;
+      return React.createElement("path", {
+        key: i,
+        d: HEART_D,
+        transform: `translate(${f1(x)},${f1(y)}) scale(${s.toFixed(2)}) rotate(${Math.sin(t + i) * 14})`,
+        fill: ['#ff6f91', '#ff9ab3', '#ffc2d1', '#e8446f'][i % 4],
+        opacity: clamp(Math.min(y / (H * 0.25), 1), 0, 1) * 0.85
+      });
+    }));
+  }
+  if (type === 'gold') {
+    return React.createElement("g", null, Array.from({
+      length: 24
+    }, (_, i) => {
+      const sp = 40 + hrnd(i + 4) * 50,
+        y = (t * sp + hrnd(i + 2) * (H + 30)) % (H + 30) - 15,
+        x = hrnd(i + 11) * W + Math.sin(t * 1.1 + i) * 8 * sc,
+        sq = Math.abs(Math.cos(t * 3 + i));
+      return React.createElement("g", {
+        key: i
+      }, React.createElement("ellipse", {
+        cx: f1(x),
+        cy: f1(y),
+        rx: f1((0.9 + sq * 5.4) * sc),
+        ry: f1(6 * sc),
+        fill: "url(#goldMetal)",
+        stroke: "#8a5406",
+        strokeWidth: "0.7"
+      }), sq > 0.6 && React.createElement("ellipse", {
+        cx: f1(x),
+        cy: f1(y),
+        rx: f1(sq * 2.6 * sc),
+        ry: f1(3 * sc),
+        fill: "#fff3b8",
+        opacity: "0.55"
+      }));
+    }));
+  }
+  if (type === 'cosmos') {
+    return React.createElement("g", null, React.createElement("circle", {
+      cx: W * 0.3,
+      cy: H * 0.3,
+      r: W * 0.5,
+      fill: "url(#glowAcc)",
+      opacity: "0.25"
+    }), React.createElement("circle", {
+      cx: W * 0.75,
+      cy: H * 0.62,
+      r: W * 0.45,
+      fill: "url(#sk_galaxy)",
+      opacity: "0.4"
+    }), Array.from({
+      length: 34
+    }, (_, i) => {
+      const a = hrnd(i) * Math.PI * 2 + t * (0.15 + hrnd(i + 5) * 0.25),
+        r = (0.12 + hrnd(i + 8) * 0.6) * Math.min(W, H) * 1.1,
+        tw = 0.35 + Math.max(0, Math.sin(t * 2 + i * 1.7)) * 0.65;
+      return React.createElement("circle", {
+        key: i,
+        cx: f1(W / 2 + Math.cos(a) * r * 1.15),
+        cy: f1(H * 0.38 + Math.sin(a) * r * 0.8),
+        r: f1((0.6 + hrnd(i + 13) * 1.5) * sc + 0.2),
+        fill: i % 4 === 0 ? '#ffd6f5' : '#fff',
+        opacity: tw
+      });
+    }));
+  }
+  return null;
+}
+function useClock(ref, speed) {
+  const [vis, setVis] = React.useState(true);
+  const [w, setW] = React.useState(() => Math.random() * 60);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(es => setVis(es[es.length - 1].isIntersecting), {
+      threshold: 0.01
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  React.useEffect(() => {
+    if (!vis) return;
+    let r,
+      last = performance.now();
+    const f = n => {
+      const dt = Math.min(n - last, 50);
+      last = n;
+      setW(v => v + dt * speed);
+      r = requestAnimationFrame(f);
+    };
+    r = requestAnimationFrame(f);
+    return () => cancelAnimationFrame(r);
+  }, [vis]);
+  return [w, vis];
+}
+function SkinPreview({
+  skin
+}) {
+  const ref = React.useRef(null);
+  const [w, vis] = useClock(ref, 0.05);
+  return React.createElement("div", {
+    ref: ref,
+    style: {
+      width: '100%',
+      height: 122,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, vis && React.createElement("svg", {
+    viewBox: "-36 -32 72 112",
+    style: {
+      width: 70,
+      height: 109,
+      display: 'block',
+      overflow: 'visible'
+    }
+  }, React.createElement("g", {
+    transform: "scale(0.7)"
+  }, React.createElement(SpermPlayer, {
+    x: 0,
+    y: 0,
+    wob: w,
+    hit: false,
+    shield: false,
+    tilt: 0,
+    skin: skin
+  }))));
+}
+function TrailPreview({
+  id
+}) {
+  const ref = React.useRef(null);
+  const [w, vis] = useClock(ref, 0.001);
+  const type = id === 'auto' ? 'neon' : id;
+  return React.createElement("div", {
+    ref: ref,
+    style: {
+      width: '100%',
+      height: 122,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, vis && React.createElement("svg", {
+    viewBox: "-50 -20 100 122",
+    style: {
+      width: 86,
+      height: 105,
+      display: 'block',
+      overflow: 'visible'
+    }
+  }, React.createElement("g", {
+    transform: "translate(0,-4) scale(0.55)"
+  }, React.createElement(SpermPlayer, {
+    x: 0,
+    y: 0,
+    wob: w * 50,
+    hit: false,
+    shield: false,
+    tilt: 0,
+    skin: SKINS[0]
+  })), id === 'none' ? React.createElement("text", {
+    y: "60",
+    textAnchor: "middle",
+    fill: "rgba(255,225,215,0.4)",
+    fontSize: "9",
+    fontFamily: "Sora,Arial"
+  }, "\u2014") : id === 'auto' ? React.createElement("text", {
+    y: "62",
+    textAnchor: "middle",
+    fill: "rgba(255,225,215,0.55)",
+    fontSize: "9",
+    fontWeight: "700",
+    fontFamily: "Sora,Arial"
+  }, "SKIN") : Array.from({
+    length: 11
+  }, (_, k) => {
+    const age = (w * 0.9 + k / 11) % 1,
+      a = 1 - age;
+    return React.createElement(TrailDot, {
+      key: k,
+      p: {
+        type,
+        seed: k * 13.7 + 2.2,
+        x: Math.sin(age * 7 + k * 1.3) * 9,
+        y: 6 + age * 74
+      },
+      a: a
+    });
+  })));
+}
+function VicPreview({
+  id
+}) {
+  const ref = React.useRef(null);
+  const [w, vis] = useClock(ref, 0.001);
+  return React.createElement("div", {
+    ref: ref,
+    style: {
+      width: '100%',
+      height: 122,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  }, vis && React.createElement("svg", {
+    viewBox: "0 0 120 112",
+    style: {
+      width: 112,
+      height: 104,
+      display: 'block',
+      borderRadius: 14,
+      background: 'radial-gradient(90% 80% at 50% 30%,rgba(255,210,94,0.18),rgba(8,2,10,0.5))'
+    }
+  }, id === 'classic' ? React.createElement("g", {
+    transform: `translate(60,56) rotate(${w * 12 % 360})`
+  }, Array.from({
+    length: 8
+  }, (_, i) => React.createElement("path", {
+    key: i,
+    d: "M -4 -14 L 0 -62 L 4 -14 Z",
+    fill: "#ffd25e",
+    opacity: "0.12",
+    transform: `rotate(${i * 45})`
+  }))) : React.createElement(VictoryFx, {
+    type: id,
+    t: w,
+    W: 120,
+    H: 112
+  }), React.createElement("g", {
+    transform: "translate(60,62) scale(0.5)"
+  }, React.createElement(SpermPlayer, {
+    x: 0,
+    y: 0,
+    wob: w * 50,
+    hit: false,
+    shield: false,
+    tilt: 0,
+    skin: SKINS[0]
+  }), React.createElement("g", {
+    transform: "translate(0,-21)"
+  }, React.createElement(Crown, null)))));
+}
+function ShopCard({
+  accent,
+  rarity,
+  status,
+  preview,
+  name,
+  label,
+  kind,
+  onClick,
+  missing
+}) {
+  const isEquip = status === 'equipped',
+    isOwned = status !== 'locked';
+  return React.createElement("div", {
+    style: {
+      position: 'relative',
+      borderRadius: 18,
+      padding: '0 10px 12px',
+      overflow: 'hidden',
+      boxSizing: 'border-box',
+      background: `linear-gradient(180deg,${accent}1f,rgba(255,255,255,0.03) 55%)`,
+      border: `1.5px solid ${isEquip ? 'rgba(255,210,94,0.75)' : `${accent}55`}`,
+      boxShadow: isEquip ? '0 0 22px rgba(255,210,94,0.22)' : 'none'
+    }
+  }, React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: '50%',
+      top: 6,
+      width: 130,
+      height: 130,
+      transform: 'translateX(-50%)',
+      borderRadius: '50%',
+      background: `radial-gradient(circle,${accent}40,transparent 68%)`,
+      pointerEvents: 'none'
+    }
+  }), React.createElement("div", {
+    style: {
+      position: 'relative',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingTop: 9
+    }
+  }, React.createElement("span", {
+    style: {
+      fontSize: 8.5,
+      fontWeight: 800,
+      letterSpacing: 1.2,
+      color: rarity.c,
+      textTransform: 'uppercase'
+    }
+  }, tr(rarity.name)), isEquip ? React.createElement("span", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 3,
+      fontSize: 9,
+      fontWeight: 800,
+      color: '#ffd25e'
+    }
+  }, React.createElement(Check, {
+    c: "#ffd25e",
+    s: 10
+  }), tr('ÉQUIPÉ')) : isOwned ? React.createElement("span", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 3,
+      fontSize: 9,
+      fontWeight: 800,
+      color: '#7ee0a0'
+    }
+  }, React.createElement(Check, {
+    c: "#7ee0a0",
+    s: 10
+  }), tr('POSSÉDÉ')) : React.createElement(Lock, {
+    c: "rgba(255,235,225,0.45)",
+    s: 11
+  })), React.createElement("div", {
+    style: {
+      position: 'relative'
+    }
+  }, preview), React.createElement("div", {
+    style: {
+      position: 'relative',
+      textAlign: 'center',
+      fontSize: 14,
+      fontWeight: 800,
+      letterSpacing: -0.2
+    }
+  }, name), React.createElement("button", {
+    type: "button",
+    onClick: onClick,
+    style: {
+      position: 'relative',
+      width: '100%',
+      marginTop: 9,
+      padding: '9px 6px',
+      borderRadius: 99,
+      border: 'none',
+      cursor: kind === 'equipped' || kind === 'cant' ? 'default' : 'pointer',
+      fontFamily: 'inherit',
+      fontSize: 12,
+      fontWeight: 800,
+      letterSpacing: 0.3,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 5,
+      background: kind === 'equipped' ? 'rgba(255,210,94,0.16)' : kind === 'equip' ? 'rgba(126,224,160,0.16)' : kind === 'buy' ? 'linear-gradient(135deg,#ff9e8a,#ff6a8a 55%,#d4407f)' : 'rgba(255,255,255,0.06)',
+      color: kind === 'equipped' ? '#ffd25e' : kind === 'equip' ? '#7ee0a0' : kind === 'buy' ? '#fff' : 'rgba(255,225,215,0.4)',
+      boxShadow: kind === 'buy' ? '0 5px 16px rgba(255,106,138,0.35)' : 'none'
+    }
+  }, label), missing > 0 && React.createElement("div", {
+    style: {
+      position: 'relative',
+      textAlign: 'center',
+      fontSize: 10,
+      fontWeight: 600,
+      color: 'rgba(255,200,215,0.6)',
+      marginTop: 5
+    }
+  }, trf('il te manque {n} mL', {
+    n: missing
+  })));
+}
+function ShopModal({
+  onClose,
+  SAT,
+  SAB,
+  mL,
+  owned,
+  equipped,
+  onEquip,
+  onBuy
+}) {
+  const [cat, setCat] = React.useState('skins');
+  const [tab, setTab] = React.useState('all');
+  const entries = cat === 'skins' ? [...SKINS].sort((a, b) => a.cost - b.cost).map(s => ({
+    key: s.id,
+    name: s.name,
+    cost: s.cost,
+    own: owned.has(s.id),
+    eq: equipped === s.id,
+    preview: React.createElement(SkinPreview, {
+      skin: s
+    })
+  })) : cat === 'trails' ? TRAILS.map(t => ({
+    key: 'trail:' + t.id,
+    name: t.name,
+    cost: t.cost,
+    own: trailOwned(owned, t.id),
+    eq: SET.trail === t.id,
+    preview: React.createElement(TrailPreview, {
+      id: t.id
+    })
+  })) : VICS.map(t => ({
+    key: 'vic:' + t.id,
+    name: t.name,
+    cost: t.cost,
+    own: vicOwned(owned, t.id),
+    eq: SET.vic === t.id,
+    preview: React.createElement(VicPreview, {
+      id: t.id
+    })
+  }));
+  const list = entries.filter(e => tab === 'all' || (tab === 'owned' ? e.own : !e.own));
+  const sub = cat === 'skins' ? trf('{a} / {b} skins débloqués', {
+    a: owned.size,
+    b: SKINS.length
+  }) : tr(cat === 'trails' ? 'Un sillage derrière toi' : 'Anime ton écran de victoire');
+  return React.createElement(ModalShell, {
+    onClose: onClose,
+    title: tr('Boutique'),
+    sub: sub,
+    SAT: SAT,
+    SAB: SAB,
+    left: React.createElement(ReservePill, {
+      mL: mL
+    }),
+    fixed: React.createElement(React.Fragment, null, React.createElement(Seg, {
+      value: cat,
+      onChange: c => {
+        setCat(c);
+        setTab('all');
+      },
+      items: [['skins', tr('Skins')], ['trails', tr('Traînées')], ['vics', tr('Victoires')]]
+    }), React.createElement("div", {
+      style: {
+        marginTop: 8
+      }
+    }, React.createElement(Seg, {
+      value: tab,
+      onChange: setTab,
+      items: [['all', tr('Tous')], ['owned', tr('Possédés')], ['new', tr('À débloquer')]]
+    })))
+  }, list.length === 0 && React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      fontSize: 12.5,
+      color: 'rgba(255,225,215,0.55)',
+      padding: '30px 0'
+    }
+  }, tab === 'owned' ? tr(cat === 'skins' ? 'Aucun skin possédé pour le moment.' : 'Aucun objet possédé pour le moment.') : tr(cat === 'skins' ? 'Tu as tous les skins, bravo !' : 'Tu as tout débloqué, bravo !')), React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 10
+    }
+  }, list.map(e => {
+    const R = cat === 'skins' ? rarityOf(e.cost) : e.cost === 0 ? RARITY[0] : rarityOf(e.cost * 2);
+    const canAfford = mL >= e.cost,
+      status = e.eq ? 'equipped' : e.own ? 'owned' : 'locked';
+    const kind = e.eq ? 'equipped' : e.own ? 'equip' : canAfford ? 'buy' : 'cant';
+    return React.createElement(ShopCard, {
+      key: e.key,
+      accent: e.eq ? '#ffd25e' : R.c,
+      rarity: R,
+      status: status,
+      preview: e.preview,
+      name: tr(e.name),
+      kind: kind,
+      label: e.eq ? tr('Équipé') : e.own ? tr('Équiper') : `${e.cost} mL`,
+      missing: !e.own && !canAfford ? e.cost - mL : 0,
+      onClick: ev => {
+        ev.stopPropagation();
+        if (e.eq) return;
+        if (e.own) onEquip(e.key);else if (canAfford) onBuy(e.key, e.cost);
+      }
+    });
+  })));
+}
+function fmtCountdown(ms) {
+  const m = Math.max(0, Math.floor(ms / 60000)),
+    d = Math.floor(m / 1440),
+    h = Math.floor(m % 1440 / 60),
+    mi = m % 60;
+  return d > 0 ? `${d} j ${h} h` : h > 0 ? `${h} h ${mi < 10 ? '0' : ''}${mi}` : `${mi} min`;
+}
+function msToMidnight() {
+  const n = new Date(),
+    t = new Date(n);
+  t.setHours(24, 0, 0, 0);
+  return t - n;
+}
+function msToMonday() {
+  const n = new Date(),
+    t = new Date(n);
+  t.setHours(0, 0, 0, 0);
+  const d = (8 - (n.getDay() || 7)) % 7 || 7;
+  t.setDate(t.getDate() + d);
+  return t - n;
+}
+function ChallengeCard({
+  c,
+  tier,
+  progress,
+  weekly
+}) {
+  const col = weekly ? '#ffd25e' : tier.color;
+  const done = c.completed;
+  return React.createElement("div", {
+    style: {
+      ...card,
+      padding: '12px 12px 11px',
+      marginBottom: 9,
+      position: 'relative',
+      overflow: 'hidden',
+      borderColor: done ? 'rgba(126,224,160,0.4)' : `${col}55`,
+      background: done ? 'linear-gradient(180deg,rgba(126,224,160,0.12),rgba(126,224,160,0.03))' : `linear-gradient(180deg,${col}18,rgba(255,255,255,0.03))`
+    }
+  }, React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 11
+    }
+  }, React.createElement("div", {
+    style: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: done ? 'linear-gradient(135deg,#9af0b8,#4fc27c)' : `linear-gradient(135deg,${col},${col}99)`,
+      boxShadow: `0 4px 14px ${done ? '#4fc27c' : col}55`
+    }
+  }, done ? React.createElement(Check, {
+    s: 16
+  }) : React.createElement("span", {
+    style: {
+      fontSize: 15,
+      fontWeight: 800,
+      color: '#2a1004'
+    }
+  }, weekly ? '★' : '!')), React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8
+    }
+  }, React.createElement("span", {
+    style: {
+      fontSize: 9,
+      fontWeight: 800,
+      letterSpacing: 1.6,
+      color: done ? '#7ee0a0' : col
+    }
+  }, weekly ? 'HEBDOMADAIRE' : tier.label.toUpperCase()), React.createElement(MlChip, {
+    v: c.ml,
+    c: done ? '#7ee0a0' : '#ff8fa8'
+  })), React.createElement("div", {
+    style: {
+      fontSize: 13.5,
+      fontWeight: 700,
+      lineHeight: '18px',
+      marginTop: 3,
+      color: done ? 'rgba(255,255,255,0.6)' : '#fff'
+    }
+  }, c.fmt))), done ? React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: '#7ee0a0',
+      marginTop: 8,
+      paddingLeft: 45
+    }
+  }, "R\xE9compense obtenue") : progress ? React.createElement("div", {
+    style: {
+      marginTop: 10,
+      paddingLeft: 45
+    }
+  }, React.createElement(Bar, {
+    p: progress.p,
+    c: col
+  }), React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: 'rgba(255,225,215,0.55)',
+      marginTop: 5,
+      display: 'flex',
+      justifyContent: 'space-between'
+    }
+  }, React.createElement("span", null, "Progression"), React.createElement("b", {
+    style: {
+      color: 'rgba(255,240,230,0.85)'
+    }
+  }, progress.txt))) : React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'rgba(255,225,215,0.5)',
+      marginTop: 8,
+      paddingLeft: 45
+    }
+  }, "\xC0 r\xE9ussir en une seule partie"));
+}
+function progressOf(tpl, state, c) {
+  if (!tpl || !(tpl.key in state)) return null;
+  const val = state[tpl.key] || 0,
+    target = tpl.scale ? c.target * tpl.scale : c.target;
+  return {
+    p: clamp(val / target, 0, 1),
+    txt: tpl.scale ? `${fmtDuration(val)} / ${fmtDuration(target)}` : `${val} / ${c.target}`
+  };
+}
+function ChallengesModal({
+  onClose,
+  SAT,
+  SAB,
+  daily,
+  weekly,
+  mL
+}) {
+  const [tab, setTab] = React.useState('day');
+  const data = tab === 'day' ? daily : weekly,
+    list = data.ch;
+  const done = list.filter(c => c.completed).length;
+  const total = list.reduce((s, c) => s + c.ml, 0),
+    got = list.filter(c => c.completed).reduce((s, c) => s + c.ml, 0);
+  const left = tab === 'day' ? msToMidnight() : msToMonday();
+  const R = 24,
+    C = 2 * Math.PI * R,
+    pct = list.length ? done / list.length : 0;
+  return React.createElement(ModalShell, {
+    onClose: onClose,
+    title: "D\xE9fis",
+    sub: tab === 'day' ? 'Nouveaux défis chaque jour' : 'Nouveaux défis chaque lundi',
+    SAT: SAT,
+    SAB: SAB,
+    left: React.createElement(ReservePill, {
+      mL: mL
+    }),
+    fixed: React.createElement(Seg, {
+      value: tab,
+      onChange: setTab,
+      items: [['day', 'Du jour'], ['week', 'De la semaine']]
+    })
+  }, React.createElement("div", {
+    style: {
+      ...card,
+      padding: '12px 14px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14
+    }
+  }, React.createElement("svg", {
+    viewBox: "-30 -30 60 60",
+    style: {
+      width: 58,
+      height: 58,
+      flexShrink: 0,
+      display: 'block'
+    }
+  }, React.createElement("circle", {
+    r: R,
+    fill: "none",
+    stroke: "rgba(255,255,255,0.1)",
+    strokeWidth: "6"
+  }), React.createElement("circle", {
+    r: R,
+    fill: "none",
+    stroke: done === list.length && list.length > 0 ? '#7ee0a0' : 'url(#goldMetal)',
+    strokeWidth: "6",
+    strokeLinecap: "round",
+    strokeDasharray: `${C * pct} ${C}`,
+    transform: "rotate(-90)"
+  }), React.createElement("text", {
+    y: "5",
+    textAnchor: "middle",
+    fill: "#fff",
+    fontSize: "15",
+    fontWeight: "800",
+    fontFamily: "Sora,Helvetica Neue,Arial"
+  }, done, "/", list.length)), React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700
+    }
+  }, done === list.length && list.length > 0 ? 'Tous les défis sont réussis !' : `${list.length - done} défi${list.length - done > 1 ? 's' : ''} à réussir`), React.createElement("div", {
+    style: {
+      marginTop: 5,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      fontSize: 11.5,
+      color: 'rgba(255,225,215,0.6)'
+    }
+  }, React.createElement(MlChip, {
+    v: got,
+    c: "#7ee0a0"
+  }), " ", React.createElement("span", null, "sur"), " ", React.createElement(MlChip, {
+    v: total
+  })))), React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      justifyContent: 'center',
+      margin: '12px 0 10px',
+      fontSize: 11,
+      color: 'rgba(255,225,215,0.5)'
+    }
+  }, React.createElement("svg", {
+    viewBox: "-7 -7 14 14",
+    style: {
+      width: 12,
+      height: 12,
+      display: 'block'
+    }
+  }, React.createElement("circle", {
+    r: "5.5",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "1.4"
+  }), React.createElement("path", {
+    d: "M 0 -3 V 0 L 2.4 1.6",
+    stroke: "currentColor",
+    strokeWidth: "1.4",
+    fill: "none",
+    strokeLinecap: "round"
+  })), "Renouvellement dans ", React.createElement("b", {
+    style: {
+      color: 'rgba(255,240,230,0.85)'
+    }
+  }, fmtCountdown(left))), list.map(c => {
+    const tpl = (tab === 'day' ? CH_TEMPLATES : WK_TEMPLATES).find(t => t.id === c.tplId);
+    return React.createElement(ChallengeCard, {
+      key: c.id,
+      c: c,
+      tier: TIERS[c.t] || TIERS.medium,
+      weekly: tab === 'week',
+      progress: c.completed ? null : progressOf(tpl, tab === 'day' ? daily.ds : weekly.ws, c)
+    });
+  }));
+}
+function RewardsModal({
+  onClose,
+  SAT,
+  SAB,
+  mL,
+  achSet,
+  stats,
+  bestInf
+}) {
+  const [tab, setTab] = React.useState('all');
+  const sExt = {
+    ...stats,
+    bestInfTime: bestInf
+  };
+  const rows = ACHIEVEMENTS.filter(a => tab === 'all' || a.tier === tab).map(a => {
+    const unlocked = achSet.has(a.id),
+      val = a.get(sExt) || 0;
+    let p = unlocked ? 1 : clamp(val / a.target, 0, 1),
+      txt;
+    if (unlocked) txt = 'Débloqué';else if (a.fmt === 'time') txt = `${fmtDuration(val)} / ${fmtDuration(a.target)}`;else if (a.fmt === 'speed') {
+      txt = sExt.bestWinTime > 0 ? `Record ${fmtTime(sExt.bestWinTime)} · cible ${fmtTime(a.target)}` : `Cible : ${fmtTime(a.target)}`;
+      p = sExt.bestWinTime > 0 ? clamp(a.target / sExt.bestWinTime, 0, 1) : 0;
+    } else txt = `${val} / ${a.target}`;
+    return {
+      a,
+      unlocked,
+      p,
+      txt
+    };
+  });
+  rows.sort((x, y) => x.unlocked - y.unlocked || y.p - x.p);
+  const n = achSet.size,
+    N = ACHIEVEMENTS.length;
+  const earned = ACHIEVEMENTS.filter(a => achSet.has(a.id)).reduce((s, a) => s + a.ml, 0);
+  const R = 26,
+    C = 2 * Math.PI * R;
+  return React.createElement(ModalShell, {
+    onClose: onClose,
+    title: "R\xE9compenses",
+    sub: "Succ\xE8s \xE0 d\xE9bloquer",
+    SAT: SAT,
+    SAB: SAB,
+    left: React.createElement(ReservePill, {
+      mL: mL
+    }),
+    fixed: React.createElement(React.Fragment, null, React.createElement("div", {
+      style: {
+        ...card,
+        padding: '10px 14px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14
+      }
+    }, React.createElement("svg", {
+      viewBox: "-32 -32 64 64",
+      style: {
+        width: 54,
+        height: 54,
+        flexShrink: 0,
+        display: 'block'
+      }
+    }, React.createElement("circle", {
+      r: R,
+      fill: "none",
+      stroke: "rgba(255,255,255,0.1)",
+      strokeWidth: "6"
+    }), React.createElement("circle", {
+      r: R,
+      fill: "none",
+      stroke: "url(#goldMetal)",
+      strokeWidth: "6",
+      strokeLinecap: "round",
+      strokeDasharray: `${C * n / N} ${C}`,
+      transform: "rotate(-90)"
+    }), React.createElement("text", {
+      y: "5",
+      textAnchor: "middle",
+      fill: "#fff",
+      fontSize: "15",
+      fontWeight: "800",
+      fontFamily: "Sora,Helvetica Neue,Arial"
+    }, n, "/", N)), React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, React.createElement("div", {
+      style: {
+        fontSize: 14,
+        fontWeight: 700
+      }
+    }, n > 1 ? n + ' succès débloqués' : n + ' succès débloqué'), React.createElement("div", {
+      style: {
+        marginTop: 4,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        fontSize: 11.5,
+        color: 'rgba(255,225,215,0.6)'
+      }
+    }, "d\xE9j\xE0 gagn\xE9s : ", React.createElement(MlChip, {
+      v: earned,
+      c: "#ffd25e"
+    })))), React.createElement("div", {
+      style: {
+        marginTop: 10
+      }
+    }, React.createElement(Seg, {
+      value: tab,
+      onChange: setTab,
+      items: [['all', 'Tous'], ['easy', 'Facile'], ['medium', 'Moyen'], ['hard', 'Difficile'], ['extreme', 'Extrême']]
+    })))
+  }, rows.map(({
+    a,
+    unlocked,
+    p,
+    txt
+  }) => {
+    const col = TIERS[a.tier].color;
+    return React.createElement("div", {
+      key: a.id,
+      style: {
+        ...card,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '11px 12px',
+        marginBottom: 8,
+        opacity: unlocked ? 1 : 0.96,
+        borderColor: unlocked ? `${col}66` : 'rgba(255,255,255,0.1)',
+        background: unlocked ? `linear-gradient(180deg,${col}1c,rgba(255,255,255,0.03))` : card.background
+      }
+    }, React.createElement("div", {
+      style: {
+        width: 42,
+        height: 42,
+        borderRadius: 14,
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: unlocked ? `linear-gradient(135deg,${col},${col}88)` : 'rgba(255,255,255,0.07)',
+        border: unlocked ? 'none' : '1px solid rgba(255,255,255,0.12)',
+        boxShadow: unlocked ? `0 4px 14px ${col}55` : 'none'
+      }
+    }, unlocked ? React.createElement(Check, {
+      s: 19,
+      c: "#fff"
+    }) : React.createElement(Lock, {
+      c: "rgba(255,235,225,0.4)",
+      s: 16
+    })), React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 8
+      }
+    }, React.createElement("span", {
+      style: {
+        fontSize: 13.5,
+        fontWeight: 700,
+        color: unlocked ? '#fff' : 'rgba(255,240,230,0.85)'
+      }
+    }, a.name), React.createElement(MlChip, {
+      v: a.ml,
+      c: unlocked ? '#ffd25e' : '#ff8fa8'
+    })), React.createElement("div", {
+      style: {
+        fontSize: 11,
+        lineHeight: '15px',
+        color: 'rgba(255,225,215,0.55)',
+        marginTop: 2
+      }
+    }, a.desc), React.createElement("div", {
+      style: {
+        marginTop: 7
+      }
+    }, React.createElement(Bar, {
+      p: p,
+      c: unlocked ? '#7ee0a0' : col,
+      h: 5
+    })), React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: unlocked ? '#7ee0a0' : 'rgba(255,225,215,0.45)',
+        marginTop: 4,
+        fontWeight: unlocked ? 700 : 500
+      }
+    }, txt)));
+  }));
+}
+const OFFSETS = [[0, 'Aucun'], [28, 'Petit'], [48, 'Moyen'], [68, 'Grand']];
+function Slider({
+  value,
+  onChange,
+  label
+}) {
+  return React.createElement("div", {
+    style: {
+      ...card,
+      padding: '12px 14px',
+      marginBottom: 9
+    }
+  }, React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      fontSize: 13,
+      fontWeight: 700
+    }
+  }, React.createElement("span", null, label), React.createElement("span", {
+    style: {
+      color: 'rgba(255,225,215,0.6)'
+    }
+  }, Math.round(value * 100), "%")), React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "100",
+    value: Math.round(value * 100),
+    onChange: e => onChange(e.target.value / 100),
+    style: {
+      width: '100%',
+      marginTop: 10,
+      accentColor: '#ff6a8a',
+      display: 'block'
+    }
+  }));
+}
+function Toggle({
+  on,
+  onChange,
+  label,
+  sub
+}) {
+  return React.createElement("div", {
+    onClick: () => onChange(!on),
+    style: {
+      ...card,
+      padding: '12px 14px',
+      marginBottom: 9,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      cursor: 'pointer'
+    }
+  }, React.createElement("div", null, React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700
+    }
+  }, label), sub && React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'rgba(255,225,215,0.5)',
+      marginTop: 2
+    }
+  }, sub)), React.createElement("div", {
+    style: {
+      width: 44,
+      height: 26,
+      borderRadius: 13,
+      position: 'relative',
+      flexShrink: 0,
+      background: on ? 'linear-gradient(135deg,#ff9e8a,#ff6a8a)' : 'rgba(255,255,255,0.14)',
+      transition: 'background .15s'
+    }
+  }, React.createElement("div", {
+    style: {
+      position: 'absolute',
+      top: 3,
+      left: on ? 21 : 3,
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      background: '#fff',
+      transition: 'left .15s',
+      boxShadow: '0 2px 6px rgba(0,0,0,0.35)'
+    }
+  })));
+}
+const Note = ({
+  children
+}) => React.createElement("div", {
+  style: {
+    fontSize: 11,
+    lineHeight: '16px',
+    color: 'rgba(255,225,215,0.5)',
+    margin: '8px 2px 0'
+  }
+}, children);
+const SmallBtn = ({
+  onClick,
+  children,
+  kind
+}) => React.createElement("div", {
+  onClick: onClick,
+  style: {
+    flex: 1,
+    textAlign: 'center',
+    padding: '11px 6px',
+    borderRadius: 14,
+    fontSize: 12.5,
+    fontWeight: 700,
+    cursor: 'pointer',
+    background: kind === 'danger' ? 'rgba(255,90,110,0.14)' : 'rgba(255,255,255,0.08)',
+    border: `1px solid ${kind === 'danger' ? 'rgba(255,90,110,0.4)' : 'rgba(255,255,255,0.16)'}`
+  }
+}, children);
+function SettingsModal({
+  onClose,
+  SAT,
+  SAB,
+  onChange
+}) {
+  const [, force] = React.useReducer(n => n + 1, 0);
+  const [msg, setMsg] = React.useState('');
+  const fileRef = React.useRef(null);
+  const upd = (patch, after) => {
+    Object.assign(SET, patch);
+    saveSettings();
+    if (after) after();
+    force();
+    onChange();
+  };
+  const stop = e => e.stopPropagation();
+  const gather = () => {
+    const d = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('theone_') === 0 && k !== 'theone_fx') d[k] = localStorage.getItem(k);
+    }
+    return JSON.stringify({
+      game: 'TheOne',
+      v: 1,
+      data: d
+    });
+  };
+  const apply = txt => {
+    try {
+      const o = JSON.parse(txt);
+      if (!o || o.game !== 'TheOne' || !o.data) throw new Error('bad');
+      if (!window.confirm(tr('Remplacer ta progression actuelle par cette sauvegarde ?'))) return;
+      Object.keys(o.data).forEach(k => {
+        if (k.indexOf('theone_') === 0) localStorage.setItem(k, o.data[k]);
+      });
+      location.reload();
+    } catch (e) {
+      setMsg(tr('Sauvegarde invalide.'));
+    }
+  };
+  const doExport = async () => {
+    const txt = gather();
+    try {
+      await navigator.clipboard.writeText(txt);
+      setMsg(tr('Sauvegarde copiée dans le presse-papiers.'));
+    } catch (e) {
+      setMsg('');
+    }
+    try {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([txt], {
+        type: 'application/json'
+      }));
+      a.download = 'theone-sauvegarde.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setMsg(m => m || tr('Fichier de sauvegarde téléchargé.'));
+    } catch (e) {}
+  };
+  return React.createElement(ModalShell, {
+    onClose: onClose,
+    title: tr('Réglages'),
+    sub: tr('Touche en dehors pour fermer'),
+    SAT: SAT,
+    SAB: SAB
+  }, React.createElement("div", {
+    onClick: stop
+  }, React.createElement(Sec, {
+    top: 4
+  }, tr('LANGUE')), React.createElement(Seg, {
+    value: SET.lang,
+    onChange: l => {
+      if (l === SET.lang) return;
+      SET.lang = l;
+      saveSettings();
+      location.reload();
+    },
+    items: [['fr', 'Français'], ['en', 'English']]
+  }), React.createElement(Sec, null, tr('SON')), React.createElement(Slider, {
+    label: tr('Musique'),
+    value: SET.music,
+    onChange: v => upd({
+      music: v
+    }, applyAudioSettings)
+  }), React.createElement(Slider, {
+    label: tr('Effets sonores'),
+    value: SET.sfx,
+    onChange: v => upd({
+      sfx: v
+    })
+  }), React.createElement(Toggle, {
+    label: tr('Vibrations'),
+    sub: tr('Retour haptique quand tu touches un obstacle'),
+    on: SET.vib,
+    onChange: v => {
+      upd({
+        vib: v
+      });
+      if (v) vibrate(30);
+    }
+  }), React.createElement(Sec, null, tr('COMMANDES')), React.createElement(Seg, {
+    value: SET.offset,
+    onChange: v => upd({
+      offset: v
+    }),
+    items: OFFSETS.map(([v, l]) => [v, tr(l)])
+  }), React.createElement(Note, null, tr('Décalage du doigt : place le spermatozoïde au-dessus de ton doigt pour qu’il reste visible.')), React.createElement(Sec, null, tr('QUALITÉ GRAPHIQUE')), React.createElement(Seg, {
+    value: SET.quality,
+    onChange: q => upd({
+      quality: q
+    }, () => {
+      if (q === 'high') FX = 0;else if (q === 'eco') FX = 2;
+    }),
+    items: [['auto', tr('Auto')], ['high', tr('Élevée')], ['eco', tr('Économe')]]
+  }), React.createElement(Note, null, tr('Auto allège le rendu si ton téléphone peine. Économe désactive lueurs, particules et traînées.')), React.createElement(Sec, null, tr('DONNÉES')), React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8
+    }
+  }, React.createElement(SmallBtn, {
+    onClick: doExport
+  }, tr('Exporter')), React.createElement(SmallBtn, {
+    onClick: () => fileRef.current && fileRef.current.click()
+  }, tr('Importer un fichier')), React.createElement(SmallBtn, {
+    onClick: () => {
+      const t = window.prompt(tr('Colle ici ta sauvegarde'));
+      if (t) apply(t);
+    }
+  }, tr('Coller'))), React.createElement("input", {
+    ref: fileRef,
+    type: "file",
+    accept: ".json,application/json",
+    style: {
+      display: 'none'
+    },
+    onChange: e => {
+      const fl = e.target.files && e.target.files[0];
+      if (!fl) return;
+      const r = new FileReader();
+      r.onload = () => apply(String(r.result));
+      r.readAsText(fl);
+      e.target.value = '';
+    }
+  }), msg && React.createElement(Note, null, msg), React.createElement(Note, null, tr('Ta progression (scores, mL, skins, succès) est enregistrée uniquement sur cet appareil : exporte-la pour ne pas la perdre.'))));
+}
+const FERT_DUR = 7.4;
+function FertScene({
+  t,
+  W,
+  H,
+  ox,
+  oy,
+  skin,
+  onSkip
+}) {
+  const cx = W / 2,
+    cy = H * 0.4,
+    S = Math.min(2.05, W * 0.44 / 84);
+  const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+  const seg = (a, b) => clamp((t - a) / (b - a), 0, 1);
+  const fade = ease(seg(0, 0.5));
+  const A = ease(seg(0.3, 2.4)),
+    B = ease(seg(2.4, 3.6)),
+    C = ease(seg(3.6, 4.9));
+  const portalY = cy + 58 * S,
+    inY = cy + 24 * S,
+    nucX = cx + 9 * S,
+    nucY = cy - 4 * S,
+    startY = H + 80;
+  let sx = cx,
+    sy = startY + (portalY - startY) * A,
+    tailK = 1,
+    scl = 1;
+  if (t >= 2.4 && t < 3.6) {
+    sy = portalY + (inY - portalY) * B;
+    tailK = 1 - 0.85 * B;
+    scl = 1 - 0.1 * B;
+  } else if (t >= 3.6) {
+    sx = cx + (nucX - cx) * C;
+    sy = inY + (nucY - inY) * C;
+    tailK = 0.15 * (1 - C);
+    scl = 0.9 - 0.45 * C;
+  }
+  const sOp = t < 4.4 ? 1 : 1 - ease(seg(4.4, 4.95));
+  const merge = ease(seg(4.5, 5.2)),
+    flashT = seg(4.55, 5.7);
+  const div = ease(seg(5.2, 6.6));
+  const pulse = t * 4;
+  const showSperm = sOp > 0.01;
+  const ring = (t0, i) => {
+    const k = seg(t0 + i * 0.22, t0 + i * 0.22 + 1.1);
+    if (k <= 0 || k >= 1) return null;
+    return React.createElement("circle", {
+      key: i,
+      cx: cx,
+      cy: portalY,
+      r: 8 + k * 52 * S * 0.5,
+      fill: "none",
+      stroke: "#fff",
+      strokeOpacity: (1 - k) * 0.8,
+      strokeWidth: 2.2 * (1 - k) + 0.4
+    });
+  };
+  const nucPulse = 1 + 0.32 * Math.sin(clamp((t - 4.5) / 1.2, 0, 1) * Math.PI) * (t > 4.5 ? 1 : 0);
+  return React.createElement("g", null, React.createElement("g", {
+    transform: `translate(${-ox},${-oy})`
+  }, React.createElement("rect", {
+    x: "0",
+    y: "0",
+    width: W,
+    height: H,
+    fill: "#0c0602",
+    opacity: fade
+  }), React.createElement("rect", {
+    x: "0",
+    y: "0",
+    width: W,
+    height: H,
+    fill: "url(#fertBg)",
+    opacity: fade
+  }), React.createElement("g", {
+    opacity: fade
+  }, React.createElement("g", {
+    transform: `translate(${cx},${cy}) rotate(${t * 6 % 360})`
+  }, Array.from({
+    length: 12
+  }, (_, i) => React.createElement("path", {
+    key: i,
+    d: "M -9 -60 L 0 -300 L 9 -60 Z",
+    fill: "#ffd25e",
+    opacity: "0.06",
+    transform: `rotate(${i * 30})`
+  }))), React.createElement("g", {
+    transform: `translate(${cx},${cy}) scale(${S})`
+  }, React.createElement("circle", {
+    cx: "0",
+    cy: "0",
+    r: 125 + Math.sin(pulse * 0.5) * 6,
+    fill: "url(#glowGold)",
+    opacity: 0.55 + 0.3 * merge
+  }), React.createElement(OvuleShell, {
+    angle: Math.PI / 2,
+    pulse: t * 50
+  }), div <= 0.01 && React.createElement(OvuleCore, null), div <= 0.01 && React.createElement("g", null, React.createElement("circle", {
+    cx: "9",
+    cy: "-4",
+    r: 13 * nucPulse,
+    fill: "url(#ovNuc)"
+  }), React.createElement("circle", {
+    cx: "9",
+    cy: "-4",
+    r: 30 * merge * nucPulse,
+    fill: "url(#glowGold)",
+    opacity: 0.7 * (1 - ease(seg(5.3, 5.9)))
+  })), div > 0.01 && React.createElement("g", null, [-1, 1].map(s => React.createElement("g", {
+    key: s,
+    transform: `translate(${s * div * 23},0) scale(${0.76 - 0.05 * div})`
+  }, React.createElement("circle", {
+    r: "46",
+    fill: "url(#ovCyto)"
+  }), React.createElement("circle", {
+    cx: s * -4,
+    cy: "-3",
+    r: "11",
+    fill: "url(#ovNuc)"
+  }), React.createElement("ellipse", {
+    cx: "-17",
+    cy: "-23",
+    rx: "14",
+    ry: "5.5",
+    fill: "#fff",
+    opacity: "0.6",
+    transform: "rotate(-38,-17,-23)"
+  }))), React.createElement("ellipse", {
+    cx: "0",
+    cy: "0",
+    rx: Math.max(0.01, 14 * (1 - div) + 3),
+    ry: "22",
+    fill: "url(#ovCyto)",
+    opacity: 1 - div * 0.4
+  })), React.createElement(OvulePortal, {
+    angle: Math.PI / 2,
+    pulse: t * 50
+  })), [0, 1, 2].map(i => ring(2.2, i)), showSperm && React.createElement("g", {
+    opacity: sOp,
+    transform: `translate(${f1(sx)},${f1(sy)}) scale(${scl.toFixed(3)})`
+  }, React.createElement(SpermPlayer, {
+    x: 0,
+    y: 0,
+    wob: t * 60,
+    hit: false,
+    shield: false,
+    tilt: 0,
+    skin: skin,
+    tailK: tailK
+  })), flashT > 0 && flashT < 1 && React.createElement("g", null, React.createElement("circle", {
+    cx: nucX,
+    cy: nucY,
+    r: flashT * 150 * S / 2,
+    fill: "url(#glowWhite)",
+    opacity: (1 - flashT) * 0.95
+  }), Array.from({
+    length: 14
+  }, (_, i) => {
+    const a = i / 14 * Math.PI * 2,
+      r = flashT * 95 * S / 2 + 8;
+    return React.createElement("path", {
+      key: i,
+      d: "M 0 -5 Q 0.6 -0.6 5 0 Q 0.6 0.6 0 5 Q -0.6 0.6 -5 0 Q -0.6 -0.6 0 -5 Z",
+      fill: "#fff",
+      opacity: 1 - flashT,
+      transform: `translate(${f1(nucX + Math.cos(a) * r)},${f1(nucY + Math.sin(a) * r)}) scale(${(1.3 - flashT * 0.6).toFixed(2)})`
+    });
+  })), t > 5.4 && React.createElement("g", {
+    opacity: ease(seg(5.4, 6.2))
+  }, React.createElement("text", {
+    x: cx,
+    y: H * 0.775,
+    textAnchor: "middle",
+    fill: "url(#goldText)",
+    fontSize: "34",
+    fontWeight: "800",
+    letterSpacing: "-1",
+    fontFamily: "Sora,Helvetica Neue,Arial"
+  }, tr('Fécondation !'))), t > 5.9 && React.createElement("text", {
+    x: cx,
+    y: H * 0.775 + 26,
+    textAnchor: "middle",
+    fill: "rgba(255,230,170,0.75)",
+    fontSize: "13",
+    fontWeight: "600",
+    fontFamily: "Sora,Helvetica Neue,Arial",
+    opacity: ease(seg(5.9, 6.7))
+  }, tr('Une nouvelle vie commence…')), t > 1 && t < 6.6 && React.createElement("text", {
+    x: cx,
+    y: H - 34,
+    textAnchor: "middle",
+    fill: "rgba(255,235,215,0.4)",
+    fontSize: "10.5",
+    fontWeight: "600",
+    letterSpacing: "1",
+    fontFamily: "Sora,Helvetica Neue,Arial"
+  }, tr('Touche pour passer'))), React.createElement("rect", {
+    x: "0",
+    y: "0",
+    width: W,
+    height: H,
+    fill: "transparent",
+    onClick: () => {
+      if (t > 0.8) onSkip();
+    },
+    style: {
+      cursor: 'pointer'
+    }
+  })));
+}
 function Game() {
   const [safeArea, setSafeArea] = React.useState({
     sat: 0,
@@ -4206,6 +6635,7 @@ function Game() {
   const [muted, setMuted] = React.useState(() => localStorage.getItem('theone_muted') === '1');
   const [shareImg, setShareImg] = React.useState(null);
   const [showInfo, setShowInfo] = React.useState(false);
+  const [showSettings, setShowSettings] = React.useState(false);
   const [showStats, setShowStats] = React.useState(false);
   const [showAch, setShowAch] = React.useState(false);
   const [showShop, setShowShop] = React.useState(false);
@@ -4248,6 +6678,58 @@ function Game() {
       setTuto(n);
     }
   }
+  const [paused, setPaused] = React.useState(false);
+  const pausedRef = React.useRef(false);
+  const [countdown, setCountdown] = React.useState(0);
+  const cdTimer = React.useRef(null);
+  function pauseGame() {
+    if (gs.current.phase !== 'playing' || tutoRef.current !== null || pausedRef.current) return;
+    pausedRef.current = true;
+    setPaused(true);
+    setCountdown(0);
+    touch.current = false;
+    if (_ambient) _ambient.pause();
+  }
+  function resumeGame() {
+    if (cdTimer.current) return;
+    let c = 3;
+    setCountdown(c);
+    cdTimer.current = setInterval(() => {
+      c--;
+      if (c <= 0) {
+        clearInterval(cdTimer.current);
+        cdTimer.current = null;
+        setCountdown(0);
+        pausedRef.current = false;
+        setPaused(false);
+        if (_ambient && !_muted) _ambient.play();
+      } else setCountdown(c);
+    }, 750);
+  }
+  function leaveRun(restart) {
+    if (cdTimer.current) {
+      clearInterval(cdTimer.current);
+      cdTimer.current = null;
+    }
+    pausedRef.current = false;
+    setPaused(false);
+    setCountdown(0);
+    if (restart) {
+      const g = gs.current;
+      startGame(g.infinite, g.hardcore);
+    } else setScreenBoth('start');
+  }
+  React.useEffect(() => {
+    const h = () => {
+      if (document.hidden) pauseGame();
+    };
+    document.addEventListener('visibilitychange', h);
+    window.addEventListener('blur', h);
+    return () => {
+      document.removeEventListener('visibilitychange', h);
+      window.removeEventListener('blur', h);
+    };
+  }, []);
   const LAND_MQ = '(orientation: landscape) and (pointer: coarse)';
   const [landscape, setLandscape] = React.useState(() => window.matchMedia(LAND_MQ).matches);
   const landRef = React.useRef(landscape);
@@ -4269,7 +6751,7 @@ function Game() {
   function setScreenBoth(s) {
     screenRef.current = s;
     setScreen(s);
-    if (s === 'win' || s === 'dead' || s === 'start') stopAmbient();
+    if (s === 'win' || s === 'dead' || s === 'start' || s === 'fertil') stopAmbient();
     if (s === 'start') gs.current = initState();
   }
   function getPos(e) {
@@ -4285,14 +6767,14 @@ function Game() {
     } = vpRef.current;
     return {
       x: clamp(-ox + (s.clientX - r.left) * (vbW / r.width), POX + 22, POX + PW - 22),
-      y: clamp(-oy + (s.clientY - r.top) * (vbH / r.height), 47 + safeAreaRef.current.sat, GH - 31)
+      y: clamp(-oy + (s.clientY - r.top) * (vbH / r.height) - (e.touches ? SET.offset : 0), 47 + safeAreaRef.current.sat, GH - 31)
     };
   }
   const onTS = e => {
     _initAudio();
     touch.current = true;
     const p = getPos(e);
-    if (p && gs.current.phase === 'playing') {
+    if (p && gs.current.phase === 'playing' && !pausedRef.current) {
       gs.current.tx = p.x;
       gs.current.ty = p.y;
     }
@@ -4301,7 +6783,7 @@ function Game() {
     if (gs.current.phase === 'playing') e.preventDefault();
     if (!touch.current) return;
     const p = getPos(e);
-    if (p && gs.current.phase === 'playing') {
+    if (p && gs.current.phase === 'playing' && !pausedRef.current) {
       gs.current.tx = p.x;
       gs.current.ty = p.y;
     }
@@ -4371,7 +6853,7 @@ function Game() {
       ctx.shadowBlur = 0;
       ctx.fillStyle = 'rgba(255,215,200,0.6)';
       ctx.font = '600 11px Sora,Helvetica Neue,Arial';
-      ctx.fillText('S O I S   L E   P R E M I E R', CW / 2, 108);
+      ctx.fillText(tr('S O I S   L E   P R E M I E R'), CW / 2, 108);
       const sk = getSkin(equippedRef.current || equipped);
       const px = CW / 2,
         py = 235;
@@ -4434,7 +6916,7 @@ function Game() {
       ctx.stroke();
       ctx.fillStyle = 'rgba(255,215,200,0.55)';
       ctx.font = '700 10px Sora,Helvetica Neue,Arial';
-      ctx.fillText(inf ? 'TEMPS DE SURVIE' : 'RIVAUX ÉLIMINÉS', CW / 2, by + 25);
+      ctx.fillText(tr(inf ? 'TEMPS DE SURVIE' : 'RIVAUX ÉLIMINÉS'), CW / 2, by + 25);
       ctx.fillStyle = won || inf ? '#ffd25e' : '#ffffff';
       ctx.font = '800 34px Sora,Helvetica Neue,Arial';
       ctx.fillText(inf ? fmtTime(g.playT) : String(g.score), CW / 2, by + 60);
@@ -4444,22 +6926,28 @@ function Game() {
         ctx.fill();
         ctx.fillStyle = 'rgba(255,110,110,0.95)';
         ctx.font = 'bold 13px Sora,Helvetica Neue,Arial';
-        ctx.fillText('☠ MODE HARDCORE', CW / 2, 479);
+        ctx.fillText(tr('☠ MODE HARDCORE'), CW / 2, 479);
       }
       ctx.fillStyle = won || inf ? '#ffd25e' : '#ff7d9c';
       ctx.font = '800 28px Sora,Helvetica Neue,Arial';
-      ctx.fillText(won ? 'Victoire !' : inf ? '∞ Mode Infini' : 'Éliminé', CW / 2, g.hardcore ? 516 : 510);
+      ctx.fillText(tr(won ? 'Victoire !' : inf ? '∞ Mode Infini' : 'Éliminé'), CW / 2, g.hardcore ? 516 : 510);
       ctx.fillStyle = 'rgba(200,160,130,0.45)';
       ctx.font = '13px Sora,Helvetica Neue,Arial';
-      ctx.fillText('Peux-tu faire mieux ?', CW / 2, g.hardcore ? 546 : 540);
+      ctx.fillText(tr('Peux-tu faire mieux ?'), CW / 2, g.hardcore ? 546 : 540);
       ctx.fillStyle = 'rgba(180,140,110,0.3)';
       ctx.font = '10px Sora,Helvetica Neue,Arial';
-      ctx.fillText('TheOne — la course du sperme', CW / 2, 610);
+      ctx.fillText(tr('TheOne — la course du sperme'), CW / 2, 610);
       const url = cv.toDataURL('image/png');
       setShareImg(url);
       if (navigator.share) {
         const blob = await (await fetch(url)).blob();
-        const txt = inf ? 'TheOne ∞ — ' + fmtTime(g.playT) + ' de survie 🏆' : won ? 'TheOne — Victoire avec ' + g.score + ' rivaux ! 🥚' : 'TheOne — ' + g.score + ' rivaux éliminés';
+        const txt = inf ? trf('TheOne ∞ — {t} de survie 🏆', {
+          t: fmtTime(g.playT)
+        }) : won ? trf('TheOne — Victoire avec {n} rivaux ! 🥚', {
+          n: g.score
+        }) : trf('TheOne — {n} rivaux éliminés', {
+          n: g.score
+        });
         await navigator.share({
           title: 'TheOne',
           text: txt,
@@ -4476,9 +6964,13 @@ function Game() {
     return Math.floor(g.score / 10) + (won ? 15 : 0) + (g.infinite ? Math.floor(g.playT / 30000) * 2 : 0);
   }
   function finishRun(g, won) {
-    g.phase = won ? 'win' : 'dead';
+    g.phase = won ? 'fertil' : 'dead';
+    if (won) {
+      g.fertT = 0;
+      g.fertV = 0;
+    }
     if (won) playSound('win');
-    setScreenBoth(won ? 'win' : 'dead');
+    setScreenBoth(won ? 'fertil' : 'dead');
     try {
       if (won) {
         localStorage.setItem('theone_won', '1');
@@ -4605,7 +7097,7 @@ function Game() {
       spd: (spd * 0.85 + 0.35) * (zd.wbcSpd || 1),
       pulse: Math.random() * 100,
       id: uid(),
-      hom: 0.004
+      hom: 0.00392
     });else if (type === 'antibody') g.abs.push({
       x: lx,
       y: yOff,
@@ -4623,7 +7115,7 @@ function Game() {
       if (gs.current.phase === 'playing') e.preventDefault();
       if (!touch.current) return;
       const p = getPos(e);
-      if (p && gs.current.phase === 'playing') {
+      if (p && gs.current.phase === 'playing' && !pausedRef.current) {
         gs.current.tx = p.x;
         gs.current.ty = p.y;
       }
@@ -4633,6 +7125,38 @@ function Game() {
     });
     return () => el.removeEventListener('touchmove', h);
   }, []);
+  function equipItem(key) {
+    if (key.indexOf('trail:') === 0) {
+      SET.trail = key.slice(6);
+      saveSettings();
+    } else if (key.indexOf('vic:') === 0) {
+      SET.vic = key.slice(4);
+      saveSettings();
+    } else {
+      const id = saveSkin(key);
+      setEquipped(id);
+    }
+    re();
+  }
+  function buyItem(key, cost) {
+    if (mL < cost) return;
+    const newML = saveML(mL - cost);
+    setML(newML);
+    const o = loadOwned();
+    o.add(key);
+    saveOwned(o);
+    setOwned(new Set(o));
+    equipItem(key);
+  }
+  function endFert() {
+    const g = gs.current;
+    if (g.phase !== 'fertil') return;
+    g.phase = 'win';
+    setScreenBoth('win');
+  }
+  function skipFert() {
+    gs.current.fertT = FERT_DUR;
+  }
   function applyLayers(g) {
     const L = LAYER_EL;
     if (!L.root) return;
@@ -4682,7 +7206,7 @@ function Game() {
       const avg = f.sum / f.n;
       f.n = 0;
       f.sum = 0;
-      if (avg > 25 && FX < 2) {
+      if (SET.quality === 'auto' && avg > 25 && FX < 2) {
         FX++;
         f.skip = 45;
         try {
@@ -4706,7 +7230,21 @@ function Game() {
       const wideT = screenRef.current === 'start' ? 1 : 0;
       g.wallMix = g.wallMix === undefined ? 1 : lerp(g.wallMix, wideT, clamp(dt / 180, 0, 1));
       applyLayers(g);
-      if (g.phase !== 'playing' || tutoRef.current !== null || landRef.current) {
+      if (g.phase === 'fertil') {
+        g.fertT += dt / 1000;
+        if (g.fertV < 1 && g.fertT > 2.4) {
+          g.fertV = 1;
+          vibrate(40);
+        }
+        if (g.fertV < 2 && g.fertT > 4.55) {
+          g.fertV = 2;
+          vibrate([30, 40, 70]);
+        }
+        if (g.fertT >= FERT_DUR) endFert();
+        re();
+        return;
+      }
+      if (g.phase !== 'playing' || tutoRef.current !== null || landRef.current || pausedRef.current) {
         const m = modalRef.current;
         if (m === 2) return;
         if (frameRef.current++ % (m === 1 ? 4 : 2) === 0) re();
@@ -4732,25 +7270,33 @@ function Game() {
       g.py += (g.ty - g.py) * fs * (dt / 16);
       const rawVx = g.px - px0;
       g.pvx = lerp(g.pvx || 0, rawVx, clamp(0.12 * (dt / 16), 0, 1));
-      const skTrail = equippedRef.current && getSkin(equippedRef.current).trail || null;
+      const sk0 = getSkin(equippedRef.current);
+      const skTrail = SET.trail === 'none' ? null : SET.trail === 'auto' || !SET.trail ? sk0.trail || null : SET.trail;
       if (skTrail && FX < 2) {
+        const tfx = TRAIL_FX[skTrail] || {
+          life: 35,
+          rate: 1,
+          vy: 0.3
+        };
         const speed = Math.abs(rawVx) + Math.abs(g.py - py0);
-        const rate = 0.5 + Math.min(speed * 0.1, 1.5);
+        const rate = (0.5 + Math.min(speed * 0.1, 1.5)) * tfx.rate;
         if (Math.random() < rate * (dt / 100)) {
           g.trail.push({
             x: g.px + (Math.random() - 0.5) * 10,
             y: g.py + (Math.random() - 0.5) * 10 + 8,
-            life: 35,
-            ml: 35,
+            life: tfx.life,
+            ml: tfx.life,
             type: skTrail,
             seed: Math.random() * 100,
-            vy: 0.3 + Math.random() * 0.4
+            vy: (tfx.vy !== undefined ? tfx.vy : 0.3) + (tfx.vy === undefined ? Math.random() * 0.4 : Math.random() * 0.15),
+            vx: (tfx.vx || 0) * (Math.random() - 0.5) * 2
           });
         }
       }
       g.trail = g.trail.filter(p => p.life > 0).map(p => {
         p.life -= dt / 16;
         p.y += p.vy * (dt / 16);
+        if (p.vx) p.x += p.vx * (dt / 16);
         return p;
       });
       const zd = effZD(g);
@@ -4981,7 +7527,7 @@ function Game() {
   const bgl = lerpHex(pz.bg1, z.bg1, g.zoneBlend || 1);
   const bgd = lerpHex(pz.bg2, z.bg2, g.zoneBlend || 1);
   const fxLevel = FX;
-  modalRef.current = showShop ? 1 : showStats || showAch || showDaily || showInfo ? 2 : 0;
+  modalRef.current = showShop || showStats || showAch || showDaily || showInfo || showSettings ? 2 : 0;
   const hitCss = 'none';
   const _vpS = Math.min(window.innerWidth / GW, window.innerHeight / GH);
   const _vpW = window.innerWidth / _vpS,
@@ -5079,14 +7625,13 @@ function Game() {
     y: m.y,
     pulse: m.pulse,
     r: m.r,
-    rot: hrnd(m.id + 77) * 360
+    v: vOf(m.id, N_MUCUS)
   })), g.wbcs.map(w => React.createElement(WBC, {
     key: w.id,
     x: w.x,
     y: w.y,
     pulse: w.pulse,
-    rot: (hrnd(w.id + 77) - 0.5) * 70,
-    flip: hrnd(w.id + 5) > 0.5
+    v: vOf(w.id, N_WBC)
   })), g.abs.map(a => React.createElement(Antibody, {
     key: a.id,
     x: a.x,
@@ -5106,149 +7651,11 @@ function Game() {
     x: h.x,
     y: h.y,
     pulse: h.pulse
-  })), screen === 'playing' && React.createElement(React.Fragment, null, g.trail.map(p => {
-    const a = Math.max(0, p.life / p.ml);
-    if (p.type === 'fire') return React.createElement("g", {
-      key: p.seed,
-      opacity: a * 0.9
-    }, React.createElement("circle", {
-      cx: p.x,
-      cy: p.y,
-      r: 7 * a + 2,
-      fill: "url(#sk_fire)"
-    }), React.createElement("ellipse", {
-      cx: p.x,
-      cy: p.y,
-      rx: 2.6 * a + 1,
-      ry: 4.4 * a + 1,
-      fill: "#ff7a2a"
-    }), React.createElement("ellipse", {
-      cx: p.x,
-      cy: p.y - 0.5,
-      rx: 1.2 * a,
-      ry: 2.2 * a,
-      fill: "#ffe27a"
-    }));
-    if (p.type === 'ice') return React.createElement("g", {
-      key: p.seed,
-      transform: `translate(${p.x},${p.y}) rotate(${p.seed * 7})`,
-      opacity: a * 0.9
-    }, [0, 60, 120].map(an => React.createElement("g", {
-      key: an,
-      transform: `rotate(${an})`
-    }, React.createElement("line", {
-      x1: "0",
-      y1: "-2.6",
-      x2: "0",
-      y2: "2.6",
-      stroke: "#eef7ff",
-      strokeWidth: 1.1 * a + 0.3,
-      strokeLinecap: "round"
-    }))));
-    if (p.type === 'diamond') return React.createElement("g", {
-      key: p.seed,
-      transform: `translate(${p.x},${p.y}) scale(${0.6 + a * 0.5})`,
-      opacity: a
-    }, React.createElement("circle", {
-      r: "4",
-      fill: "url(#glowWhite)"
-    }), React.createElement("path", {
-      d: "M 0 -3.2 Q 0.4 -0.4 3.2 0 Q 0.4 0.4 0 3.2 Q -0.4 0.4 -3.2 0 Q -0.4 -0.4 0 -3.2 Z",
-      fill: "#fff"
-    }));
-    if (p.type === 'neon') return React.createElement("g", {
-      key: p.seed
-    }, React.createElement("circle", {
-      cx: p.x,
-      cy: p.y,
-      r: 6 * a + 1,
-      fill: "url(#sk_neon)",
-      opacity: a
-    }), React.createElement("circle", {
-      cx: p.x,
-      cy: p.y,
-      r: 1.8 * a + 0.6,
-      fill: "#c8fff4",
-      opacity: a
-    }));
-    if (p.type === 'toxic') return React.createElement("g", {
-      key: p.seed,
-      opacity: a
-    }, React.createElement("circle", {
-      cx: p.x,
-      cy: p.y,
-      r: 3.5 * (1.4 - a) + 1.5,
-      fill: "#c4f24a",
-      fillOpacity: "0.15",
-      stroke: "#d8fa7a",
-      strokeWidth: "1"
-    }), React.createElement("circle", {
-      cx: p.x - 1,
-      cy: p.y - 1,
-      r: "0.8",
-      fill: "#fff"
-    }));
-    if (p.type === 'aurora') return React.createElement("circle", {
-      key: p.seed,
-      cx: p.x,
-      cy: p.y,
-      r: 7 * a + 2,
-      fill: Math.floor(p.seed) % 2 ? 'url(#sk_aurora)' : 'url(#glowBlue)',
-      opacity: a
-    });
-    if (p.type === 'stars') return React.createElement("g", {
-      key: p.seed,
-      transform: `translate(${p.x},${p.y}) scale(${0.5 + a * 0.6}) rotate(${p.seed * 9})`,
-      opacity: a
-    }, React.createElement("circle", {
-      r: "4",
-      fill: "url(#sk_galaxy)"
-    }), React.createElement("path", {
-      d: "M 0 -3.5 Q 0.4 -0.4 3.5 0 Q 0.4 0.4 0 3.5 Q -0.4 0.4 -3.5 0 Q -0.4 -0.4 0 -3.5 Z",
-      fill: Math.floor(p.seed) % 3 ? '#fff' : '#ffb8f0'
-    }));
-    if (p.type === 'gold') return React.createElement("g", {
-      key: p.seed,
-      transform: `translate(${p.x},${p.y}) scale(${0.5 + a * 0.6})`,
-      opacity: a
-    }, React.createElement("circle", {
-      r: "5",
-      fill: "url(#glowGold)"
-    }), React.createElement("path", {
-      d: "M 0 -3.2 L 1 -1 L 3.2 0 L 1 1 L 0 3.2 L -1 1 L -3.2 0 L -1 -1 Z",
-      fill: "#ffe08a"
-    }));
-    if (p.type === 'holo') {
-      const c = ['#ffc6ec', '#c6e8ff', '#d8ffd6', '#e2c9ff', '#ffd9c2'];
-      return React.createElement("g", {
-        key: p.seed
-      }, React.createElement("circle", {
-        cx: p.x,
-        cy: p.y,
-        r: 6 * a + 1,
-        fill: "url(#glowWhite)",
-        opacity: a * 0.6
-      }), React.createElement("circle", {
-        cx: p.x,
-        cy: p.y,
-        r: 2.4 * a + 0.8,
-        fill: c[Math.floor(p.seed) % 5],
-        opacity: a
-      }));
-    }
-    if (p.type === 'rainbow') {
-      const c = ['#ff5a7a', '#ffa45c', '#ffd95e', '#7ee0a0', '#5fb4ff', '#8a7bff', '#d77bff'];
-      return React.createElement("circle", {
-        key: p.seed,
-        cx: p.x,
-        cy: p.y,
-        r: 2.5 * a + 1,
-        fill: c[Math.floor(p.seed) % 7],
-        opacity: a * 0.85
-      });
-    }
-    return null;
-  }), React.createElement("g", {
+  })), screen === 'playing' && React.createElement(React.Fragment, null, g.trail.map(p => React.createElement(TrailDot, {
+    key: p.seed,
+    p: p,
+    a: Math.max(0, p.life / p.ml)
+  })), React.createElement("g", {
     opacity: g.inv > 0 ? Math.sin(g.inv * 0.025) > 0 ? 1 : 0.35 : 1
   }, React.createElement(SpermPlayer, {
     x: g.px,
@@ -5702,6 +8109,28 @@ function Game() {
       fontFamily: "Sora,Helvetica Neue,Arial"
     }, pending)));
   })(), React.createElement(IconBtn, {
+    cx: GW - 28,
+    cy: 146 + SAT,
+    onClick: () => setShowSettings(true)
+  }, React.createElement("g", {
+    transform: `translate(${GW - 28},${146 + SAT})`,
+    fill: "none",
+    stroke: "rgba(255,235,225,0.9)",
+    strokeWidth: "1.5",
+    strokeLinecap: "round"
+  }, React.createElement("circle", {
+    r: "3.1"
+  }), React.createElement("circle", {
+    r: "6.4"
+  }), [0, 45, 90, 135, 180, 225, 270, 315].map(a => React.createElement("line", {
+    key: a,
+    x1: "0",
+    y1: "-6.4",
+    x2: "0",
+    y2: "-9",
+    transform: `rotate(${a})`,
+    strokeWidth: "2.4"
+  })))), React.createElement(IconBtn, {
     cx: 28,
     cy: 146 + SAT,
     onClick: () => setShowShop(true)
@@ -5937,7 +8366,7 @@ function Game() {
     fill: "rgba(255,215,200,0.3)",
     fontSize: "9.5",
     fontFamily: "Sora,Helvetica Neue,Arial"
-  }, "v67")), screen === 'dead' && React.createElement("g", null, React.createElement("rect", {
+  }, APP_VERSION.startsWith('__') ? 'dev' : APP_VERSION)), screen === 'dead' && React.createElement("g", null, React.createElement("rect", {
     x: -ox,
     y: -oy,
     width: vbW,
@@ -6126,9 +8555,16 @@ function Game() {
     width: vbW,
     height: vbH,
     fill: "rgba(14,9,2,0.86)"
-  }), React.createElement("g", {
+  }), SET.vic !== 'classic' && React.createElement("g", {
+    transform: `translate(${-ox},${-oy})`
+  }, React.createElement(VictoryFx, {
+    type: SET.vic,
+    t: g.pulse / 80,
+    W: vbW,
+    H: vbH
+  })), React.createElement("g", {
     transform: `translate(${GW / 2},${GH * 0.23})`
-  }, React.createElement("g", {
+  }, SET.vic === 'classic' && React.createElement(React.Fragment, null, React.createElement("g", {
     transform: `rotate(${g.pulse * 0.15 % 360})`
   }, Array.from({
     length: 12
@@ -6160,7 +8596,7 @@ function Game() {
       opacity: "0.9",
       transform: `translate(${f1(Math.cos(a) * d)},${f1(Math.sin(a) * d)}) rotate(${(g.pulse * (i % 2 ? 1.5 : -1.5) + i * 40) % 360})`
     });
-  }), React.createElement(SpermPlayer, {
+  })), React.createElement(SpermPlayer, {
     x: 0,
     y: 0,
     wob: g.wob,
@@ -6298,7 +8734,15 @@ function Game() {
     fontSize: "12.5",
     fontWeight: "600",
     fontFamily: "Sora,Helvetica Neue,Arial"
-  }, "\u2190 Menu principal"))), (dailyToast || achToast) && (() => {
+  }, "\u2190 Menu principal"))), screen === 'fertil' && React.createElement(FertScene, {
+    t: g.fertT || 0,
+    W: vbW,
+    H: vbH,
+    ox: ox,
+    oy: oy,
+    skin: getSkin(equipped),
+    onSkip: skipFert
+  }), screen !== 'fertil' && (dailyToast || achToast) && (() => {
     const aList = achToast || [];
     const dList = dailyToast || [];
     const hasBoth = aList.length > 0 && dList.length > 0;
@@ -6714,7 +9158,101 @@ function Game() {
         color: 'rgba(255,215,200,0.55)'
       }
     }, "Passer")));
-  })(), landscape && React.createElement("div", {
+  })(), screen === 'playing' && tuto === null && !paused && !landscape && g.phase === 'playing' && React.createElement("div", {
+    onClick: e => {
+      e.stopPropagation();
+      pauseGame();
+    },
+    onTouchStart: e => e.stopPropagation(),
+    onMouseDown: e => e.stopPropagation(),
+    style: {
+      position: 'absolute',
+      top: 52 + SAT,
+      right: 10,
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      zIndex: 6,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      background: 'rgba(14,3,16,0.5)',
+      border: '1px solid rgba(255,255,255,0.2)',
+      backdropFilter: 'blur(6px)',
+      WebkitBackdropFilter: 'blur(6px)'
+    }
+  }, React.createElement("svg", {
+    viewBox: "-8 -8 16 16",
+    style: {
+      width: 14,
+      height: 14,
+      display: 'block'
+    }
+  }, React.createElement("rect", {
+    x: "-5",
+    y: "-5.5",
+    width: "3.4",
+    height: "11",
+    rx: "1.2",
+    fill: "#fff"
+  }), React.createElement("rect", {
+    x: "1.6",
+    y: "-5.5",
+    width: "3.4",
+    height: "11",
+    rx: "1.2",
+    fill: "#fff"
+  }))), paused && screen === 'playing' && React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    onTouchStart: e => e.stopPropagation(),
+    onMouseDown: e => e.stopPropagation(),
+    style: {
+      position: 'absolute',
+      inset: 0,
+      zIndex: 12,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      background: 'rgba(8,2,12,0.66)',
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      color: '#fff',
+      fontFamily: 'Sora,Helvetica Neue,Arial'
+    }
+  }, countdown > 0 ? React.createElement("div", {
+    key: countdown,
+    style: {
+      fontSize: 110,
+      fontWeight: 800,
+      letterSpacing: -4,
+      background: 'linear-gradient(180deg,#fff9f4,#ffcdb5 55%,#ff8fa8)',
+      WebkitBackgroundClip: 'text',
+      backgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      animation: 'cdpop .45s ease-out'
+    }
+  }, countdown) : React.createElement(React.Fragment, null, React.createElement("div", {
+    style: {
+      fontSize: 34,
+      fontWeight: 800,
+      letterSpacing: -1,
+      marginBottom: 10,
+      background: 'linear-gradient(180deg,#fff9f4,#ffcdb5 55%,#ff8fa8)',
+      WebkitBackgroundClip: 'text',
+      backgroundClip: 'text',
+      WebkitTextFillColor: 'transparent'
+    }
+  }, tr('Pause')), React.createElement(MenuBtn, {
+    kind: "primary",
+    onClick: resumeGame
+  }, tr('Reprendre')), React.createElement(MenuBtn, {
+    onClick: () => leaveRun(true)
+  }, tr('Recommencer')), React.createElement(MenuBtn, {
+    onClick: () => leaveRun(false)
+  }, tr('Quitter la partie')))), landscape && React.createElement("div", {
     style: {
       position: 'absolute',
       inset: 0,
@@ -6777,676 +9315,48 @@ function Game() {
       maxWidth: 260,
       lineHeight: '19px'
     }
-  }, "TheOne se joue uniquement en mode portrait.", screen === 'playing' ? ' La partie est en pause.' : '')), showShop && React.createElement("div", {
-    onClick: () => setShowShop(false),
-    style: {
-      position: 'absolute',
-      inset: 0,
-      background: 'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',
-      backdropFilter: 'blur(14px)',
-      WebkitBackdropFilter: 'blur(14px)',
-      zIndex: 10
-    }
-  }, React.createElement("div", {
-    className: "modal-wrap",
-    style: {
-      color: 'white',
-      fontFamily: 'Sora,Helvetica Neue,Arial',
-      paddingTop: 24 + SAT,
-      paddingBottom: 8 + SAB
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: '26px',
-      fontWeight: 800,
-      color: P.skin1,
-      textAlign: 'center'
-    }
-  }, "Boutique"), React.createElement("div", {
-    style: {
-      fontSize: '10.5px',
-      letterSpacing: '2px',
-      color: 'rgba(210,170,140,0.5)',
-      textAlign: 'center',
-      marginTop: '4px'
-    }
-  }, "TAP N'IMPORTE O\xD9 POUR FERMER"), React.createElement("div", {
-    style: {
-      margin: '12px auto 6px',
-      background: 'rgba(232,113,138,0.08)',
-      border: '1px solid rgba(232,113,138,0.3)',
-      borderRadius: 14,
-      padding: '6px 24px',
-      textAlign: 'center'
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 9,
-      letterSpacing: 2,
-      color: 'rgba(232,140,160,0.65)'
-    }
-  }, "R\xC9SERVE"), React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: P.rose,
-      marginTop: 2
-    }
-  }, mL.toLocaleString('fr'), " mL")), React.createElement("div", {
-    style: {
-      fontSize: 11,
-      letterSpacing: 2,
-      color: 'rgba(220,180,150,0.55)',
-      textAlign: 'center',
-      marginBottom: 8
-    }
-  }, "SKINS \u2014 ", owned.size, "/", SKINS.length), React.createElement("div", {
-    className: "ach-scroll",
-    style: {
-      flex: 1,
-      overflowY: 'auto',
-      padding: '0 4px 30px',
-      touchAction: 'pan-y',
-      WebkitOverflowScrolling: 'touch'
-    }
-  }, React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: 10
-    }
-  }, [...SKINS].sort((a, b) => a.cost - b.cost).map(s => {
-    const isOwned = owned.has(s.id);
-    const isEquip = equipped === s.id;
-    const canAfford = mL >= s.cost;
-    return React.createElement("div", {
-      key: s.id,
-      style: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        borderRadius: 14,
-        padding: '12px 10px',
-        background: isEquip ? 'rgba(245,200,66,0.15)' : 'rgba(255,255,255,0.05)',
-        border: `1.5px solid ${isEquip ? 'rgba(245,200,66,0.6)' : isOwned ? 'rgba(126,200,138,0.4)' : 'rgba(220,160,120,0.15)'}`,
-        boxSizing: 'border-box'
-      }
-    }, React.createElement("svg", {
-      viewBox: "-36 -32 72 112",
-      width: "76",
-      height: "118",
-      style: {
-        display: "block"
-      }
-    }, React.createElement("g", {
-      transform: "scale(0.7)"
-    }, React.createElement(SpermPlayer, {
-      x: 0,
-      y: 0,
-      wob: g.wob * 0.5,
-      hit: false,
-      shield: false,
-      tilt: 0,
-      skin: s
-    }))), React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 700,
-        color: 'rgba(230,200,180,0.95)',
-        textAlign: 'center',
-        marginTop: 2
-      }
-    }, s.name), React.createElement("div", {
-      style: {
-        fontSize: 10,
-        fontWeight: 600,
-        color: isEquip ? '#f5c842' : isOwned ? '#7ec88a' : canAfford ? 'rgba(232,140,160,0.85)' : 'rgba(180,140,140,0.45)',
-        marginTop: 3,
-        textAlign: 'center'
-      }
-    }, isEquip ? 'Équipé' : isOwned ? 'Possédé' : `${s.cost} mL`), React.createElement("button", {
-      type: "button",
-      onClick: ev => {
-        ev.stopPropagation();
-        if (isEquip) return;
-        if (isOwned) {
-          const id = saveSkin(s.id);
-          setEquipped(id);
-        } else if (canAfford) {
-          const newML = saveML(mL - s.cost);
-          setML(newML);
-          const o = loadOwned();
-          o.add(s.id);
-          saveOwned(o);
-          setOwned(new Set(o));
-          const id = saveSkin(s.id);
-          setEquipped(id);
-        }
-      },
-      style: {
-        marginTop: 8,
-        padding: '7px 10px',
-        borderRadius: 14,
-        fontSize: 11,
-        fontWeight: 700,
-        cursor: isEquip ? 'default' : 'pointer',
-        background: isEquip ? 'rgba(245,200,66,0.2)' : isOwned ? 'rgba(126,200,138,0.18)' : canAfford ? P.rose : 'rgba(255,255,255,0.05)',
-        color: isEquip ? '#f5c842' : isOwned ? '#7ec88a' : canAfford ? 'white' : 'rgba(220,180,180,0.4)',
-        border: `1px solid ${isEquip ? 'rgba(245,200,66,0.4)' : isOwned ? 'rgba(126,200,138,0.35)' : canAfford ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
-        width: '100%',
-        fontFamily: 'inherit'
-      }
-    }, isEquip ? '✓ Équipé' : isOwned ? 'Équiper' : canAfford ? 'Acheter' : 'Pas assez'));
-  }))))), showDaily && React.createElement("div", {
-    onClick: () => setShowDaily(false),
-    style: {
-      position: 'absolute',
-      inset: 0,
-      background: 'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',
-      backdropFilter: 'blur(14px)',
-      WebkitBackdropFilter: 'blur(14px)',
-      zIndex: 10
-    }
-  }, React.createElement("div", {
-    className: "modal-wrap",
-    style: {
-      color: 'white',
-      fontFamily: 'Sora,Helvetica Neue,Arial',
-      paddingTop: 24 + SAT,
-      paddingBottom: 8 + SAB
-    }
-  }, React.createElement("div", {
-    style: {
-      textAlign: 'center'
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 26,
-      fontWeight: 800,
-      color: P.skin1
-    }
-  }, "D\xE9fis temporaires"), React.createElement("div", {
-    style: {
-      fontSize: 9,
-      letterSpacing: 1.5,
-      color: 'rgba(210,170,140,0.5)',
-      marginTop: 3
-    }
-  }, "SE RENOUVELLENT"), React.createElement("div", {
-    style: {
-      fontSize: 9,
-      letterSpacing: 1.5,
-      color: 'rgba(210,170,140,0.5)'
-    }
-  }, "QUOTIDIENNEMENT / HEBDOMADAIREMENT")), React.createElement("div", {
-    className: "ach-scroll",
-    style: {
-      flex: 1,
-      overflowY: 'auto',
-      padding: '0 4px 30px',
-      touchAction: 'pan-y',
-      WebkitOverflowScrolling: 'touch'
-    }
-  }, React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      marginTop: 10
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 11,
-      letterSpacing: 2.5,
-      fontWeight: 700,
-      color: P.skin2
-    }
-  }, "\u2600 D\xC9FIS DU JOUR"), React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'rgba(220,180,150,0.5)',
-      marginTop: 3
-    }
-  }, daily.ch.filter(c => c.completed).length, " / ", daily.ch.length, " compl\xE9t\xE9s")), daily.ch.map((c, i) => {
-    const tier = TIERS[c.t];
-    return React.createElement("div", {
-      key: c.id,
-      style: {
-        marginTop: 10,
-        borderRadius: 14,
-        padding: '10px 12px',
-        background: c.completed ? 'rgba(126,200,138,0.1)' : `${tier.color}10`,
-        border: `1.2px solid ${c.completed ? 'rgba(126,200,138,0.4)' : `${tier.color}55`}`
-      }
-    }, React.createElement("div", {
-      style: {
-        display: 'flex',
-        alignItems: 'flex-start'
-      }
-    }, React.createElement("div", {
-      style: {
-        width: 20,
-        height: 20,
-        borderRadius: '50%',
-        background: c.completed ? '#7ec88a' : tier.color,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 11,
-        fontWeight: 800,
-        color: 'white',
-        flexShrink: 0,
-        marginRight: 10,
-        marginTop: 2
-      }
-    }, c.completed ? '✓' : i + 1), React.createElement("div", {
-      style: {
-        flex: 1,
-        minWidth: 0
-      }
-    }, React.createElement("div", {
-      style: {
-        fontSize: 9,
-        fontWeight: 700,
-        letterSpacing: 1.5,
-        color: tier.color
-      }
-    }, tier.label.toUpperCase()), React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 600,
-        color: c.completed ? 'rgba(180,220,180,0.75)' : 'rgba(230,200,180,0.92)',
-        textDecoration: c.completed ? 'line-through' : 'none',
-        marginTop: 2
-      }
-    }, c.fmt), (() => {
-      const tpl = CH_TEMPLATES.find(t => t.id === c.tplId);
-      if (!tpl || c.completed) return c.completed ? React.createElement("div", {
-        style: {
-          fontSize: 11,
-          color: 'rgba(150,210,160,0.75)',
-          marginTop: 2
-        }
-      }, "R\xE9compense obtenue") : null;
-      let progressTxt = '';
-      if (tpl.key in daily.ds) {
-        const val = daily.ds[tpl.key] || 0;
-        if (tpl.scale) progressTxt = `Progression : ${fmtDuration(val)} / ${fmtDuration(c.target * tpl.scale)}`;else progressTxt = `Progression : ${val} / ${c.target}`;
-      } else progressTxt = 'En jeu — réussis-le en une partie';
-      return React.createElement("div", {
-        style: {
-          fontSize: 11,
-          color: 'rgba(200,170,150,0.5)',
-          marginTop: 2
-        }
-      }, progressTxt);
-    })(), (() => {
-      const tpl = CH_TEMPLATES.find(t => t.id === c.tplId);
-      if (!tpl || c.completed || !(tpl.key in daily.ds)) return null;
-      const val = daily.ds[tpl.key] || 0;
-      const target = tpl.scale ? c.target * tpl.scale : c.target;
-      const p = clamp(val / target, 0, 1);
-      return React.createElement("div", {
-        style: {
-          marginTop: 8,
-          height: 5,
-          background: 'rgba(255,255,255,0.08)',
-          borderRadius: 2.5,
-          overflow: 'hidden'
-        }
-      }, React.createElement("div", {
-        style: {
-          height: '100%',
-          width: p * 100 + '%',
-          background: tier.color,
-          borderRadius: 2.5
-        }
-      }));
-    })()), React.createElement("div", {
-      style: {
-        fontSize: 12,
-        fontWeight: 800,
-        color: c.completed ? '#7ec88a' : P.rose,
-        whiteSpace: 'nowrap',
-        marginLeft: 8,
-        marginTop: 2,
-        flexShrink: 0
-      }
-    }, "+", c.ml, " mL")));
-  }), React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      marginTop: 18
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 11,
-      letterSpacing: 2.5,
-      fontWeight: 700,
-      color: P.gold
-    }
-  }, "\u2605 D\xC9FIS HEBDOMADAIRES"), React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: 'rgba(220,180,150,0.5)',
-      marginTop: 3
-    }
-  }, weekly.ch.filter(c => c.completed).length, " / ", weekly.ch.length, " compl\xE9t\xE9s \xB7 se renouvellent chaque semaine")), weekly.ch.map((c, i) => React.createElement("div", {
-    key: c.id,
-    style: {
-      marginTop: 10,
-      borderRadius: 14,
-      padding: '10px 12px',
-      background: c.completed ? 'rgba(126,200,138,0.1)' : 'rgba(245,200,66,0.08)',
-      border: `1.2px solid ${c.completed ? 'rgba(126,200,138,0.4)' : 'rgba(245,200,66,0.45)'}`
-    }
-  }, React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'flex-start'
-    }
-  }, React.createElement("div", {
-    style: {
-      width: 20,
-      height: 20,
-      borderRadius: '50%',
-      background: c.completed ? '#7ec88a' : P.gold,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: 11,
-      fontWeight: 800,
-      color: 'white',
-      flexShrink: 0,
-      marginRight: 10,
-      marginTop: 2
-    }
-  }, c.completed ? '✓' : '★'), React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 0
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 9,
-      fontWeight: 700,
-      letterSpacing: 1.5,
-      color: P.gold
-    }
-  }, "HEBDO"), React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 600,
-      color: c.completed ? 'rgba(180,220,180,0.75)' : 'rgba(230,200,180,0.92)',
-      textDecoration: c.completed ? 'line-through' : 'none',
-      marginTop: 2
-    }
-  }, c.fmt), (() => {
-    const tpl = WK_TEMPLATES.find(t => t.id === c.tplId);
-    if (!tpl || c.completed) return c.completed ? React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: 'rgba(150,210,160,0.75)',
-        marginTop: 2
-      }
-    }, "R\xE9compense obtenue") : null;
-    let txt = '';
-    if (tpl.key in weekly.ws) {
-      const val = weekly.ws[tpl.key] || 0;
-      if (tpl.scale) txt = `Progression : ${fmtDuration(val)} / ${fmtDuration(c.target * tpl.scale)}`;else txt = `Progression : ${val} / ${c.target}`;
-    } else txt = 'En jeu — réussis-le en une partie';
-    return React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: 'rgba(200,170,150,0.5)',
-        marginTop: 2
-      }
-    }, txt);
-  })(), (() => {
-    const tpl = WK_TEMPLATES.find(t => t.id === c.tplId);
-    if (!tpl || c.completed || !(tpl.key in weekly.ws)) return null;
-    const val = weekly.ws[tpl.key] || 0;
-    const target = tpl.scale ? c.target * tpl.scale : c.target;
-    const p = clamp(val / target, 0, 1);
-    return React.createElement("div", {
-      style: {
-        marginTop: 8,
-        height: 5,
-        background: 'rgba(255,255,255,0.08)',
-        borderRadius: 2.5,
-        overflow: 'hidden'
-      }
-    }, React.createElement("div", {
-      style: {
-        height: '100%',
-        width: p * 100 + '%',
-        background: P.gold,
-        borderRadius: 2.5
-      }
-    }));
-  })()), React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 800,
-      color: c.completed ? '#7ec88a' : P.rose,
-      whiteSpace: 'nowrap',
-      marginLeft: 8,
-      marginTop: 2,
-      flexShrink: 0
-    }
-  }, "+", c.ml, " mL")))), React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      marginTop: 16,
-      fontSize: 11,
-      fontStyle: 'italic',
-      color: 'rgba(220,170,140,0.4)'
-    }
-  }, "\uD83D\uDCA7 ", mL.toLocaleString('fr'), " mL en r\xE9serve"), React.createElement("div", {
-    style: {
-      height: 20
-    }
-  })))), showStats && React.createElement(StatsModal, {
+  }, "TheOne se joue uniquement en mode portrait.", screen === 'playing' ? ' La partie est en pause.' : '')), showShop && React.createElement(ShopModal, {
+    onClose: () => setShowShop(false),
+    SAT: SAT,
+    SAB: SAB,
+    mL: mL,
+    owned: owned,
+    equipped: equipped,
+    onEquip: equipItem,
+    onBuy: buyItem
+  }), showDaily && React.createElement(ChallengesModal, {
+    onClose: () => setShowDaily(false),
+    SAT: SAT,
+    SAB: SAB,
+    daily: daily,
+    weekly: weekly,
+    mL: mL
+  }), showStats && React.createElement(StatsModal, {
     onClose: () => setShowStats(false),
     SAT: SAT,
     SAB: SAB,
     stats: stats,
     bestScore: highScores.reduce((m, h) => Math.max(m, h.score || 0), 0),
     bestInf: highScoresInf[0]?.time || 0
+  }), showSettings && React.createElement(SettingsModal, {
+    onClose: () => setShowSettings(false),
+    SAT: SAT,
+    SAB: SAB,
+    onChange: () => re()
   }), showInfo && React.createElement(InfoModal, {
     onClose: () => setShowInfo(false),
     SAT: SAT,
     SAB: SAB,
     discrete: discreteMode
-  }), showAch && React.createElement("div", {
-    onClick: () => setShowAch(false),
-    style: {
-      position: 'absolute',
-      inset: 0,
-      background: 'radial-gradient(120% 70% at 50% 0%,rgba(80,14,50,0.9),rgba(8,2,10,0.95) 65%)',
-      backdropFilter: 'blur(14px)',
-      WebkitBackdropFilter: 'blur(14px)',
-      zIndex: 10
-    }
-  }, React.createElement("div", {
-    className: "modal-wrap",
-    style: {
-      color: 'white',
-      fontFamily: 'Sora,Helvetica Neue,Arial',
-      paddingTop: 24 + SAT,
-      paddingBottom: 8 + SAB
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: '26px',
-      fontWeight: 800,
-      color: P.skin1,
-      textAlign: 'center'
-    }
-  }, "R\xE9compenses"), React.createElement("div", {
-    style: {
-      fontSize: '10.5px',
-      letterSpacing: '2px',
-      color: 'rgba(210,170,140,0.5)',
-      textAlign: 'center',
-      marginTop: '4px'
-    }
-  }, "TAP N'IMPORTE O\xD9 POUR FERMER"), React.createElement("div", {
-    style: {
-      margin: '8px auto 6px',
-      background: 'rgba(232,113,138,0.08)',
-      border: '1px solid rgba(232,113,138,0.3)',
-      borderRadius: 14,
-      padding: '6px 24px',
-      textAlign: 'center'
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 9,
-      letterSpacing: 2,
-      color: 'rgba(232,140,160,0.65)'
-    }
-  }, "R\xC9SERVE COLLECT\xC9E"), React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: P.rose,
-      marginTop: 2
-    }
-  }, mL.toLocaleString('fr'), " mL")), React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: 'rgba(220,190,170,0.7)',
-      textAlign: 'center',
-      marginBottom: 8
-    }
-  }, achSet.size, " / ", ACHIEVEMENTS.length, " d\xE9bloqu\xE9es"), React.createElement("div", {
-    className: "ach-scroll",
-    style: {
-      flex: 1,
-      overflowY: 'auto',
-      padding: '0 8px 30px',
-      touchAction: 'pan-y',
-      WebkitOverflowScrolling: 'touch'
-    }
-  }, ['easy', 'medium', 'hard', 'extreme'].map(tier => React.createElement("div", {
-    key: tier,
-    style: {
-      marginBottom: 10
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 10,
-      letterSpacing: 2,
-      fontWeight: 700,
-      color: TIERS[tier].color,
-      padding: '8px 4px 4px'
-    }
-  }, TIERS[tier].label.toUpperCase()), ACHIEVEMENTS.filter(a => a.tier === tier).map(a => {
-    const unlocked = achSet.has(a.id);
-    const sExt = {
-      ...stats,
-      bestInfTime: highScoresInf[0]?.time || 0
-    };
-    const val = a.get(sExt) || 0;
-    const tgt = a.target;
-    let pct = unlocked ? 1 : clamp(val / tgt, 0, 1);
-    let progressTxt;
-    if (unlocked) {
-      progressTxt = 'Débloqué';
-    } else if (a.fmt === 'time') {
-      progressTxt = fmtDuration(val) + ' / ' + fmtDuration(tgt);
-    } else if (a.fmt === 'speed') {
-      progressTxt = sExt.bestWinTime > 0 ? 'Record : ' + fmtTime(sExt.bestWinTime) + ' / ' + fmtTime(tgt) : 'Cible : ' + fmtTime(tgt);
-      pct = sExt.bestWinTime > 0 ? clamp(tgt / sExt.bestWinTime, 0, 1) : 0;
-    } else {
-      progressTxt = val + ' / ' + tgt;
-    }
-    return React.createElement("div", {
-      key: a.id,
-      style: {
-        padding: '8px 10px',
-        marginBottom: 5,
-        borderRadius: 10,
-        background: unlocked ? 'rgba(245,200,66,0.08)' : 'rgba(255,255,255,0.025)',
-        border: `1px solid ${unlocked ? 'rgba(245,200,66,0.3)' : 'rgba(220,160,120,0.08)'}`
-      }
-    }, React.createElement("div", {
-      style: {
-        display: 'flex',
-        alignItems: 'flex-start'
-      }
-    }, React.createElement("div", {
-      style: {
-        width: 28,
-        height: 28,
-        borderRadius: '50%',
-        background: unlocked ? TIERS[tier].color : 'rgba(255,255,255,0.05)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 14,
-        marginRight: 10,
-        color: unlocked ? 'white' : 'rgba(255,255,255,0.3)',
-        flexShrink: 0
-      }
-    }, unlocked ? '✓' : '·'), React.createElement("div", {
-      style: {
-        flex: 1,
-        minWidth: 0
-      }
-    }, React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 600,
-        color: unlocked ? 'rgba(230,200,180,0.95)' : 'rgba(180,150,130,0.5)'
-      }
-    }, a.name), React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: unlocked ? 'rgba(190,160,140,0.6)' : 'rgba(150,125,110,0.4)',
-        marginTop: 2
-      }
-    }, a.desc)), React.createElement("div", {
-      style: {
-        fontSize: 12,
-        fontWeight: 700,
-        color: unlocked ? P.rose : 'rgba(180,140,140,0.35)',
-        whiteSpace: 'nowrap',
-        marginLeft: 8,
-        marginTop: 2,
-        flexShrink: 0
-      }
-    }, "+", a.ml, " mL")), React.createElement("div", {
-      style: {
-        marginTop: 7,
-        marginLeft: 38
-      }
-    }, React.createElement("div", {
-      style: {
-        height: 4,
-        background: 'rgba(255,255,255,0.06)',
-        borderRadius: 2,
-        overflow: 'hidden'
-      }
-    }, React.createElement("div", {
-      style: {
-        height: '100%',
-        width: pct * 100 + '%',
-        background: unlocked ? '#7ec88a' : TIERS[tier].color,
-        borderRadius: 2,
-        transition: 'width .3s'
-      }
-    })), React.createElement("div", {
-      style: {
-        fontSize: 9.5,
-        color: 'rgba(180,150,130,0.5)',
-        marginTop: 3
-      }
-    }, progressTxt)));
-  }))), React.createElement("div", {
-    style: {
-      height: 20
-    }
-  })))));
+  }), showAch && React.createElement(RewardsModal, {
+    onClose: () => setShowAch(false),
+    SAT: SAT,
+    SAB: SAB,
+    mL: mL,
+    achSet: achSet,
+    stats: stats,
+    bestInf: highScoresInf[0]?.time || 0
+  }));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(Game, null));
 </script>

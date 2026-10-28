@@ -23,6 +23,9 @@ $src = [IO.File]::ReadAllText($srcPath, $utf8)
 $m = [regex]::Match($src, '(?s)<script type="text/babel">(.*?)</script>')
 if (-not $m.Success) { throw 'Bloc <script type="text/babel"> introuvable dans la source.' }
 $jsx = $m.Groups[1].Value
+# Version shown on the home screen = the service-worker cache number this build will have
+$nextVer = [int][regex]::Match([IO.File]::ReadAllText($swPath, $utf8), 'theone-v(\d+)').Groups[1].Value + 1
+$jsx = $jsx.Replace('__BUILD_VERSION__', "v$nextVer")
 
 # 1) Compile JSX with Babel inside headless Edge; the result comes back base64-encoded in the dumped DOM
 $tmp = Join-Path $env:TEMP 'theone-build'
@@ -69,7 +72,7 @@ if ($out -match 'react\.development|@babel/standalone|text/babel') { throw 'Il r
 
 # 3) Bump the service-worker cache version
 $sw = [IO.File]::ReadAllText($swPath, $utf8)
-$sw = [regex]::Replace($sw, "theone-v(\d+)", { param($mm) 'theone-v' + ([int]$mm.Groups[1].Value + 1) }, 1)
+$sw = [regex]::Replace($sw, "theone-v\d+", "theone-v$nextVer", 1)
 [IO.File]::WriteAllText($swPath, $sw, $utf8)
 
 "OK  $([math]::Round($out.Length/1KB)) Ko -> $outPath"

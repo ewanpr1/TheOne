@@ -181,7 +181,7 @@ Object.assign(EN,{
 "Anime ton écran de victoire":"Animate your victory screen","Un sillage derrière toi":"A wake behind you","Aucun skin possédé pour le moment.":"No skins owned yet.","Aucun objet possédé pour le moment.":"Nothing owned yet.","Tu as tout débloqué, bravo !":"You have unlocked everything, well done!","Tu as tous les skins, bravo !":"You own every skin, well done!",
 "SKIN":"SKIN","Classique":"Classic","Rosé":"Rosé","Menthe":"Mint","Doré":"Golden","Ninja":"Ninja","Fantôme":"Ghost","Néon":"Neon","Arc-en-ciel":"Rainbow","Glace":"Ice","Feu":"Fire","Diamant":"Diamond",
 "Perle":"Pearl","Toxique":"Toxic","Chrome":"Chrome","Aurore":"Aurora","Galaxie":"Galaxy","Royal":"Royal","Holographique":"Holographic",
-"Celle du skin":"Skin's own","Aucune":"None","Bulles":"Bubbles","Cœurs":"Hearts","Pétales":"Petals","Confettis":"Confetti","Étoiles":"Stars","Comète":"Comet","Bling-bling":"Bling",
+"Celle du skin":"Skin's own","Aucune":"None","Bulles":"Bubbles","Cœurs":"Hearts","Pétales":"Petals","Confettis":"Confetti","Étoiles":"Stars","Comète":"Comet","Bling-bling":"Bling","Couper le son":"Mute sound","Coupe la musique et les effets":"Mutes music and sound effects",
 "Couronne":"Crown","Feux d’artifice":"Fireworks","Pluie de cœurs":"Rain of hearts","Pluie d’or":"Rain of gold","Cosmos":"Cosmos",
 /* settings */
 "Réglages":"Settings","LANGUE":"LANGUAGE","Français":"Français","English":"English","SON":"SOUND","Musique":"Music","Effets sonores":"Sound effects","Vibrations":"Vibration",
@@ -386,7 +386,7 @@ const SKINS=[
   {id:'aurora',name:'Aurore',cost:1800,body:'url(#auroraGrad)',bodyGrad:true,eye:'#ffffff',pupil:'#14123a',tail:'url(#auroraGradV)',cheek:'rgba(255,255,255,0.3)',mouth:'#1c2a5a',shine:0.7,glow:'#6af5d0',spin:true,trail:'aurora'},
   {id:'galaxy',name:'Galaxie',cost:3000,body:'url(#galaxyGrad)',bodyGrad:false,eye:'#c9a8ff',pupil:'#0a0420',tail:'url(#galaxyGradV)',cheek:'rgba(200,120,255,0.3)',mouth:'#d8c4ff',shine:0.55,glow:'#8a5cff',galaxy:true,trail:'stars'},
   {id:'royal',name:'Royal',cost:4000,body:'url(#royalGold)',bodyGrad:true,eye:'#b0123c',pupil:'#2a0008',tail:'url(#royalGoldV)',cheek:'rgba(255,130,80,0.4)',mouth:'#7a3a05',shine:0.85,glow:'#ffc94d',crown:true,chrome:true,trail:'gold'},
-  {id:'holo',name:'Holographique',cost:7500,body:'url(#holoGrad)',bodyGrad:true,eye:'#ffffff',pupil:'#1a1030',tail:'url(#holoGradV)',cheek:'rgba(255,255,255,0.35)',mouth:'#3a2a6a',shine:0.9,glow:'#d6b8ff',spin:true,pearl:true,sparkle:true,trail:'holo'},
+  {id:'holo',name:'Holographique',cost:7500,body:'url(#holoGrad)',bodyGrad:true,eye:'#ffffff',pupil:'#1a1030',tail:'url(#holoGradV)',cheek:'rgba(255,255,255,0.35)',mouth:'#3a2a6a',shine:0.9,glow:'#d6b8ff',spin:true,pearl:true,holo:true,trail:'holo'},
 ];
 const OWNED_KEY='theone_owned';
 const SKIN_KEY='theone_skin';
@@ -636,6 +636,7 @@ function FxDefs({acc}){
     <linearGradient id="holoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#ffc6ec"/><stop offset="30%" stopColor="#c6e8ff"/><stop offset="55%" stopColor="#d8ffd6"/><stop offset="80%" stopColor="#e2c9ff"/><stop offset="100%" stopColor="#ffd9c2"/></linearGradient>
     {lg('holoGradV',[['0%','#ffc6ec'],['35%','#c6e8ff'],['65%','#d8ffd6'],['100%','#e2c9ff',0.6]])}
     <linearGradient id="pearlSheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#ff9ed0" stopOpacity="0.32"/><stop offset="45%" stopColor="#fff" stopOpacity="0"/><stop offset="100%" stopColor="#8fe4ff" stopOpacity="0.4"/></linearGradient>
+    <linearGradient id="holoBand" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#fff" stopOpacity="0"/><stop offset="22%" stopColor="#ff7ad9" stopOpacity="0.75"/><stop offset="50%" stopColor="#7affd8" stopOpacity="0.9"/><stop offset="78%" stopColor="#7ab8ff" stopOpacity="0.75"/><stop offset="100%" stopColor="#fff" stopOpacity="0"/></linearGradient>
     <linearGradient id="chromeBand" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#fff" stopOpacity="0"/><stop offset="50%" stopColor="#fff" stopOpacity="0.85"/><stop offset="100%" stopColor="#fff" stopOpacity="0"/></linearGradient>
     {lg('medal0',[['0%','#fff3b8'],['100%','#d99a14']])}
     {lg('medal1',[['0%','#ffffff'],['100%','#9aa6b8']])}
@@ -734,7 +735,7 @@ const HelmetShape=React.memo(function HelmetShape(){
   </g>);
 });
 
-function SpermPlayer({x,y,wob,hit,shield,tilt,skin,tailK=1}){
+function SpermPlayer({x,y,wob,hit,shield,tilt,skin,tailK=1,fxBehind,fxLayer}){
   const sk=skin||SKINS[0];
   const td=clamp(tilt*20,-35,35);
   const pts=[];
@@ -801,6 +802,7 @@ function SpermPlayer({x,y,wob,hit,shield,tilt,skin,tailK=1}){
         <path d={ribbon(pts,8.5,0.9)} fill={tailFill}/>
         <path d={polyD(pts.slice(0,12))} stroke="#fff" strokeOpacity="0.5" strokeWidth="1.3" fill="none" strokeLinecap="round"/>
       </g>}
+      {fxBehind}
       {/* Contact shadow */}
       <ellipse cx="0" cy="4" rx={PR+1} ry={PR+2} fill="#000" opacity="0.16"/>
       {/* Head */}
@@ -825,6 +827,23 @@ function SpermPlayer({x,y,wob,hit,shield,tilt,skin,tailK=1}){
           <rect x={-60+((ph*18)%120)} y="-30" width="14" height="60" fill="url(#chromeBand)" transform="rotate(25)"/>
         </g>
       </g>}
+      {/* Holographic: chromatic edge split + rainbow prism band sweeping across the head */}
+      {sk.holo&&<g>
+        <ellipse cx="-1.5" cy="0" rx={PR} ry={PR+1.5} fill="none" stroke="#ff4fd8" strokeOpacity="0.65" strokeWidth="1.6"/>
+        <ellipse cx="1.5" cy="0" rx={PR} ry={PR+1.5} fill="none" stroke="#3fe8ff" strokeOpacity="0.65" strokeWidth="1.6"/>
+        <clipPath id="holoClip"><ellipse cx="0" cy="0" rx={PR} ry={PR+1.5}/></clipPath>
+        <g clipPath="url(#holoClip)"><rect x={-70+((ph*26)%140)} y="-30" width="24" height="60" fill="url(#holoBand)" transform="rotate(-28)"/></g>
+      </g>}
+      {/* Holographic: three glowing orbs with comet tails orbit the head (shorter tails on lighter quality) */}
+      {sk.holo&&<g>{[['#ff7ad9','glowRose'],['#7ab8ff','glowBlue'],['#ffd25e','glowGold']].map(([c,gl],i)=>{
+        const a=ph*1.1+i*2.094,r=PR+13+i*2.5,x=Math.cos(a)*r,y=Math.sin(a)*r*0.82,nT=FX>=1?3:7,st=FX>=1?0.34:0.17;
+        return<g key={i}>
+          {Array.from({length:nT},(_,j)=>{const a2=a-(j+1)*st;return<circle key={j} cx={f1(Math.cos(a2)*r)} cy={f1(Math.sin(a2)*r*0.82)} r={f1(4.4-(j+1)*(3.6/nT))} fill={c} opacity={0.55-(j+1)*(0.5/nT)}/>;})}
+          <circle cx={f1(x)} cy={f1(y)} r="10" fill={`url(#${gl})`}/>
+          <circle cx={f1(x)} cy={f1(y)} r="3.9" fill={c}/>
+          <circle cx={f1(x-1)} cy={f1(y-1.1)} r="1.4" fill="#fff"/>
+        </g>;})}</g>}
+      {fxLayer}
       {/* Acrosome cap */}
       <path d="M -16.5 -11 Q 0 -31 16.5 -11 Q 0 -19 -16.5 -11 Z" fill="#fff" opacity="0.14"/>
       <ellipse cx="0" cy="0" rx={PR-0.8} ry={PR+0.7} fill="none" stroke="url(#rimIri)" strokeOpacity="0.75" strokeWidth="1.6"/>
@@ -1145,8 +1164,9 @@ function arcPath(r,startA,endA){
   return`M ${x1} ${y1} A ${r} ${r} 0 ${sweep>Math.PI?1:0} 1 ${x2} ${y2}`;
 }
 /* Ovule = glow + shell (corona + zona, rotates with the entry) + core (cytoplasm, nucleus, highlight — fixed light) + entry portal */
-function OvuleShell({angle,pulse}){
-  const gapH=Math.PI/3.2;
+const OV_GAP=Math.PI/3.2,OV_GAP_HC=Math.PI/3.6;   // half-opening of the ovule (hardcore is a bit tighter)
+function OvuleShell({angle,pulse,gap=OV_GAP}){
+  const gapH=gap;
   const a0=angle+gapH,a1=angle-gapH+Math.PI*2;
   const N=24,span=a1-a0-0.24;
   return(
@@ -1187,24 +1207,24 @@ function OvulePortal({angle,pulse}){
   );
 }
 const OvuleGlow=()=><circle cx="0" cy="0" r="125" fill="url(#glowGold)" opacity="0.6"/>;
-function OvuleVec({x,y,pulse,angle}){
+function OvuleVec({x,y,pulse,angle,hard}){
   const a=angle||0;
   return(
     <g transform={`translate(${x},${y})`}>
       <circle cx="0" cy="0" r={125+Math.sin(pulse*0.05)*8} fill="url(#glowGold)" opacity="0.6"/>
-      <OvuleShell angle={a} pulse={pulse}/>
+      <OvuleShell angle={a} pulse={pulse} gap={hard?OV_GAP_HC:OV_GAP}/>
       <OvuleCore/>
       <OvulePortal angle={a} pulse={pulse}/>
     </g>
   );
 }
 function Ovule(p){
-  if(!SPR.ovCore||!SPR.ovShell||!SPR.ovGlow)return<OvuleVec {...p}/>;
+  if(!SPR.ovCore||!SPR.ovGlow||!SPR[p.hard?'ovShellH':'ovShell'])return<OvuleVec {...p}/>;
   const a=p.angle||0;
   return(
     <g transform={`translate(${f1(p.x)},${f1(p.y)})`}>
       {FX<2&&<Img k="ovGlow" x={0} y={0} sx={1+Math.sin(p.pulse*0.05)*0.06} sy={1+Math.sin(p.pulse*0.05)*0.06}/>}
-      <Img k="ovShell" x={0} y={0} rot={a*180/Math.PI} sx={1+Math.sin(p.pulse*0.05)*0.012} sy={1+Math.sin(p.pulse*0.05)*0.012}/>
+      <Img k={p.hard?'ovShellH':'ovShell'} x={0} y={0} rot={a*180/Math.PI} sx={1+Math.sin(p.pulse*0.05)*0.012} sy={1+Math.sin(p.pulse*0.05)*0.012}/>
       <Img k="ovCore" x={0} y={0}/>
       <OvulePortal angle={a} pulse={p.pulse}/>
     </g>
@@ -1217,6 +1237,7 @@ const SPR_DEFS={
   ovGlow: {w:272,h:272,cx:136,cy:136,el:()=><OvuleGlow/>},
   ovCore: {w:112,h:112,cx:56, cy:56, el:()=><OvuleCore/>},
   ovShell:{w:176,h:176,cx:88, cy:88, el:()=><OvuleShell angle={0} pulse={0}/>},
+  ovShellH:{w:176,h:176,cx:88, cy:88, el:()=><OvuleShell angle={0} pulse={0} gap={OV_GAP_HC}/>},
 };
 for(let i=0;i<N_RIVAL;i++)SPR_DEFS['enemy'+i]={w:48,h:52,cx:24,cy:26,el:()=><EnemyHead v={i}/>};for(let i=0;i<N_WBC;i++)SPR_DEFS['wbc'+i]={w:100,h:100,cx:50,cy:50,el:()=><WBCVec x={0} y={0} pulse={0} v={i}/>};for(let i=0;i<N_MUCUS;i++)SPR_DEFS['mucus'+i]={w:100,h:100,cx:50,cy:50,el:()=><MucusVec x={0} y={0} pulse={0} r={25} v={i}/>};
 // Rasterises every sprite once (one per timer tick so the main thread is never blocked for long)
@@ -1615,7 +1636,7 @@ function TrailDot({p,a}){
   if(p.type==='aurora')return<circle cx={p.x} cy={p.y} r={7*a+2} fill={Math.floor(p.seed)%2?'url(#sk_aurora)':'url(#glowBlue)'} opacity={a}/>;
   if(p.type==='stars')return<g transform={`translate(${p.x},${p.y}) scale(${0.5+a*0.6}) rotate(${p.seed*9})`} opacity={a}><circle r="4" fill="url(#sk_galaxy)"/><path d="M 0 -3.5 Q 0.4 -0.4 3.5 0 Q 0.4 0.4 0 3.5 Q -0.4 0.4 -3.5 0 Q -0.4 -0.4 0 -3.5 Z" fill={Math.floor(p.seed)%3?'#fff':'#ffb8f0'}/></g>;
   if(p.type==='gold')return<g transform={`translate(${p.x},${p.y}) scale(${0.5+a*0.6})`} opacity={a}><circle r="5" fill="url(#glowGold)"/><path d="M 0 -3.2 L 1 -1 L 3.2 0 L 1 1 L 0 3.2 L -1 1 L -3.2 0 L -1 -1 Z" fill="#ffe08a"/></g>;
-  if(p.type==='holo'){const c=['#ffc6ec','#c6e8ff','#d8ffd6','#e2c9ff','#ffd9c2'];return<g><circle cx={p.x} cy={p.y} r={6*a+1} fill="url(#glowWhite)" opacity={a*0.6}/><circle cx={p.x} cy={p.y} r={2.4*a+0.8} fill={c[Math.floor(p.seed)%5]} opacity={a}/></g>;}
+  if(p.type==='holo'){const s=0.6+a*0.7;return<g transform={`translate(${p.x},${p.y}) rotate(${p.seed*40+(1-a)*160}) scale(${s.toFixed(2)})`} opacity={a}><path d="M 0 -4.6 L 4.2 3 L -4.2 3 Z" transform="translate(-1.6,0)" fill="#ff4fd8" opacity="0.75"/><path d="M 0 -4.6 L 4.2 3 L -4.2 3 Z" transform="translate(1.6,0)" fill="#3fe8ff" opacity="0.75"/><path d="M 0 -3.4 L 3 2.2 L -3 2.2 Z" fill="#fff"/></g>;}
   if(p.type==='rainbow'){const c=['#ff5a7a','#ffa45c','#ffd95e','#7ee0a0','#5fb4ff','#8a7bff','#d77bff'];return<circle cx={p.x} cy={p.y} r={2.5*a+1} fill={c[Math.floor(p.seed)%7]} opacity={a*0.85}/>;}
   if(p.type==='bubbles')return<g opacity={a}><circle cx={p.x} cy={p.y} r={2.2+(1-a)*3.8} fill="rgba(200,235,255,0.14)" stroke="#d8f0ff" strokeOpacity="0.85" strokeWidth="0.9"/><circle cx={p.x-1} cy={p.y-1.1} r="0.8" fill="#fff"/></g>;
   if(p.type==='hearts')return<path d={HEART_D} transform={`translate(${p.x},${p.y}) scale(${0.5+a*0.6}) rotate(${Math.sin(p.seed)*18})`} fill={Math.floor(p.seed)%2?'#ff6f91':'#ff9ab3'} opacity={a}/>;
@@ -1941,7 +1962,7 @@ const SmallBtn=({onClick,children,kind})=>(
   <div onClick={onClick} style={{flex:1,textAlign:'center',padding:'11px 6px',borderRadius:14,fontSize:12.5,fontWeight:700,cursor:'pointer',background:kind==='danger'?'rgba(255,90,110,0.14)':'rgba(255,255,255,0.08)',border:`1px solid ${kind==='danger'?'rgba(255,90,110,0.4)':'rgba(255,255,255,0.16)'}`}}>{children}</div>
 );
 
-function SettingsModal({onClose,SAT,SAB,onChange}){
+function SettingsModal({onClose,SAT,SAB,onChange,onMute}){
   const [,force]=React.useReducer(n=>n+1,0);
   const [msg,setMsg]=React.useState('');
   const fileRef=React.useRef(null);
@@ -1971,6 +1992,7 @@ function SettingsModal({onClose,SAT,SAB,onChange}){
         <Seg value={SET.lang} onChange={l=>{if(l===SET.lang)return;SET.lang=l;saveSettings();location.reload();}} items={[['fr','Français'],['en','English']]}/>
 
         <Sec>{tr('SON')}</Sec>
+        <Toggle label={tr('Couper le son')} sub={tr('Coupe la musique et les effets')} on={_muted} onChange={v=>{_muted=v;try{localStorage.setItem('theone_muted',v?'1':'0');}catch(e){}if(window.Howler)Howler.mute(v);force();if(onMute)onMute(v);}}/>
         <Slider label={tr('Musique')} value={SET.music} onChange={v=>upd({music:v},applyAudioSettings)}/>
         <Slider label={tr('Effets sonores')} value={SET.sfx} onChange={v=>upd({sfx:v})}/>
         <Toggle label={tr('Vibrations')} sub={tr('Retour haptique quand tu touches un obstacle')} on={SET.vib} onChange={v=>{upd({vib:v});if(v)vibrate(30);}}/>
@@ -1980,7 +2002,7 @@ function SettingsModal({onClose,SAT,SAB,onChange}){
         <Note>{tr('Décalage du doigt : place le spermatozoïde au-dessus de ton doigt pour qu’il reste visible.')}</Note>
 
         <Sec>{tr('QUALITÉ GRAPHIQUE')}</Sec>
-        <Seg value={SET.quality} onChange={q=>upd({quality:q},()=>{if(q==='high')FX=0;else if(q==='eco')FX=2;})} items={[['auto',tr('Auto')],['high',tr('Élevée')],['eco',tr('Économe')]]}/>
+        <Seg value={SET.quality} onChange={q=>upd({quality:q},()=>{FX=q==='eco'?2:0;try{localStorage.removeItem('theone_fx');}catch(e){}})} items={[['auto',tr('Auto')],['high',tr('Élevée')],['eco',tr('Économe')]]}/>
         <Note>{tr('Auto allège le rendu si ton téléphone peine. Économe désactive lueurs, particules et traînées.')}</Note>
 
         <Sec>{tr('DONNÉES')}</Sec>
@@ -2442,9 +2464,11 @@ function Game(){
     if(f.n>=90){
       const avg=f.sum/f.n;f.n=0;f.sum=0;
       if(SET.quality==='auto'&&avg>25&&FX<2){
-        FX++;f.skip=45;
+        FX++;f.skip=45;f.good=0;f.noUp=true;      // struggling: lighten, and do not climb back this session
         try{localStorage.setItem('theone_fx',String(FX));}catch(e){}
-      }
+      }else if(SET.quality==='auto'&&avg<15.5&&FX>0&&!f.noUp){
+        if(++f.good>=4){FX--;f.good=0;f.skip=45;try{localStorage.setItem('theone_fx',String(FX));}catch(e){}}   // ~6 s of smooth frames: raise quality again
+      }else f.good=0;
     }
   }
   React.useEffect(()=>{
@@ -2500,7 +2524,7 @@ function Game(){
         const speed=Math.abs(rawVx)+Math.abs(g.py-py0);
         const rate=(0.5+Math.min(speed*0.1,1.5))*tfx.rate;
         if(Math.random()<rate*(dt/100)){
-          g.trail.push({x:g.px+(Math.random()-0.5)*10,y:g.py+(Math.random()-0.5)*10+8,life:tfx.life,ml:tfx.life,type:skTrail,seed:Math.random()*100,vy:(tfx.vy!==undefined?tfx.vy:0.3)+(tfx.vy===undefined?Math.random()*0.4:Math.random()*0.15),vx:(tfx.vx||0)*(Math.random()-0.5)*2});
+          g.trail.push({x:g.px+(Math.random()-0.5)*10,y:g.py+(Math.random()-0.5)*10+8,life:tfx.life,ml:tfx.life,type:skTrail,big:(SET.trail!=='auto'&&SET.trail!=='none'&&skTrail!=='comet'),seed:Math.random()*100,vy:(tfx.vy!==undefined?tfx.vy:0.3)+(tfx.vy===undefined?Math.random()*0.4:Math.random()*0.15),vx:(tfx.vx||0)*(Math.random()-0.5)*2});
         }
       }
       g.trail=g.trail.filter(p=>p.life>0).map(p=>{p.life-=dt/16;p.y+=p.vy*(dt/16);if(p.vx)p.x+=p.vx*(dt/16);return p;});
@@ -2562,7 +2586,7 @@ function Game(){
           burst(g,clamp(e.x,POX+20,POX+PW-20),15,P.rose,8);
           if(g.lives<=0){finishRun(g,false);return;}
         } else if(d2(g.px,g.py,e.x,e.y)<PR+15){
-          burst(g,e.x,e.y,'#e89870',10);g.score++;vibrate(15);playSound('kill');
+          if(FX<2)burst(g,e.x,e.y,'#e89870',10);g.score++;vibrate(15);playSound('kill');
         } else {
           nextSperms.push(e);
         }
@@ -2627,7 +2651,7 @@ function Game(){
         // Solid as soon as it reaches the playable area (not only once parked), so the entry can be hit while it descends
         if(g.ovuleY>-37){
           const dd=d2(g.px,g.py,GW/2,g.ovuleY);
-          const gapH=Math.PI/3.2;
+          const gapH=g.hardcore?OV_GAP_HC:OV_GAP;
           const pA=Math.atan2(g.py-g.ovuleY,g.px-GW/2);
           let diff=Math.abs(pA-g.ovuleAngle)%(Math.PI*2);
           if(diff>Math.PI)diff=Math.PI*2-diff;
@@ -2709,7 +2733,7 @@ function Game(){
         </defs>
 
         {/* Ovule */}
-        {g.zone===4&&g.ovuleY>-130&&<Ovule x={GW/2} y={g.ovuleY} pulse={g.pulse} angle={g.ovuleAngle}/>}
+        {g.zone===4&&g.ovuleY>-130&&<Ovule x={GW/2} y={g.ovuleY} pulse={g.pulse} angle={g.ovuleAngle} hard={g.hardcore}/>}
 
         <Ptcl list={g.ptcl}/>
 
@@ -2721,7 +2745,9 @@ function Game(){
 
         {/* Player & skin trail */}
         {screen==='playing'&&(<React.Fragment>
-          {g.trail.map(p=><TrailDot key={p.seed} p={p} a={Math.max(0,p.life/p.ml)}/>)}
+          {g.trail.map(p=>p.big
+            ?<g key={p.seed} transform={`translate(${p.x} ${p.y}) scale(1.45) translate(${-p.x} ${-p.y})`}><TrailDot p={p} a={Math.max(0,p.life/p.ml)}/></g>
+            :<TrailDot key={p.seed} p={p} a={Math.max(0,p.life/p.ml)}/>)}
           <g opacity={g.inv>0?(Math.sin(g.inv*0.025)>0?1:0.35):1}>
             <SpermPlayer x={g.px} y={g.py} wob={g.wob} hit={false} shield={g.shield} tilt={g.pvx} skin={getSkin(equipped)}/>
           </g>
@@ -3231,7 +3257,7 @@ function Game(){
       {showShop&&<ShopModal onClose={()=>setShowShop(false)} SAT={SAT} SAB={SAB} mL={mL} owned={owned} equipped={equipped} onEquip={equipItem} onBuy={buyItem}/>}
       {showDaily&&<ChallengesModal onClose={()=>setShowDaily(false)} SAT={SAT} SAB={SAB} daily={daily} weekly={weekly} mL={mL}/>}
       {showStats&&<StatsModal onClose={()=>setShowStats(false)} SAT={SAT} SAB={SAB} stats={stats} bestScore={highScores.reduce((m,h)=>Math.max(m,h.score||0),0)} bestInf={highScoresInf[0]?.time||0}/>}
-      {showSettings&&<SettingsModal onClose={()=>setShowSettings(false)} SAT={SAT} SAB={SAB} onChange={()=>re()}/>}
+      {showSettings&&<SettingsModal onClose={()=>setShowSettings(false)} SAT={SAT} SAB={SAB} onChange={()=>re()} onMute={v=>setMuted(v)}/>}
       {showInfo&&<InfoModal onClose={()=>setShowInfo(false)} SAT={SAT} SAB={SAB} discrete={discreteMode}/>}
       {showAch&&<RewardsModal onClose={()=>setShowAch(false)} SAT={SAT} SAB={SAB} mL={mL} achSet={achSet} stats={stats} bestInf={highScoresInf[0]?.time||0}/>}
     </div>

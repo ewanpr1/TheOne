@@ -149,7 +149,7 @@ const ZONES = [{
   minGaps: 1,
   spermSpd: 0.7
 }];
-const APP_VERSION = "v82";
+const APP_VERSION = "v85";
 const TUTO_KEY = 'theone_tuto',
   TUTO_STEPS = 3;
 let DISCRETE_MODE = false;
@@ -425,6 +425,8 @@ Object.assign(EN, {
   "Étoiles": "Stars",
   "Comète": "Comet",
   "Bling-bling": "Bling",
+  "Couper le son": "Mute sound",
+  "Coupe la musique et les effets": "Mutes music and sound effects",
   "Couronne": "Crown",
   "Feux d’artifice": "Fireworks",
   "Pluie de cœurs": "Rain of hearts",
@@ -1196,7 +1198,7 @@ const SKINS = [{
   glow: '#d6b8ff',
   spin: true,
   pearl: true,
-  sparkle: true,
+  holo: true,
   trail: 'holo'
 }];
 const OWNED_KEY = 'theone_owned';
@@ -1822,6 +1824,32 @@ function FxDefs({
     stopColor: "#8fe4ff",
     stopOpacity: "0.4"
   })), React.createElement("linearGradient", {
+    id: "holoBand",
+    x1: "0",
+    y1: "0",
+    x2: "1",
+    y2: "0"
+  }, React.createElement("stop", {
+    offset: "0%",
+    stopColor: "#fff",
+    stopOpacity: "0"
+  }), React.createElement("stop", {
+    offset: "22%",
+    stopColor: "#ff7ad9",
+    stopOpacity: "0.75"
+  }), React.createElement("stop", {
+    offset: "50%",
+    stopColor: "#7affd8",
+    stopOpacity: "0.9"
+  }), React.createElement("stop", {
+    offset: "78%",
+    stopColor: "#7ab8ff",
+    stopOpacity: "0.75"
+  }), React.createElement("stop", {
+    offset: "100%",
+    stopColor: "#fff",
+    stopOpacity: "0"
+  })), React.createElement("linearGradient", {
     id: "chromeBand",
     x1: "0",
     y1: "0",
@@ -2108,7 +2136,9 @@ function SpermPlayer({
   shield,
   tilt,
   skin,
-  tailK = 1
+  tailK = 1,
+  fxBehind,
+  fxLayer
 }) {
   const sk = skin || SKINS[0];
   const td = clamp(tilt * 20, -35, 35);
@@ -2237,7 +2267,7 @@ function SpermPlayer({
     strokeWidth: "1.3",
     fill: "none",
     strokeLinecap: "round"
-  })), React.createElement("ellipse", {
+  })), fxBehind, React.createElement("ellipse", {
     cx: "0",
     cy: "4",
     rx: PR + 1,
@@ -2312,7 +2342,78 @@ function SpermPlayer({
     height: "60",
     fill: "url(#chromeBand)",
     transform: "rotate(25)"
-  }))), React.createElement("path", {
+  }))), sk.holo && React.createElement("g", null, React.createElement("ellipse", {
+    cx: "-1.5",
+    cy: "0",
+    rx: PR,
+    ry: PR + 1.5,
+    fill: "none",
+    stroke: "#ff4fd8",
+    strokeOpacity: "0.65",
+    strokeWidth: "1.6"
+  }), React.createElement("ellipse", {
+    cx: "1.5",
+    cy: "0",
+    rx: PR,
+    ry: PR + 1.5,
+    fill: "none",
+    stroke: "#3fe8ff",
+    strokeOpacity: "0.65",
+    strokeWidth: "1.6"
+  }), React.createElement("clipPath", {
+    id: "holoClip"
+  }, React.createElement("ellipse", {
+    cx: "0",
+    cy: "0",
+    rx: PR,
+    ry: PR + 1.5
+  })), React.createElement("g", {
+    clipPath: "url(#holoClip)"
+  }, React.createElement("rect", {
+    x: -70 + ph * 26 % 140,
+    y: "-30",
+    width: "24",
+    height: "60",
+    fill: "url(#holoBand)",
+    transform: "rotate(-28)"
+  }))), sk.holo && React.createElement("g", null, [['#ff7ad9', 'glowRose'], ['#7ab8ff', 'glowBlue'], ['#ffd25e', 'glowGold']].map(([c, gl], i) => {
+    const a = ph * 1.1 + i * 2.094,
+      r = PR + 13 + i * 2.5,
+      x = Math.cos(a) * r,
+      y = Math.sin(a) * r * 0.82,
+      nT = FX >= 1 ? 3 : 7,
+      st = FX >= 1 ? 0.34 : 0.17;
+    return React.createElement("g", {
+      key: i
+    }, Array.from({
+      length: nT
+    }, (_, j) => {
+      const a2 = a - (j + 1) * st;
+      return React.createElement("circle", {
+        key: j,
+        cx: f1(Math.cos(a2) * r),
+        cy: f1(Math.sin(a2) * r * 0.82),
+        r: f1(4.4 - (j + 1) * (3.6 / nT)),
+        fill: c,
+        opacity: 0.55 - (j + 1) * (0.5 / nT)
+      });
+    }), React.createElement("circle", {
+      cx: f1(x),
+      cy: f1(y),
+      r: "10",
+      fill: `url(#${gl})`
+    }), React.createElement("circle", {
+      cx: f1(x),
+      cy: f1(y),
+      r: "3.9",
+      fill: c
+    }), React.createElement("circle", {
+      cx: f1(x - 1),
+      cy: f1(y - 1.1),
+      r: "1.4",
+      fill: "#fff"
+    }));
+  })), fxLayer, React.createElement("path", {
     d: "M -16.5 -11 Q 0 -31 16.5 -11 Q 0 -19 -16.5 -11 Z",
     fill: "#fff",
     opacity: "0.14"
@@ -3136,11 +3237,14 @@ function arcPath(r, startA, endA) {
   const sweep = (endA - startA + Math.PI * 4) % (Math.PI * 2);
   return `M ${x1} ${y1} A ${r} ${r} 0 ${sweep > Math.PI ? 1 : 0} 1 ${x2} ${y2}`;
 }
+const OV_GAP = Math.PI / 3.2,
+  OV_GAP_HC = Math.PI / 3.6;
 function OvuleShell({
   angle,
-  pulse
+  pulse,
+  gap = OV_GAP
 }) {
-  const gapH = Math.PI / 3.2;
+  const gapH = gap;
   const a0 = angle + gapH,
     a1 = angle - gapH + Math.PI * 2;
   const N = 24,
@@ -3259,7 +3363,8 @@ function OvuleVec({
   x,
   y,
   pulse,
-  angle
+  angle,
+  hard
 }) {
   const a = angle || 0;
   return React.createElement("g", {
@@ -3272,14 +3377,15 @@ function OvuleVec({
     opacity: "0.6"
   }), React.createElement(OvuleShell, {
     angle: a,
-    pulse: pulse
+    pulse: pulse,
+    gap: hard ? OV_GAP_HC : OV_GAP
   }), React.createElement(OvuleCore, null), React.createElement(OvulePortal, {
     angle: a,
     pulse: pulse
   }));
 }
 function Ovule(p) {
-  if (!SPR.ovCore || !SPR.ovShell || !SPR.ovGlow) return React.createElement(OvuleVec, p);
+  if (!SPR.ovCore || !SPR.ovGlow || !SPR[p.hard ? 'ovShellH' : 'ovShell']) return React.createElement(OvuleVec, p);
   const a = p.angle || 0;
   return React.createElement("g", {
     transform: `translate(${f1(p.x)},${f1(p.y)})`
@@ -3290,7 +3396,7 @@ function Ovule(p) {
     sx: 1 + Math.sin(p.pulse * 0.05) * 0.06,
     sy: 1 + Math.sin(p.pulse * 0.05) * 0.06
   }), React.createElement(Img, {
-    k: "ovShell",
+    k: p.hard ? 'ovShellH' : 'ovShell',
     x: 0,
     y: 0,
     rot: a * 180 / Math.PI,
@@ -3347,6 +3453,17 @@ const SPR_DEFS = {
     el: () => React.createElement(OvuleShell, {
       angle: 0,
       pulse: 0
+    })
+  },
+  ovShellH: {
+    w: 176,
+    h: 176,
+    cx: 88,
+    cy: 88,
+    el: () => React.createElement(OvuleShell, {
+      angle: 0,
+      pulse: 0,
+      gap: OV_GAP_HC
     })
   }
 };
@@ -4973,19 +5090,23 @@ function TrailDot({
     fill: "#ffe08a"
   }));
   if (p.type === 'holo') {
-    const c = ['#ffc6ec', '#c6e8ff', '#d8ffd6', '#e2c9ff', '#ffd9c2'];
-    return React.createElement("g", null, React.createElement("circle", {
-      cx: p.x,
-      cy: p.y,
-      r: 6 * a + 1,
-      fill: "url(#glowWhite)",
-      opacity: a * 0.6
-    }), React.createElement("circle", {
-      cx: p.x,
-      cy: p.y,
-      r: 2.4 * a + 0.8,
-      fill: c[Math.floor(p.seed) % 5],
+    const s = 0.6 + a * 0.7;
+    return React.createElement("g", {
+      transform: `translate(${p.x},${p.y}) rotate(${p.seed * 40 + (1 - a) * 160}) scale(${s.toFixed(2)})`,
       opacity: a
+    }, React.createElement("path", {
+      d: "M 0 -4.6 L 4.2 3 L -4.2 3 Z",
+      transform: "translate(-1.6,0)",
+      fill: "#ff4fd8",
+      opacity: "0.75"
+    }), React.createElement("path", {
+      d: "M 0 -4.6 L 4.2 3 L -4.2 3 Z",
+      transform: "translate(1.6,0)",
+      fill: "#3fe8ff",
+      opacity: "0.75"
+    }), React.createElement("path", {
+      d: "M 0 -3.4 L 3 2.2 L -3 2.2 Z",
+      fill: "#fff"
     }));
   }
   if (p.type === 'rainbow') {
@@ -6232,7 +6353,8 @@ function SettingsModal({
   onClose,
   SAT,
   SAB,
-  onChange
+  onChange,
+  onMute
 }) {
   const [, force] = React.useReducer(n => n + 1, 0);
   const [msg, setMsg] = React.useState('');
@@ -6309,7 +6431,20 @@ function SettingsModal({
       location.reload();
     },
     items: [['fr', 'Français'], ['en', 'English']]
-  }), React.createElement(Sec, null, tr('SON')), React.createElement(Slider, {
+  }), React.createElement(Sec, null, tr('SON')), React.createElement(Toggle, {
+    label: tr('Couper le son'),
+    sub: tr('Coupe la musique et les effets'),
+    on: _muted,
+    onChange: v => {
+      _muted = v;
+      try {
+        localStorage.setItem('theone_muted', v ? '1' : '0');
+      } catch (e) {}
+      if (window.Howler) Howler.mute(v);
+      force();
+      if (onMute) onMute(v);
+    }
+  }), React.createElement(Slider, {
     label: tr('Musique'),
     value: SET.music,
     onChange: v => upd({
@@ -6342,7 +6477,10 @@ function SettingsModal({
     onChange: q => upd({
       quality: q
     }, () => {
-      if (q === 'high') FX = 0;else if (q === 'eco') FX = 2;
+      FX = q === 'eco' ? 2 : 0;
+      try {
+        localStorage.removeItem('theone_fx');
+      } catch (e) {}
     }),
     items: [['auto', tr('Auto')], ['high', tr('Élevée')], ['eco', tr('Économe')]]
   }), React.createElement(Note, null, tr('Auto allège le rendu si ton téléphone peine. Économe désactive lueurs, particules et traînées.')), React.createElement(Sec, null, tr('DONNÉES')), React.createElement("div", {
@@ -7219,10 +7357,21 @@ function Game() {
       if (SET.quality === 'auto' && avg > 25 && FX < 2) {
         FX++;
         f.skip = 45;
+        f.good = 0;
+        f.noUp = true;
         try {
           localStorage.setItem('theone_fx', String(FX));
         } catch (e) {}
-      }
+      } else if (SET.quality === 'auto' && avg < 15.5 && FX > 0 && !f.noUp) {
+        if (++f.good >= 4) {
+          FX--;
+          f.good = 0;
+          f.skip = 45;
+          try {
+            localStorage.setItem('theone_fx', String(FX));
+          } catch (e) {}
+        }
+      } else f.good = 0;
     }
   }
   React.useEffect(() => {
@@ -7297,6 +7446,7 @@ function Game() {
             life: tfx.life,
             ml: tfx.life,
             type: skTrail,
+            big: SET.trail !== 'auto' && SET.trail !== 'none' && skTrail !== 'comet',
             seed: Math.random() * 100,
             vy: (tfx.vy !== undefined ? tfx.vy : 0.3) + (tfx.vy === undefined ? Math.random() * 0.4 : Math.random() * 0.15),
             vx: (tfx.vx || 0) * (Math.random() - 0.5) * 2
@@ -7390,7 +7540,7 @@ function Game() {
             return;
           }
         } else if (d2(g.px, g.py, e.x, e.y) < PR + 15) {
-          burst(g, e.x, e.y, '#e89870', 10);
+          if (FX < 2) burst(g, e.x, e.y, '#e89870', 10);
           g.score++;
           vibrate(15);
           playSound('kill');
@@ -7483,7 +7633,7 @@ function Game() {
         g.ovuleAngle = (g.ovuleAngle + 0.0018 * dt) % (Math.PI * 2);
         if (g.ovuleY > -37) {
           const dd = d2(g.px, g.py, GW / 2, g.ovuleY);
-          const gapH = Math.PI / 3.2;
+          const gapH = g.hardcore ? OV_GAP_HC : OV_GAP;
           const pA = Math.atan2(g.py - g.ovuleY, g.px - GW / 2);
           let diff = Math.abs(pA - g.ovuleAngle) % (Math.PI * 2);
           if (diff > Math.PI) diff = Math.PI * 2 - diff;
@@ -7626,7 +7776,8 @@ function Game() {
     x: GW / 2,
     y: g.ovuleY,
     pulse: g.pulse,
-    angle: g.ovuleAngle
+    angle: g.ovuleAngle,
+    hard: g.hardcore
   }), React.createElement(Ptcl, {
     list: g.ptcl
   }), g.mucus.map(m => React.createElement(Mucus, {
@@ -7661,7 +7812,13 @@ function Game() {
     x: h.x,
     y: h.y,
     pulse: h.pulse
-  })), screen === 'playing' && React.createElement(React.Fragment, null, g.trail.map(p => React.createElement(TrailDot, {
+  })), screen === 'playing' && React.createElement(React.Fragment, null, g.trail.map(p => p.big ? React.createElement("g", {
+    key: p.seed,
+    transform: `translate(${p.x} ${p.y}) scale(1.45) translate(${-p.x} ${-p.y})`
+  }, React.createElement(TrailDot, {
+    p: p,
+    a: Math.max(0, p.life / p.ml)
+  })) : React.createElement(TrailDot, {
     key: p.seed,
     p: p,
     a: Math.max(0, p.life / p.ml)
@@ -9352,7 +9509,8 @@ function Game() {
     onClose: () => setShowSettings(false),
     SAT: SAT,
     SAB: SAB,
-    onChange: () => re()
+    onChange: () => re(),
+    onMute: v => setMuted(v)
   }), showInfo && React.createElement(InfoModal, {
     onClose: () => setShowInfo(false),
     SAT: SAT,

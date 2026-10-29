@@ -83,7 +83,7 @@ let DISCRETE_MODE=false;
 const SET_KEY='theone_settings';
 let SET={music:1,sfx:1,vib:true,quality:'auto',offset:0,lang:null,trail:'auto',vic:'classic'};
 try{Object.assign(SET,JSON.parse(localStorage.getItem(SET_KEY)||'{}'));}catch(e){}
-if(SET.lang!=='fr'&&SET.lang!=='en')SET.lang=((navigator.language||'fr').toLowerCase().indexOf('fr')===0)?'fr':'en';
+if(['fr','en','de','es'].indexOf(SET.lang)<0){const nl=(navigator.language||'fr').toLowerCase().slice(0,2);SET.lang=['fr','de','es'].indexOf(nl)>=0?nl:'en';}
 function saveSettings(){try{localStorage.setItem(SET_KEY,JSON.stringify(SET));}catch(e){}}
 let LANG=SET.lang;
 
@@ -95,13 +95,28 @@ const EN={};                                         // French text → English 
 const EN_RULES=[];                                   // [RegExp, 'English with $1 $2'] for texts containing numbers
 const MISS=new Set();
 let ENV=null;                                        // set of already-English texts (avoids reporting them as missing)
+/* German / Spanish: XL maps the ENGLISH text → [German, Spanish]; XL_RULES holds [French pattern, German, Spanish] for texts with numbers */
+const XL={};
+const XL_RULES=[];
+const LI=LANG==='de'?0:1;
 function tr(s){
-  if(LANG!=='en'||typeof s!=='string'||!s)return s;
+  if(LANG==='fr'||typeof s!=='string'||!s)return s;
   const m=/^(\s*)([\s\S]*?)(\s*)$/.exec(s),core=m[2];
   if(!core)return s;
-  let out=EN[core];
+  let out;
+  if(LANG!=='en'){
+    for(let i=0;i<XL_RULES.length;i++){const r=XL_RULES[i][0].exec(core);if(r){out=XL_RULES[i][1+LI].replace(/\$(\d)/g,(x,k)=>r[k]);break;}}
+  }
   if(out===undefined){
-    for(let i=0;i<EN_RULES.length;i++){const r=EN_RULES[i][0].exec(core);if(r){out=EN_RULES[i][1].replace(/\$(\d)/g,(x,k)=>r[k]);break;}}
+    out=EN[core];
+    if(out===undefined){
+      for(let i=0;i<EN_RULES.length;i++){const r=EN_RULES[i][0].exec(core);if(r){out=EN_RULES[i][1].replace(/\$(\d)/g,(x,k)=>r[k]);break;}}
+    }
+    if(out!==undefined&&LANG!=='en'){
+      const t=XL[out];
+      if(t&&t[LI])out=t[LI];
+      else if(/[A-Za-zÀ-ÿ]{3,}/.test(out))MISS.add(out);
+    }
   }
   if(out===undefined){
     if(/[A-Za-zÀ-ÿ]{3,}/.test(core)){
@@ -113,7 +128,7 @@ function tr(s){
   return m[1]+out+m[3];
 }
 const trf=(s,v)=>tr(s).replace(/\{(\w+)\}/g,(m,k)=>v&&v[k]!==undefined?v[k]:m);   // tr + {placeholders}
-if(LANG==='en'){
+if(LANG!=='fr'){
   window.__miss=MISS;
   const _ce=React.createElement;
   React.createElement=function(type,props,...kids){
@@ -203,7 +218,8 @@ Object.assign(EN,{
 "Streak":"Streak","3 victoires d'affilée":"3 victories in a row","Gagner sans utiliser de casque":"Win without using a helmet",
 "TheOne":"TheOne","dev":"dev","VICTOIRES":"WINS","☠ MODE HARDCORE":"☠ HARDCORE MODE","Victoire !":"Victory!","Peux-tu faire mieux ?":"Can you do better?",
 "TheOne — la course du sperme":"TheOne — the sperm race","S O I S   L E   P R E M I E R":"B E   T H E   F I R S T",
-"TheOne ∞ — {t} de survie 🏆":"TheOne ∞ — survived {t} 🏆","TheOne — Victoire avec {n} rivaux ! 🥚":"TheOne — Victory with {n} rivals! 🥚","TheOne — {n} rivaux éliminés":"TheOne — {n} rivals eliminated"
+"TheOne ∞ — {t} de survie 🏆":"TheOne ∞ — survived {t} 🏆","TheOne — Victoire avec {n} rivaux ! 🥚":"TheOne — Victory with {n} rivals! 🥚","TheOne — {n} rivaux éliminés":"TheOne — {n} rivals eliminated",
+"Deutsch":"Deutsch","Español":"Español","CONNEXION QUOTIDIENNE":"DAILY LOGIN","Jour {n}":"Day {n}","Série de {n} jours — reviens demain !":"{n}-day streak — come back tomorrow!","Reviens demain pour une meilleure récompense !":"Come back tomorrow for a better reward!"
 });
 EN_RULES.push(
  [/^Éliminer (\d+) rivaux en une partie$/,'Eliminate $1 rivals in one game'],
@@ -230,6 +246,123 @@ EN_RULES.push(
  [/^1 succès débloqué$/,'1 achievement unlocked'],
  [/^(\d+) succès débloqués?$/,'$1 achievements unlocked']
 );
+/* DE-ES-BEGIN — English text → [Deutsch, Español] */
+Object.assign(XL,{
+/* home */
+"BE THE FIRST":["SEI DER ERSTE","SÉ EL PRIMERO"],"Drag to steer — dodge, ram, survive":["Ziehen zum Steuern — ausweichen, rammen, überleben","Desliza para dirigir — esquiva, embiste, sobrevive"],
+"BEST SCORES":["BESTE PUNKTE","MEJORES PUNTUACIONES"],"RIVALS":["RIVALEN","RIVALES"],"No score yet — your turn to play!":["Noch kein Ergebnis — du bist dran!","Aún sin puntuación — ¡te toca jugar!"],
+"BEST TIME ∞":["BESTZEIT ∞","MEJOR TIEMPO ∞"],"BEST TIMES":["BESTZEITEN","MEJORES TIEMPOS"],"Infinite Mode":["Endlos-Modus","Modo Infinito"],"Infinite Mode ∞":["Endlos-Modus ∞","Modo Infinito ∞"],
+"PLAY":["SPIELEN","JUGAR"],"∞ Infinite":["∞ Endlos","∞ Infinito"],"Infinite":["Endlos","Infinito"],"Hardcore":["Hardcore","Hardcore"],"Hardcore Mode":["Hardcore-Modus","Modo Hardcore"],"Discreet Mode":["Diskreter Modus","Modo Discreto"],
+"Eliminated":["Ausgeschieden","Eliminado"],"RETRY":["NOCHMAL","REINTENTAR"],"← Main menu":["← Hauptmenü","← Menú principal"],"∞ Infinite Mode":["∞ Endlos-Modus","∞ Modo Infinito"],
+"Victory":["Sieg","Victoria"],"Victories":["Siege","Victorias"],"REPLAY":["NOCHMAL SPIELEN","VOLVER A JUGAR"],"RIVALS ELIMINATED":["RIVALEN AUSGESCHALTET","RIVALES ELIMINADOS"],"SURVIVAL TIME":["ÜBERLEBENSZEIT","TIEMPO DE SUPERVIVENCIA"],"TIME":["ZEIT","TIEMPO"],
+"Hardcore mode complete!":["Hardcore-Modus geschafft!","¡Modo Hardcore completado!"],"You reached the egg first!":["Du hast die Eizelle als Erster erreicht!","¡Has llegado primero al óvulo!"],"You reached the target first!":["Du hast das Ziel als Erster erreicht!","¡Has llegado primero a la meta!"],
+"Tap to continue":["Tippen zum Fortfahren","Toca para continuar"],"NEW REWARD":["NEUE BELOHNUNG","NUEVA RECOMPENSA"],"NEW REWARDS":["NEUE BELOHNUNGEN","NUEVAS RECOMPENSAS"],"CHALLENGE COMPLETE":["HERAUSFORDERUNG GESCHAFFT","DESAFÍO COMPLETADO"],"CHALLENGES COMPLETE":["HERAUSFORDERUNGEN GESCHAFFT","DESAFÍOS COMPLETADOS"],
+"Long-press the image to save — tap to close":["Bild lange drücken zum Speichern — tippen zum Schließen","Mantén pulsada la imagen para guardarla — toca para cerrar"],
+"Rotate your phone":["Dreh dein Handy","Gira tu teléfono"],"TheOne is played in portrait mode only.":["TheOne wird nur im Hochformat gespielt.","TheOne solo se juega en vertical."],"The game is paused.":["Das Spiel ist pausiert.","El juego está en pausa."],
+"Fertilization!":["Befruchtung!","¡Fecundación!"],"A new life begins…":["Ein neues Leben beginnt …","Comienza una nueva vida…"],"Tap to skip":["Tippen zum Überspringen","Toca para saltar"],
+/* zones */
+"Cervix":["Gebärmutterhals","Cuello uterino"],"Uterus":["Gebärmutter","Útero"],"Fallopian Tubes":["Eileiter","Trompas de Falopio"],"Final Approach":["Endspurt","Aproximación final"],"The Egg":["Die Eizelle","El óvulo"],
+"Corridor 1":["Korridor 1","Pasillo 1"],"Corridor 2":["Korridor 2","Pasillo 2"],"Corridor 3":["Korridor 3","Pasillo 3"],"Approach":["Anflug","Aproximación"],"The Target":["Das Ziel","La meta"],
+/* tutorial & pause */
+"Drag your finger":["Zieh deinen Finger","Desliza el dedo"],"Your sperm follows your finger: drag anywhere on the screen to steer it.":["Dein Spermium folgt deinem Finger: Zieh irgendwo auf dem Bildschirm, um es zu steuern.","Tu espermatozoide sigue tu dedo: desliza por cualquier parte de la pantalla para dirigirlo."],
+"Ram the rivals":["Ramm die Rivalen","Embiste a los rivales"],"Charge into the rivals rising up to eliminate them. If they reach the top of the screen, you lose a life!":["Renn in die aufsteigenden Rivalen, um sie auszuschalten. Erreichen sie den oberen Bildschirmrand, verlierst du ein Leben!","Embiste a los rivales que suben para eliminarlos. ¡Si llegan a la parte superior de la pantalla, pierdes una vida!"],
+"Avoid the defenses":["Weich den Abwehrkräften aus","Evita las defensas"],"White blood cells and antibodies cost you a life. Mucus slows you down. The helmet protects you from one hit.":["Weiße Blutkörperchen und Antikörper kosten dich ein Leben. Schleim bremst dich. Der Helm schützt dich vor einem Treffer.","Los glóbulos blancos y los anticuerpos te cuestan una vida. El moco te ralentiza. El casco te protege de un golpe."],
+"NEXT":["WEITER","SIGUIENTE"],"LET'S GO!":["LOS GEHT'S!","¡VAMOS!"],"Skip":["Überspringen","Saltar"],"Pause":["Pause","Pausa"],"Resume":["Fortsetzen","Continuar"],"Restart":["Neustart","Reiniciar"],"Quit game":["Spiel beenden","Salir de la partida"],
+/* info */
+"How to play":["So wird gespielt","Cómo jugar"],"Tap anywhere to close":["Irgendwo tippen zum Schließen","Toca en cualquier sitio para cerrar"],"Tap outside to close":["Außerhalb tippen zum Schließen","Toca fuera para cerrar"],
+"Reach the egg first":["Erreiche die Eizelle als Erster","Llega primero al óvulo"],"Reach the target first":["Erreiche das Ziel als Erster","Llega primero a la meta"],"Cross 5 zones without losing your 3 lives.":["Durchquere 5 Zonen, ohne deine 3 Leben zu verlieren.","Cruza 5 zonas sin perder tus 3 vidas."],
+"You play the white dot.":["Du spielst den weißen Punkt.","Tú juegas el punto blanco."],"You play the white sperm.":["Du spielst das weiße Spermium.","Tú juegas el espermatozoide blanco."],"IN 4 STEPS":["IN 4 SCHRITTEN","EN 4 PASOS"],
+"Your character follows your finger, anywhere on the screen.":["Deine Figur folgt deinem Finger, überall auf dem Bildschirm.","Tu personaje sigue tu dedo, en cualquier parte de la pantalla."],
+"Eliminate rivals":["Rivalen ausschalten","Elimina rivales"],"Ram rivals to eliminate them. If one reaches the top of the screen, you lose 1 life.":["Ramm Rivalen, um sie auszuschalten. Erreicht einer den oberen Rand, verlierst du 1 Leben.","Embiste a los rivales para eliminarlos. Si uno llega a la parte superior, pierdes 1 vida."],
+"White blood cells and antibodies cost you 1 life. Mucus slows you down.":["Weiße Blutkörperchen und Antikörper kosten dich 1 Leben. Schleim bremst dich.","Los glóbulos blancos y los anticuerpos te cuestan 1 vida. El moco te ralentiza."],
+"Enter the egg":["Dring in die Eizelle ein","Entra en el óvulo"],"In the last zone, go through the rotating opening. Touching the membrane costs 1 life.":["Flieg in der letzten Zone durch die rotierende Öffnung. Die Membran zu berühren kostet 1 Leben.","En la última zona, pasa por la abertura giratoria. Tocar la membrana cuesta 1 vida."],
+"WHAT YOU WILL MEET":["WAS DIR BEGEGNET","LO QUE ENCONTRARÁS"],"Rival":["Rivale","Rival"],"ELIMINATE":["AUSSCHALTEN","ELIMINAR"],"It rises toward the top: ram it before it gets out.":["Er steigt nach oben: Ramm ihn, bevor er entkommt.","Sube hacia arriba: embístelo antes de que escape."],
+"Mucus":["Schleim","Moco"],"SLOWS YOU":["BREMST DICH","TE RALENTIZA"],"It slows you for 1.4 s. It disappears when you touch it.":["Er bremst dich für 1,4 s. Er verschwindet, wenn du ihn berührst.","Te ralentiza durante 1,4 s. Desaparece al tocarlo."],
+"White blood cell":["Weißes Blutkörperchen","Glóbulo blanco"],"White blood cells":["Weiße Blutkörperchen","Glóbulos blancos"],"−1 LIFE":["−1 LEBEN","−1 VIDA"],"It slowly follows you. Keep your distance.":["Es folgt dir langsam. Halt Abstand.","Te sigue despacio. Mantén la distancia."],
+"Antibody":["Antikörper","Anticuerpo"],"It rushes at you: change direction at the last moment.":["Er rast auf dich zu: Wechsle im letzten Moment die Richtung.","Se lanza contra ti: cambia de dirección en el último momento."],
+"Helmet":["Helm","Casco"],"8 S SHIELD":["8 S SCHILD","ESCUDO 8 S"],"Pick it up: it absorbs the next hit. Not available in Hardcore mode.":["Sammle ihn ein: Er fängt den nächsten Treffer ab. Im Hardcore-Modus nicht verfügbar.","Recógelo: absorbe el siguiente golpe. No disponible en modo Hardcore."],
+"YOUR JOURNEY":["DEINE REISE","TU VIAJE"],"Rivals and mucus":["Rivalen und Schleim","Rivales y moco"],"Everything at once, faster":["Alles auf einmal, schneller","Todo a la vez, más rápido"],"Find the egg's opening":["Finde die Öffnung der Eizelle","Encuentra la abertura del óvulo"],
+"GAME MODES":["SPIELMODI","MODOS DE JUEGO"],"Unlocked after your first victory. You stay in the last zone, which gets harder and harder. Your record is your survival time.":["Nach deinem ersten Sieg freigeschaltet. Du bleibst in der letzten Zone, die immer schwerer wird. Dein Rekord ist deine Überlebenszeit.","Se desbloquea tras tu primera victoria. Te quedas en la última zona, cada vez más difícil. Tu récord es tu tiempo de supervivencia."],
+"One life and no helmet. Available from the start.":["Ein Leben und kein Helm. Von Anfang an verfügbar.","Una vida y sin casco. Disponible desde el principio."],
+"Eye button on the home screen: hides the tails and makes zone names neutral.":["Augen-Button auf dem Startbildschirm: Blendet die Schwänze aus und macht Zonennamen neutral.","Botón del ojo en la pantalla de inicio: oculta las colas y vuelve neutros los nombres de las zonas."],
+"EARN mL":["mL VERDIENEN","GANAR mL"],"Every game earns mL:":["Jede Partie bringt mL:","Cada partida da mL:"],"1 per 10 rivals":["1 pro 10 Rivalen","1 por cada 10 rivales"],"eliminated and":["ausgeschaltet und","eliminados y"],"15 for a win":["15 für einen Sieg","15 por una victoria"],
+". Achievements and challenges earn some too. Spend them in the shop to unlock new skins.":[". Auch Erfolge und Herausforderungen bringen welche. Gib sie im Shop aus, um neue Skins freizuschalten.",". Los logros y los desafíos también dan. Gástalos en la tienda para desbloquear nuevos skins."],
+/* stats */
+"Statistics":["Statistiken","Estadísticas"],"Saved on this device":["Auf diesem Gerät gespeichert","Guardado en este dispositivo"],"GAMES PLAYED":["GESPIELTE PARTIEN","PARTIDAS JUGADAS"],"GAME PLAYED":["GESPIELTE PARTIE","PARTIDA JUGADA"],
+"win":["Sieg","victoria"],"wins":["Siege","victorias"],"loss":["Niederlage","derrota"],"losses":["Niederlagen","derrotas"],"Play a first game to fill in your statistics.":["Spiel eine erste Partie, um deine Statistiken zu füllen.","Juega una primera partida para rellenar tus estadísticas."],
+"RECORDS":["REKORDE","RÉCORDS"],"BEST SCORE":["BESTE PUNKTZAHL","MEJOR PUNTUACIÓN"],"rivals in one game":["Rivalen in einer Partie","rivales en una partida"],"FASTEST WIN":["SCHNELLSTER SIEG","VICTORIA MÁS RÁPIDA"],"best time, normal mode":["Bestzeit, Normalmodus","mejor tiempo, modo normal"],
+"INFINITE RECORD":["ENDLOS-REKORD","RÉCORD INFINITO"],"survival time":["Überlebenszeit","tiempo de supervivencia"],"BEST STREAK":["BESTE SERIE","MEJOR RACHA"],"wins in a row":["Siege in Folge","victorias seguidas"],"OVERALL":["INSGESAMT","EN TOTAL"],
+"HELMETS COLLECTED":["GESAMMELTE HELME","CASCOS RECOGIDOS"],"That is an average of":["Das sind im Durchschnitt","Es un promedio de"],"rivals eliminated per game.":["ausgeschaltete Rivalen pro Partie.","rivales eliminados por partida."],"PLAY TIME":["SPIELZEIT","TIEMPO DE JUEGO"],"TOTAL":["GESAMT","TOTAL"],"Normal":["Normal","Normal"]
+});
+Object.assign(XL,{
+/* challenges & rewards */
+"Challenges":["Herausforderungen","Desafíos"],"New challenges every day":["Jeden Tag neue Herausforderungen","Nuevos desafíos cada día"],"New challenges every Monday":["Jeden Montag neue Herausforderungen","Nuevos desafíos cada lunes"],"Daily":["Täglich","Diarios"],"Weekly":["Wöchentlich","Semanales"],
+"All challenges complete!":["Alle Herausforderungen geschafft!","¡Todos los desafíos completados!"],"of":["von","de"],"Renews in":["Erneuert sich in","Se renueva en"],"WEEKLY":["WÖCHENTLICH","SEMANAL"],"Reward earned":["Belohnung erhalten","Recompensa obtenida"],
+"Must be done in a single game":["In einer einzigen Partie zu schaffen","Hay que lograrlo en una sola partida"],"Progress":["Fortschritt","Progreso"],"Rewards":["Belohnungen","Recompensas"],"Achievements to unlock":["Freizuschaltende Erfolge","Logros por desbloquear"],"already earned:":["bereits verdient:","ya ganados:"],
+"Unlocked":["Freigeschaltet","Desbloqueado"],"All":["Alle","Todos"],"Easy":["Leicht","Fácil"],"Medium":["Mittel","Medio"],"Hard":["Schwer","Difícil"],"Extreme":["Extrem","Extremo"],"EASY":["LEICHT","FÁCIL"],"MEDIUM":["MITTEL","MEDIO"],"HARD":["SCHWER","DIFÍCIL"],"EXTREME":["EXTREM","EXTREMO"],"In reserve":["In Reserve","En reserva"],
+"achievement unlocked":["Erfolg freigeschaltet","logro desbloqueado"],"achievements unlocked":["Erfolge freigeschaltet","logros desbloqueados"],
+/* shop */
+"Shop":["Shop","Tienda"],"Skins":["Skins","Skins"],"Trails":["Spuren","Estelas"],"Owned":["Im Besitz","Poseídos"],"To unlock":["Freizuschalten","Por desbloquear"],"Common":["Gewöhnlich","Común"],"Rare":["Selten","Raro"],"Epic":["Episch","Épico"],"Legendary":["Legendär","Legendario"],
+"EQUIPPED":["AUSGERÜSTET","EQUIPADO"],"OWNED":["IM BESITZ","POSEÍDO"],"Equipped":["Ausgerüstet","Equipado"],"Equip":["Ausrüsten","Equipar"],"you need {n} more mL":["dir fehlen {n} mL","te faltan {n} mL"],"{a} / {b} skins unlocked":["{a} / {b} Skins freigeschaltet","{a} / {b} skins desbloqueados"],
+"Animate your victory screen":["Animiere deinen Siegesbildschirm","Anima tu pantalla de victoria"],"A wake behind you":["Eine Spur hinter dir","Una estela tras de ti"],"No skins owned yet.":["Noch keine Skins im Besitz.","Aún no tienes skins."],"Nothing owned yet.":["Noch nichts im Besitz.","Aún no tienes nada."],
+"You have unlocked everything, well done!":["Du hast alles freigeschaltet, bravo!","¡Lo has desbloqueado todo, enhorabuena!"],"You own every skin, well done!":["Du besitzt alle Skins, bravo!","¡Tienes todos los skins, enhorabuena!"],
+"SKIN":["SKIN","SKIN"],"Classic":["Klassisch","Clásico"],"Rosé":["Rosé","Rosado"],"Mint":["Minze","Menta"],"Golden":["Golden","Dorado"],"Ninja":["Ninja","Ninja"],"Ghost":["Geist","Fantasma"],"Neon":["Neon","Neón"],"Rainbow":["Regenbogen","Arcoíris"],"Ice":["Eis","Hielo"],"Fire":["Feuer","Fuego"],"Diamond":["Diamant","Diamante"],
+"Pearl":["Perle","Perla"],"Toxic":["Giftig","Tóxico"],"Chrome":["Chrom","Cromo"],"Aurora":["Aurora","Aurora"],"Galaxy":["Galaxie","Galaxia"],"Royal":["Königlich","Real"],"Holographic":["Holografisch","Holográfico"],
+"Skin's own":["Die des Skins","La del skin"],"None":["Keine","Ninguna"],"Bubbles":["Blasen","Burbujas"],"Hearts":["Herzen","Corazones"],"Petals":["Blütenblätter","Pétalos"],"Confetti":["Konfetti","Confeti"],"Stars":["Sterne","Estrellas"],"Comet":["Komet","Cometa"],"Bling":["Bling","Bling"],"Mute sound":["Ton aus","Silenciar sonido"],"Mutes music and sound effects":["Schaltet Musik und Soundeffekte stumm","Silencia la música y los efectos de sonido"],
+"Crown":["Krone","Corona"],"Fireworks":["Feuerwerk","Fuegos artificiales"],"Rain of hearts":["Herzregen","Lluvia de corazones"],"Rain of gold":["Goldregen","Lluvia de oro"],"Cosmos":["Kosmos","Cosmos"],
+/* settings */
+"Settings":["Einstellungen","Ajustes"],"LANGUAGE":["SPRACHE","IDIOMA"],"Français":["Français","Français"],"English":["English","English"],"Deutsch":["Deutsch","Deutsch"],"Español":["Español","Español"],"SOUND":["TON","SONIDO"],"Music":["Musik","Música"],"Sound effects":["Soundeffekte","Efectos de sonido"],"Vibration":["Vibration","Vibración"],
+"Haptic feedback when you hit an obstacle":["Haptisches Feedback, wenn du ein Hindernis berührst","Respuesta háptica al chocar con un obstáculo"],"CONTROLS":["STEUERUNG","CONTROLES"],"Small":["Klein","Pequeño"],"Large":["Groß","Grande"],
+"Finger offset: places the sperm above your finger so it stays visible.":["Fingerversatz: Setzt das Spermium über deinen Finger, damit es sichtbar bleibt.","Desfase del dedo: coloca el espermatozoide por encima de tu dedo para que siga visible."],
+"GRAPHICS QUALITY":["GRAFIKQUALITÄT","CALIDAD GRÁFICA"],"Auto":["Auto","Auto"],"High":["Hoch","Alta"],"Saver":["Sparsam","Económica"],"Auto lightens the rendering if your phone struggles. Saver turns off glows, particles and trails.":["Auto vereinfacht die Darstellung, wenn dein Handy Probleme hat. Sparsam schaltet Leuchteffekte, Partikel und Spuren ab.","Auto aligera el renderizado si tu teléfono va justo. Económica desactiva brillos, partículas y estelas."],
+"DATA":["DATEN","DATOS"],"Export":["Exportieren","Exportar"],"Import file":["Datei importieren","Importar archivo"],"Paste":["Einfügen","Pegar"],"Save copied to the clipboard.":["Spielstand in die Zwischenablage kopiert.","Partida guardada copiada al portapapeles."],"Save file downloaded.":["Sicherungsdatei heruntergeladen.","Archivo de copia descargado."],
+"Invalid save.":["Ungültiger Spielstand.","Copia no válida."],"Replace your current progress with this save?":["Deinen aktuellen Fortschritt durch diesen Spielstand ersetzen?","¿Reemplazar tu progreso actual por esta copia?"],"Paste your save here":["Füge hier deinen Spielstand ein","Pega aquí tu copia"],
+"Your progress (scores, mL, skins, achievements) is stored only on this device: export it so you don't lose it.":["Dein Fortschritt (Punkte, mL, Skins, Erfolge) wird nur auf diesem Gerät gespeichert: Exportiere ihn, damit du ihn nicht verlierst.","Tu progreso (puntuaciones, mL, skins, logros) se guarda solo en este dispositivo: expórtalo para no perderlo."]
+});
+/* DE-ES-PART2 */
+Object.assign(XL,{
+/* achievements */
+"First steps":["Erste Schritte","Primeros pasos"],"Play 1 game":["Spiel 1 Partie","Juega 1 partida"],"First victim":["Erstes Opfer","Primera víctima"],"Eliminate 10 rivals in total":["Schalte insgesamt 10 Rivalen aus","Elimina 10 rivales en total"],"Crash test":["Crashtest","Prueba de choque"],"Die 5 times":["Stirb 5 Mal","Muere 5 veces"],
+"Helmeted":["Behelmt","Con casco"],"Pick up a helmet":["Sammle einen Helm ein","Recoge un casco"],"Persistent":["Hartnäckig","Persistente"],"Play 10 games":["Spiel 10 Partien","Juega 10 partidas"],"Warm-up":["Aufwärmen","Calentamiento"],"5 minutes of total play time":["5 Minuten Gesamtspielzeit","5 minutos de juego acumulado"],
+"The One":["The One","The One"],"First victory":["Erster Sieg","Primera victoria"],"Tactical":["Taktisch","Táctico"],"Pick up 25 helmets":["Sammle 25 Helme ein","Recoge 25 cascos"],"Executioner":["Henker","Verdugo"],"1000 rivals eliminated":["1000 Rivalen ausgeschaltet","1000 rivales eliminados"],
+"Infinite apprentice":["Endlos-Lehrling","Aprendiz infinito"],"2 min in infinite mode":["2 Min im Endlos-Modus","2 min en modo infinito"],"Marathoner":["Marathonläufer","Maratoniano"],"30 min of total play time":["30 Min Gesamtspielzeit","30 min de juego acumulado"],
+"Legend":["Legende","Leyenda"],"10 victories":["10 Siege","10 victorias"],"Prime target":["Hauptziel","Objetivo prioritario"],"2500 rivals eliminated":["2500 Rivalen ausgeschaltet","2500 rivales eliminados"],"Endurance":["Ausdauer","Resistencia"],"1 h of total play time":["1 Std Gesamtspielzeit","1 h de juego acumulado"],
+"Infinite master":["Endlos-Meister","Maestro infinito"],"3 min in infinite mode":["3 Min im Endlos-Modus","3 min en modo infinito"],"Speedrun":["Speedrun","Speedrun"],"Win in under 2:50":["Gewinne in unter 2:50","Gana en menos de 2:50"],"Bare hands":["Mit bloßen Händen","A pelo"],
+"Win without picking up a helmet (outside hardcore mode)":["Gewinne, ohne einen Helm einzusammeln (außer im Hardcore-Modus)","Gana sin recoger ningún casco (fuera del modo hardcore)"],"Flawless":["Makellos","Impecable"],"Win without losing a life":["Gewinne, ohne ein Leben zu verlieren","Gana sin perder ninguna vida"],
+"Massacre":["Massaker","Masacre"],"10000 rivals eliminated":["10000 Rivalen ausgeschaltet","10000 rivales eliminados"],"The Chosen One":["Der Auserwählte","El Elegido"],"50 victories":["50 Siege","50 victorias"],"Infinite legend":["Endlos-Legende","Leyenda infinita"],"5 min in infinite mode":["5 Min im Endlos-Modus","5 min en modo infinito"],
+"Streak":["Serie","Racha"],"3 victories in a row":["3 Siege in Folge","3 victorias seguidas"],"Win without using a helmet":["Gewinne, ohne einen Helm zu benutzen","Gana sin usar casco"],
+"TheOne":["TheOne","TheOne"],"dev":["dev","dev"],"WINS":["SIEGE","VICTORIAS"],"☠ HARDCORE MODE":["☠ HARDCORE-MODUS","☠ MODO HARDCORE"],"Victory!":["Sieg!","¡Victoria!"],"Can you do better?":["Kannst du es besser?","¿Puedes hacerlo mejor?"],
+"TheOne — the sperm race":["TheOne — das Spermien-Rennen","TheOne — la carrera de los espermatozoides"],"B E   T H E   F I R S T":["S E I   D E R   E R S T E","S É   E L   P R I M E R O"],
+"TheOne ∞ — survived {t} 🏆":["TheOne ∞ — {t} überlebt 🏆","TheOne ∞ — he sobrevivido {t} 🏆"],"TheOne — Victory with {n} rivals! 🥚":["TheOne — Sieg mit {n} Rivalen! 🥚","TheOne — ¡Victoria con {n} rivales! 🥚"],"TheOne — {n} rivals eliminated":["TheOne — {n} Rivalen ausgeschaltet","TheOne — {n} rivales eliminados"],
+/* daily login */
+"DAILY LOGIN":["TÄGLICHE ANMELDUNG","CONEXIÓN DIARIA"],"Day {n}":["Tag {n}","Día {n}"],"{n}-day streak — come back tomorrow!":["{n} Tage in Folge — komm morgen wieder!","Racha de {n} días — ¡vuelve mañana!"],"Come back tomorrow for a better reward!":["Komm morgen wieder für eine bessere Belohnung!","¡Vuelve mañana para una mejor recompensa!"]
+});
+XL_RULES.push(
+ [/^Éliminer (\d+) rivaux en une partie$/,'Schalte $1 Rivalen in einer Partie aus','Elimina $1 rivales en una partida'],
+ [/^Ramasser (\d+) casques aujourd'hui$/,'Sammle heute $1 Helme ein','Recoge $1 cascos hoy'],
+ [/^Jouer (\d+) min aujourd'hui$/,'Spiel heute $1 Min','Juega $1 min hoy'],
+ [/^Éliminer (\d+) rivaux aujourd'hui$/,'Schalte heute $1 Rivalen aus','Elimina $1 rivales hoy'],
+ [/^Atteindre la zone (\d+) en une partie$/,'Erreiche Zone $1 in einer Partie','Alcanza la zona $1 en una partida'],
+ [/^Gagner 1 partie aujourd'hui$/,'Gewinne heute 1 Partie','Gana 1 partida hoy'],
+ [/^Gagner (\d+) parties aujourd'hui$/,'Gewinne heute $1 Partien','Gana $1 partidas hoy'],
+ [/^Survivre (\d+)s en mode infini$/,'Überlebe $1 s im Endlos-Modus','Sobrevive $1 s en modo infinito'],
+ [/^Survivre (\d+) min en mode infini$/,'Überlebe $1 Min im Endlos-Modus','Sobrevive $1 min en modo infinito'],
+ [/^Gagner en moins de (\d+:\d+)$/,'Gewinne in unter $1','Gana en menos de $1'],
+ [/^Éliminer (\d+) rivaux cette semaine$/,'Schalte diese Woche $1 Rivalen aus','Elimina $1 rivales esta semana'],
+ [/^Ramasser (\d+) casques cette semaine$/,'Sammle diese Woche $1 Helme ein','Recoge $1 cascos esta semana'],
+ [/^Jouer (\d+) min cette semaine$/,'Spiel diese Woche $1 Min','Juega $1 min esta semana'],
+ [/^Gagner (\d+) parties cette semaine$/,'Gewinne diese Woche $1 Partien','Gana $1 partidas esta semana'],
+ [/^Atteindre (\d+) fois la zone 5$/,'Erreiche $1 Mal Zone 5','Alcanza $1 veces la zona 5'],
+ [/^ZONE (\d+) \/ (\d+)$/,'ZONE $1 / $2','ZONA $1 / $2'],
+ [/^1 défi à réussir$/,'1 Herausforderung offen','1 desafío por cumplir'],
+ [/^(\d+) défis à réussir$/,'$1 Herausforderungen offen','$1 desafíos por cumplir'],
+ [/^Record (\S+) · cible (\S+)$/,'Rekord $1 · Ziel $2','Récord $1 · meta $2'],
+ [/^Cible : (\S+)$/,'Ziel: $1','Meta: $1'],
+ [/^(\d+) j (\d+) h$/,'$1 T $2 Std','$1 d $2 h'],
+ [/^1 succès débloqué$/,'1 Erfolg freigeschaltet','1 logro desbloqueado'],
+ [/^(\d+) succès débloqués?$/,'$1 Erfolge freigeschaltet','$1 logros desbloqueados']
+);
+/* DE-ES-END */
 /* EN-END */
 
 /* ── Audio & Vibration (Howler.js) ─────────────────────────────── */
@@ -395,6 +528,21 @@ function saveOwned(set){localStorage.setItem(OWNED_KEY,JSON.stringify([...set]))
 function loadSkin(){return localStorage.getItem(SKIN_KEY)||'classic';}
 function saveSkin(id){localStorage.setItem(SKIN_KEY,id);return id;}
 function getSkin(id){return SKINS.find(s=>s.id===id)||SKINS[0];}
+
+/* ── Daily login streak: one reward per day, growing over a 7-day cycle ── */
+const LOGIN_KEY='theone_login';
+const LOGIN_REWARDS=[10,15,20,25,30,40,60];
+function loginTick(){
+  let o=null;try{o=JSON.parse(localStorage.getItem(LOGIN_KEY)||'null');}catch(e){}
+  const d=new Date(),today=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+  if(o&&o.last===today)return{streak:o.streak,reward:0};
+  d.setDate(d.getDate()-1);
+  const yest=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+  const streak=(o&&o.last===yest)?o.streak+1:1,reward=LOGIN_REWARDS[(streak-1)%7];
+  try{localStorage.setItem(LOGIN_KEY,JSON.stringify({last:today,streak}));localStorage.setItem('theone_ml',String(Number(localStorage.getItem('theone_ml')||'0')+reward));}catch(e){}
+  return{streak,reward};
+}
+const LOGIN0=loginTick();   // runs once per page load, before the app reads its mL
 
 /* ── Daily challenges ─────────────────────────────────────── */
 const DAILY_KEY='theone_daily';
@@ -1323,6 +1471,17 @@ const Pill=React.memo(function Pill({x,y,w,h,fill,stroke,glow}){
     <rect x={x+0.5} y={y+0.5} width={w-1} height={h-1} rx={(h-1)/2} fill="none" stroke={stroke||'url(#glassStroke)'} strokeWidth="1"/>
   </g>);
 });
+/* Outline of an 8-tooth gear (radius ≈ 9) used by the settings button */
+const GEAR_D=(()=>{
+  const n=8,st=Math.PI*2/n,ro=9.2,ri=6.9,P=(r,a)=>(r*Math.sin(a)).toFixed(2)+' '+(-r*Math.cos(a)).toFixed(2);
+  let d='';
+  for(let i=0;i<n;i++){
+    const c=i*st;
+    d+=(i?'A '+ri+' '+ri+' 0 0 1 ':'M ')+P(ri,c-0.36*st)+' L '+P(ro,c-0.2*st)+' L '+P(ro,c+0.2*st)+' L '+P(ri,c+0.36*st)+' ';
+  }
+  return d+'A '+ri+' '+ri+' 0 0 1 '+P(ri,-0.36*st)+' Z';
+})();
+const ICON_C='rgba(255,235,225,0.92)';
 function IconBtn({cx,cy,onClick,active,children}){
   return(
     <g onClick={onClick} style={{cursor:'pointer'}}>
@@ -1939,11 +2098,11 @@ function RewardsModal({onClose,SAT,SAB,mL,achSet,stats,bestInf}){
 
 /* ── Settings window ── */
 const OFFSETS=[[0,'Aucun'],[28,'Petit'],[48,'Moyen'],[68,'Grand']];
-function Slider({value,onChange,label}){
+function Slider({value,onChange,label,disabled}){
   return(
-    <div style={{...card,padding:'12px 14px',marginBottom:9}}>
+    <div style={{...card,padding:'12px 14px',marginBottom:9,opacity:disabled?0.4:1,transition:'opacity .15s'}}>
       <div style={{display:'flex',justifyContent:'space-between',fontSize:13,fontWeight:700}}><span>{label}</span><span style={{color:'rgba(255,225,215,0.6)'}}>{Math.round(value*100)}%</span></div>
-      <input type="range" min="0" max="100" value={Math.round(value*100)} onChange={e=>onChange(e.target.value/100)} style={{width:'100%',marginTop:10,accentColor:'#ff6a8a',display:'block'}}/>
+      <input type="range" min="0" max="100" value={Math.round(value*100)} disabled={disabled} onChange={e=>onChange(e.target.value/100)} style={{width:'100%',marginTop:10,accentColor:disabled?'#8a7a80':'#ff6a8a',display:'block',filter:disabled?'grayscale(1)':'none',pointerEvents:disabled?'none':'auto'}}/>
     </div>
   );
 }
@@ -1989,12 +2148,12 @@ function SettingsModal({onClose,SAT,SAB,onChange,onMute}){
     <ModalShell onClose={onClose} title={tr('Réglages')} sub={tr('Touche en dehors pour fermer')} SAT={SAT} SAB={SAB}>
       <div onClick={stop}>
         <Sec top={4}>{tr('LANGUE')}</Sec>
-        <Seg value={SET.lang} onChange={l=>{if(l===SET.lang)return;SET.lang=l;saveSettings();location.reload();}} items={[['fr','Français'],['en','English']]}/>
+        <Seg value={SET.lang} onChange={l=>{if(l===SET.lang)return;SET.lang=l;saveSettings();location.reload();}} items={[['fr','Français'],['en','English'],['de','Deutsch'],['es','Español']]}/>
 
         <Sec>{tr('SON')}</Sec>
         <Toggle label={tr('Couper le son')} sub={tr('Coupe la musique et les effets')} on={_muted} onChange={v=>{_muted=v;try{localStorage.setItem('theone_muted',v?'1':'0');}catch(e){}if(window.Howler)Howler.mute(v);force();if(onMute)onMute(v);}}/>
-        <Slider label={tr('Musique')} value={SET.music} onChange={v=>upd({music:v},applyAudioSettings)}/>
-        <Slider label={tr('Effets sonores')} value={SET.sfx} onChange={v=>upd({sfx:v})}/>
+        <Slider label={tr('Musique')} disabled={_muted} value={SET.music} onChange={v=>upd({music:v},applyAudioSettings)}/>
+        <Slider label={tr('Effets sonores')} disabled={_muted} value={SET.sfx} onChange={v=>upd({sfx:v})}/>
         <Toggle label={tr('Vibrations')} sub={tr('Retour haptique quand tu touches un obstacle')} on={SET.vib} onChange={v=>{upd({vib:v});if(v)vibrate(30);}}/>
 
         <Sec>{tr('COMMANDES')}</Sec>
@@ -2132,6 +2291,7 @@ function Game(){
   const [discreteMode,setDiscreteMode]=React.useState(()=>localStorage.getItem('theone_discrete')==='1');
   DISCRETE_MODE=discreteMode;
   const [muted,setMuted]=React.useState(()=>localStorage.getItem('theone_muted')==='1');
+  const [loginInfo,setLoginInfo]=React.useState(LOGIN0.reward>0?LOGIN0:null);
   const [shareImg,setShareImg]=React.useState(null);
   const [showInfo,setShowInfo]=React.useState(false);
   const [showSettings,setShowSettings]=React.useState(false);
@@ -2853,24 +3013,33 @@ function Game(){
 
             {/* Right column: info / discrete / mute */}
             <IconBtn cx={GW-28} cy={32+SAT} onClick={()=>setShowInfo(true)}>
-              <circle cx={GW-28} cy={26.5+SAT} r="1.6" fill="rgba(255,235,225,0.9)"/>
-              <rect x={GW-29.3} y={30+SAT} width="2.6" height="9" rx="1.3" fill="rgba(255,235,225,0.9)"/>
+              <g transform={`translate(${GW-28},${32+SAT})`} fill="none" stroke={ICON_C} strokeWidth="1.7" strokeLinecap="round">
+                <circle r="8.6"/>
+                <line x1="0" y1="-0.6" x2="0" y2="4.6" strokeWidth="2.1"/>
+                <circle cx="0" cy="-4" r="1.2" fill={ICON_C} stroke="none"/>
+              </g>
             </IconBtn>
             <IconBtn cx={GW-28} cy={70+SAT} active={discreteMode} onClick={()=>{const d=!discreteMode;setDiscreteMode(d);localStorage.setItem('theone_discrete',d?'1':'0');}}>
-              <path d={`M ${GW-37} ${70+SAT} Q ${GW-28} ${62+SAT} ${GW-19} ${70+SAT} Q ${GW-28} ${78+SAT} ${GW-37} ${70+SAT} Z`} fill="none" stroke={discreteMode?'rgba(150,210,255,0.95)':'rgba(255,235,225,0.9)'} strokeWidth="1.5" strokeLinejoin="round"/>
-              <circle cx={GW-28} cy={70+SAT} r="2.4" fill={discreteMode?'rgba(150,210,255,0.95)':'rgba(255,235,225,0.9)'}/>
-              {discreteMode&&<line x1={GW-36} y1={62+SAT} x2={GW-20} y2={78+SAT} stroke="rgba(150,210,255,0.95)" strokeWidth="1.6" strokeLinecap="round"/>}
+              {(()=>{const c=discreteMode?'rgba(150,210,255,0.98)':ICON_C;return(
+              <g transform={`translate(${GW-28},${70+SAT})`} fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M -10 0 Q 0 -9.5 10 0 Q 0 9.5 -10 0 Z"/>
+                <circle r="3.6"/>
+                <circle r="1.3" fill={c} stroke="none"/>
+                {discreteMode&&<g><line x1="-8" y1="8" x2="8" y2="-8" stroke="#1a0510" strokeWidth="4.6"/><line x1="-8" y1="8" x2="8" y2="-8"/></g>}
+              </g>);})()}
             </IconBtn>
             <IconBtn cx={GW-28} cy={108+SAT} onClick={()=>{_muted=!_muted;localStorage.setItem('theone_muted',_muted?'1':'0');Howler.mute(_muted);setMuted(_muted);}}>
-              <path d={`M ${GW-36} ${105+SAT} L ${GW-32.5} ${105+SAT} L ${GW-28} ${101+SAT} L ${GW-28} ${115+SAT} L ${GW-32.5} ${111+SAT} L ${GW-36} ${111+SAT} Z`} fill="rgba(255,235,225,0.9)" strokeLinejoin="round"/>
-              {muted?(
-                <path d={`M ${GW-25} ${105+SAT} L ${GW-19.5} ${111+SAT} M ${GW-19.5} ${105+SAT} L ${GW-25} ${111+SAT}`} stroke="#ff7a8a" strokeWidth="1.6" strokeLinecap="round"/>
-              ):(
-                <g fill="none" stroke="rgba(255,235,225,0.9)" strokeWidth="1.5" strokeLinecap="round">
-                  <path d={`M ${GW-25} ${105+SAT} Q ${GW-22.5} ${108+SAT} ${GW-25} ${111+SAT}`}/>
-                  <path d={`M ${GW-22} ${102.5+SAT} Q ${GW-17.5} ${108+SAT} ${GW-22} ${113.5+SAT}`}/>
-                </g>
-              )}
+              <g transform={`translate(${GW-28},${108+SAT})`} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M -9.5 -3.2 L -5.2 -3.2 L 0 -7.6 L 0 7.6 L -5.2 3.2 L -9.5 3.2 Z" fill={ICON_C} stroke={ICON_C} strokeWidth="1.2"/>
+                {muted?(
+                  <path d="M 3.6 -3.6 L 9.6 3.6 M 9.6 -3.6 L 3.6 3.6" fill="none" stroke="#ff7a8a" strokeWidth="1.9"/>
+                ):(
+                  <g fill="none" stroke={ICON_C} strokeWidth="1.7">
+                    <path d="M 3.6 -3.4 Q 6 0 3.6 3.4"/>
+                    <path d="M 6.4 -6.6 Q 11.4 0 6.4 6.6"/>
+                  </g>
+                )}
+              </g>
             </IconBtn>
             {/* Left column: stats / achievements / daily / shop */}
             <IconBtn cx={28} cy={32+SAT} onClick={()=>setShowStats(true)}>
@@ -2898,9 +3067,9 @@ function Game(){
             </IconBtn>);})()}
             {/* Settings (gear) under the mute button */}
             <IconBtn cx={GW-28} cy={146+SAT} onClick={()=>setShowSettings(true)}>
-              <g transform={`translate(${GW-28},${146+SAT})`} fill="none" stroke="rgba(255,235,225,0.9)" strokeWidth="1.5" strokeLinecap="round">
-                <circle r="3.1"/><circle r="6.4"/>
-                {[0,45,90,135,180,225,270,315].map(a=><line key={a} x1="0" y1="-6.4" x2="0" y2="-9" transform={`rotate(${a})`} strokeWidth="2.4"/>)}
+              <g transform={`translate(${GW-28},${146+SAT})`} fill="none" stroke={ICON_C} strokeWidth="1.6" strokeLinejoin="round">
+                <path d={GEAR_D}/>
+                <circle r="2.8"/>
               </g>
             </IconBtn>
             <IconBtn cx={28} cy={146+SAT} onClick={()=>setShowShop(true)}>
@@ -2951,9 +3120,15 @@ function Game(){
             {/* Play button */}
             <g onClick={()=>startGame(false)} style={{cursor:'pointer'}}>
               <Pill x={GW/2-88} y={LY.playY} w={176} h={56} fill="url(#btnPrimary)" stroke="rgba(255,255,255,0.35)" glow="#ff6a8a"/>
-              <path d={`M ${GW/2-58} ${LY.playY+21} L ${GW/2-58} ${LY.playY+35} L ${GW/2-46.5} ${LY.playY+28} Z`} fill="#fff" strokeLinejoin="round" stroke="#fff" strokeWidth="2"/>
-              <text x={GW/2+9} y={LY.playY+36} textAnchor="middle" fill="#fff" fontSize="21"
-                fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial" letterSpacing="3">JOUER</text>
+              {(()=>{
+                // triangle + label are centred as a group; longer words (SPIELEN, JUGAR) get a smaller font so they never touch the triangle
+                const lb=tr('JOUER'),n=lb.length,fs=n<=5?21:n<=6?19:17,ls=n<=5?3:2;
+                const tw=n*(fs*0.7+ls),x0=GW/2-(tw+26)/2;
+                return<g>
+                  <path d={`M ${x0} ${LY.playY+21} L ${x0} ${LY.playY+35} L ${x0+11.5} ${LY.playY+28} Z`} fill="#fff" strokeLinejoin="round" stroke="#fff" strokeWidth="2"/>
+                  <text x={x0+26} y={LY.playY+36} textAnchor="start" fill="#fff" fontSize={fs}
+                    fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial" letterSpacing={ls}>{lb}</text>
+                </g>;})()}
             </g>
             {/* Secondary mode buttons */}
             {infiniteUnlocked?(
@@ -3154,6 +3329,34 @@ function Game(){
           );
         })()}
 
+
+        {/* Daily login reward */}
+        {screen==='start'&&loginInfo&&!dailyToast&&!achToast&&(()=>{
+          const day=(loginInfo.streak-1)%7,cy=GH*0.4;
+          return(
+            <g onClick={()=>setLoginInfo(null)} style={{cursor:'pointer'}}>
+              <rect x={-ox} y={-oy} width={vbW} height={vbH} fill="rgba(8,2,10,0.9)"/>
+              <text x={GW/2} y={cy-96} textAnchor="middle" fill="url(#goldText)" fontSize="11.5" letterSpacing="3" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">CONNEXION QUOTIDIENNE</text>
+              <circle cx={GW/2} cy={cy-38} r="46" fill="url(#glowGold)" opacity="0.5"/>
+              <path d={`M ${GW/2} ${cy-72} C ${GW/2+22} ${cy-50} ${GW/2+26} ${cy-30} ${GW/2+14} ${cy-14} C ${GW/2+8} ${cy-6} ${GW/2-8} ${cy-6} ${GW/2-14} ${cy-14} C ${GW/2-26} ${cy-30} ${GW/2-16} ${cy-48} ${GW/2} ${cy-72} Z`} fill="url(#goldMetal)"/>
+              <path d={`M ${GW/2} ${cy-48} C ${GW/2+9} ${cy-38} ${GW/2+10} ${cy-26} ${GW/2+5} ${cy-18} C ${GW/2} ${cy-12} ${GW/2-5} ${cy-18} ${GW/2-8} ${cy-26} C ${GW/2-10} ${cy-34} ${GW/2-4} ${cy-42} ${GW/2} ${cy-48} Z`} fill="#fff6d8" opacity="0.9"/>
+              <text x={GW/2} y={cy+34} textAnchor="middle" fill="#fff" fontSize="26" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{trf('Jour {n}',{n:loginInfo.streak})}</text>
+              <text x={GW/2} y={cy+56} textAnchor="middle" fill="#ff8fa8" fontSize="16" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">+{loginInfo.reward} mL</text>
+              <g transform={`translate(${GW/2-117},${cy+82})`}>
+                {LOGIN_REWARDS.map((r,i)=>{const done=i<day,cur=i===day;return(
+                  <g key={i} transform={`translate(${i*39},0)`}>
+                    <rect x="0" y="0" width="33" height="46" rx="10" fill={cur?'rgba(255,210,94,0.18)':'url(#glass)'}/>
+                    <rect x="0.5" y="0.5" width="32" height="45" rx="9.5" fill="none" stroke={cur?'#ffd25e':done?'rgba(126,224,160,0.6)':'rgba(255,255,255,0.14)'} strokeWidth={cur?1.6:1}/>
+                    <text x="16.5" y="15" textAnchor="middle" fill={cur?'#ffd25e':'rgba(255,225,215,0.5)'} fontSize="8.5" fontWeight="700" fontFamily="Sora,Helvetica Neue,Arial">{i+1}</text>
+                    {done?<path d="M 10 30 L 15 35 L 23 26" stroke="#7ee0a0" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      :<text x="16.5" y="35" textAnchor="middle" fill={cur?'#fff':'rgba(255,225,215,0.7)'} fontSize="11" fontWeight="800" fontFamily="Sora,Helvetica Neue,Arial">{r}</text>}
+                  </g>);})}
+              </g>
+              <text x={GW/2} y={cy+160} textAnchor="middle" fill="rgba(255,225,215,0.6)" fontSize="11" fontFamily="Sora,Helvetica Neue,Arial">{loginInfo.streak>1?trf('Série de {n} jours — reviens demain !',{n:loginInfo.streak}):'Reviens demain pour une meilleure récompense !'}</text>
+              <text x={GW/2} y={GH-SAB-18} textAnchor="middle" fill="rgba(255,220,205,0.55)" fontSize="11" fontWeight="600" letterSpacing="1" fontFamily="Sora,Helvetica Neue,Arial">Touche pour continuer</text>
+            </g>
+          );
+        })()}
 
         {/* Achievements modal — HTML overlay (outside SVG, see below) */}
 

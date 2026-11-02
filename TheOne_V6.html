@@ -188,7 +188,7 @@ const ZONES = [{
   minGaps: 1,
   spermSpd: 0.7
 }];
-const APP_VERSION = "v94";
+const APP_VERSION = "v96";
 const TUTO_KEY = 'theone_tuto',
   TUTO_STEPS = 3;
 let DISCRETE_MODE = false;
@@ -301,7 +301,6 @@ Object.assign(EN, {
   "RIVAUX ÉLIMINÉS": "RIVALS ELIMINATED",
   "TEMPS DE SURVIE": "SURVIVAL TIME",
   "TEMPS": "TIME",
-  "Mode Hardcore accompli !": "Hardcore mode complete!",
   "Tu as atteint l'ovule en premier !": "You reached the egg first!",
   "Tu as atteint la cible en premier !": "You reached the target first!",
   "Touche pour continuer": "Tap to continue",
@@ -456,8 +455,6 @@ Object.assign(EN, {
   "Un sillage derrière toi": "A wake behind you",
   "Aucun skin possédé pour le moment.": "No skins owned yet.",
   "Aucun objet possédé pour le moment.": "Nothing owned yet.",
-  "Tu as tout débloqué, bravo !": "You have unlocked everything, well done!",
-  "Tu as tous les skins, bravo !": "You own every skin, well done!",
   "SKIN": "SKIN",
   "Classique": "Classic",
   "Rosé": "Rosé",
@@ -572,7 +569,6 @@ Object.assign(EN, {
   "VICTOIRES": "WINS",
   "☠ MODE HARDCORE": "☠ HARDCORE MODE",
   "Victoire !": "Victory!",
-  "Peux-tu faire mieux ?": "Can you do better?",
   "TheOne — la course du sperme": "TheOne — the sperm race",
   "S O I S   L E   P R E M I E R": "B E   T H E   F I R S T",
   "TheOne ∞ — {t} de survie 🏆": "TheOne ∞ — survived {t} 🏆",
@@ -738,7 +734,7 @@ Object.assign(EN, {
   "NORMAL · 3 VIES": "NORMAL · 3 LIVES",
   "Discret": "Discreet",
   "Débloqué après ta 1ʳᵉ victoire. Survis le plus longtemps.": "Unlocked after your 1st win. Survive as long as you can.",
-  "1 seule vie, pas de casque. Dispo dès le début.": "1 single life, no helmet. Available from the start.",
+  "1 seule vie, pas de casque. Disponible dès le début.": "1 single life, no helmet. Available from the start.",
   "Bouton œil de l’accueil : queues masquées, zones neutres.": "Eye button on the home screen: tails hidden, neutral zone names.",
   "CHOISIS TON MODE": "CHOOSE YOUR MODE",
   "3 vies. Atteins l’ovule en premier.": "3 lives. Reach the egg first.",
@@ -787,7 +783,6 @@ Object.assign(XL, {
   "RIVALS ELIMINATED": ["RIVALEN AUSGESCHALTET", "RIVALES ELIMINADOS"],
   "SURVIVAL TIME": ["ÜBERLEBENSZEIT", "TIEMPO DE SUPERVIVENCIA"],
   "TIME": ["ZEIT", "TIEMPO"],
-  "Hardcore mode complete!": ["Hardcore-Modus geschafft!", "¡Modo Hardcore completado!"],
   "You reached the egg first!": ["Du hast die Eizelle als Erster erreicht!", "¡Has llegado primero al óvulo!"],
   "You reached the target first!": ["Du hast das Ziel als Erster erreicht!", "¡Has llegado primero a la meta!"],
   "Tap to continue": ["Tippen zum Fortfahren", "Toca para continuar"],
@@ -944,8 +939,6 @@ Object.assign(XL, {
   "A wake behind you": ["Eine Spur hinter dir", "Una estela tras de ti"],
   "No skins owned yet.": ["Noch keine Skins im Besitz.", "Aún no tienes skins."],
   "Nothing owned yet.": ["Noch nichts im Besitz.", "Aún no tienes nada."],
-  "You have unlocked everything, well done!": ["Du hast alles freigeschaltet, bravo!", "¡Lo has desbloqueado todo, enhorabuena!"],
-  "You own every skin, well done!": ["Du besitzt alle Skins, bravo!", "¡Tienes todos los skins, enhorabuena!"],
   "SKIN": ["SKIN", "SKIN"],
   "Classic": ["Klassisch", "Clásico"],
   "Rosé": ["Rosé", "Rosado"],
@@ -1063,7 +1056,6 @@ Object.assign(XL, {
   "WINS": ["SIEGE", "VICTORIAS"],
   "☠ HARDCORE MODE": ["☠ HARDCORE-MODUS", "☠ MODO HARDCORE"],
   "Victory!": ["Sieg!", "¡Victoria!"],
-  "Can you do better?": ["Kannst du es besser?", "¿Puedes hacerlo mejor?"],
   "TheOne — the sperm race": ["TheOne — das Spermien-Rennen", "TheOne — la carrera de los espermatozoides"],
   "B E   T H E   F I R S T": ["S E I   D E R   E R S T E", "S É   E L   P R I M E R O"],
   "TheOne ∞ — survived {t} 🏆": ["TheOne ∞ — {t} überlebt 🏆", "TheOne ∞ — he sobrevivido {t} 🏆"],
@@ -6154,7 +6146,7 @@ const HomeScreen = React.memo(function HomeScreen(p) {
       display: 'flex',
       flexDirection: 'column',
       boxSizing: 'border-box',
-      padding: `${12 + SAT}px 16px ${16 + SAB}px`,
+      padding: `${12 + SAT}px 16px ${8 + Math.round(SAB * 0.5)}px`,
       pointerEvents: 'auto'
     }
   }, React.createElement("div", {
@@ -6537,7 +6529,8 @@ function UiPopup({
       boxShadow: 'var(--shadow-sheet)',
       padding: 14,
       boxSizing: 'border-box',
-      animation: 'popIn .16s ease-out'
+      animation: 'popIn .16s ease-out',
+      borderTopRightRadius: anchor === 'right' ? 8 : 22
     }
   }, React.createElement("div", {
     style: {
@@ -7246,7 +7239,7 @@ const EndScreen = React.memo(function EndScreen(p) {
       display: 'flex',
       flexDirection: 'column',
       boxSizing: 'border-box',
-      padding: `${12 + SAT}px 16px ${16 + SAB}px`,
+      padding: `${12 + SAT}px 16px ${8 + Math.round(SAB * 0.5)}px`,
       pointerEvents: 'auto'
     }
   }, React.createElement("div", {
@@ -9475,7 +9468,7 @@ function HowToPlay({
     }), 'Infini', 'Débloqué après ta 1ʳᵉ victoire. Survis le plus longtemps.'), modeCard('#ff7a8a', React.createElement(Ic, {
       n: "heart",
       s: 24
-    }), 'Hardcore', '1 seule vie, pas de casque. Dispo dès le début.'), modeCard('#7cc4ff', React.createElement(Ic, {
+    }), 'Hardcore', '1 seule vie, pas de casque. Disponible dès le début.'), modeCard('#7cc4ff', React.createElement(Ic, {
       n: "eye",
       s: 24,
       sw: 2.2
@@ -11922,8 +11915,11 @@ function Game() {
     }
   }, React.createElement("div", {
     style: {
-      position: 'relative',
-      height: 4,
+      position: 'fixed',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: 5,
       background: 'rgba(255,255,255,.10)'
     }
   }, React.createElement("div", {

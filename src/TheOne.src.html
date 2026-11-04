@@ -44,8 +44,8 @@
   }
   @keyframes jouerPulse{0%,100%{box-shadow:var(--shadow-play),0 0 0 0 rgba(255,106,138,.35)}50%{box-shadow:var(--shadow-play),0 0 0 12px rgba(255,106,138,0)}}
   @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-  @keyframes chIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-  @keyframes chOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-14px)}}
+  @keyframes chIn{from{transform:translateX(110%)}to{transform:none}}
+  @keyframes chOut{from{transform:none}to{transform:translateX(-110%)}}
   @keyframes popIn{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:none}}
   @keyframes toastIn{from{opacity:0;transform:translate(-50%,-12px)}to{opacity:1;transform:translate(-50%,0)}}
   .tos-jouer{animation:jouerPulse 2.4s ease-in-out infinite}
@@ -977,35 +977,41 @@ function dayId(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+
 function strHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 function mulberry32(seed){let s=seed;return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 
+/* Daily challenges: one easy, one medium, one hard. `mls` is the reward for each target of `pool` (harder target = bigger reward). */
 const CH_TEMPLATES=[
   // Easy
-  {id:'k_g_e',t:'easy',ml:30,pool:[5,8,10,12],fmt:n=>`Éliminer ${n} rivaux en une partie`,key:'killsInGame',mode:'gte'},
-  {id:'helm_d',t:'easy',ml:25,pool:[2,3,4],fmt:n=>`Ramasser ${n} casques aujourd'hui`,key:'helmetsToday',mode:'gte'},
-  {id:'time_d',t:'easy',ml:30,pool:[5,10,15],fmt:n=>`Jouer ${n} min aujourd'hui`,key:'timeToday',mode:'gte',scale:60000},
-  {id:'k_d_e',t:'easy',ml:35,pool:[25,40,60],fmt:n=>`Éliminer ${n} rivaux aujourd'hui`,key:'killsToday',mode:'gte'},
-  {id:'zone_e',t:'easy',ml:40,pool:[3,4],fmt:n=>`Atteindre la zone ${n} en une partie`,key:'bestZoneInGame',mode:'gte'},
+  {id:'k_g_e',t:'easy',pool:[15,20,25],mls:[15,20,25],fmt:n=>`Éliminer ${n} rivaux en une partie`,key:'killsInGame',mode:'gte'},
+  {id:'helm_d',t:'easy',pool:[2,3,4],mls:[20,25,30],fmt:n=>`Ramasser ${n} casques aujourd'hui`,key:'helmetsToday',mode:'gte'},
+  {id:'time_d',t:'easy',pool:[5,10,15],mls:[20,30,40],fmt:n=>`Jouer ${n} min aujourd'hui`,key:'timeToday',mode:'gte',scale:60000},
+  {id:'k_d_e',t:'easy',pool:[40,80,120],mls:[25,35,45],fmt:n=>`Éliminer ${n} rivaux aujourd'hui`,key:'killsToday',mode:'gte'},
+  {id:'zone_e',t:'easy',pool:[2,3,4],mls:[20,30,40],fmt:n=>`Atteindre la zone ${n} en une partie`,key:'bestZoneInGame',mode:'gte'},
   // Medium
-  {id:'k_g_m',t:'medium',ml:100,pool:[80,90,100],fmt:n=>`Éliminer ${n} rivaux en une partie`,key:'killsInGame',mode:'gte'},
-  {id:'wins_d',t:'medium',ml:120,pool:[1,2],fmt:n=>`Gagner ${n} partie${n>1?'s':''} aujourd'hui`,key:'winsToday',mode:'gte'},
-  {id:'inf_m',t:'medium',ml:120,pool:[60,90,120],fmt:n=>`Survivre ${n}s en mode infini`,key:'bestInfInGame',mode:'gte',scale:1000},
-  {id:'k_d_m',t:'medium',ml:130,pool:[100,150],fmt:n=>`Éliminer ${n} rivaux aujourd'hui`,key:'killsToday',mode:'gte'},
+  {id:'k_g_m',t:'medium',pool:[80,100,120],mls:[50,65,80],fmt:n=>`Éliminer ${n} rivaux en une partie`,key:'killsInGame',mode:'gte'},
+  {id:'wins_d',t:'medium',pool:[1,2],mls:[100,200],fmt:n=>`Gagner ${n} partie${n>1?'s':''} aujourd'hui`,key:'winsToday',mode:'gte'},
+  {id:'inf_m',t:'medium',pool:[60,90,120],mls:[80,110,140],fmt:n=>`Survivre ${n}s en mode infini`,key:'bestInfInGame',mode:'gte',scale:1000},
+  {id:'k_d_m',t:'medium',pool:[200,300],mls:[100,140],fmt:n=>`Éliminer ${n} rivaux aujourd'hui`,key:'killsToday',mode:'gte'},
   // Hard
-  {id:'no_hit',t:'hard',ml:400,pool:[1],fmt:()=>`Gagner sans perdre de vie`,key:'perfectWin',mode:'eq'},
-  {id:'inf_h',t:'hard',ml:300,pool:[180,240],fmt:n=>`Survivre ${Math.floor(n/60)} min en mode infini`,key:'bestInfInGame',mode:'gte',scale:1000},
-  {id:'speed',t:'hard',ml:350,pool:[240,210],fmt:n=>`Gagner en moins de ${Math.floor(n/60)}:${(n%60).toString().padStart(2,'0')}`,key:'bestWinInGame',mode:'lte',scale:1000},
-  {id:'no_helm',t:'hard',ml:300,pool:[1],fmt:()=>`Gagner sans utiliser de casque`,key:'noHelmetWin',mode:'eq'},
+  {id:'no_hit',t:'hard',pool:[1],mls:[300],fmt:()=>`Gagner sans perdre de vie`,key:'perfectWin',mode:'eq'},
+  {id:'inf_h',t:'hard',pool:[180,240,300],mls:[250,350,500],fmt:n=>`Survivre ${Math.floor(n/60)} min en mode infini`,key:'bestInfInGame',mode:'gte',scale:1000},
+  {id:'speed',t:'hard',pool:[195,180],mls:[250,350],fmt:n=>`Gagner en moins de ${Math.floor(n/60)}:${(n%60).toString().padStart(2,'0')}`,key:'bestWinInGame',mode:'lte',scale:1000},
+  {id:'no_helm',t:'hard',pool:[1],mls:[200],fmt:()=>`Gagner sans utiliser de casque`,key:'noHelmetWin',mode:'eq'},
+  {id:'zone_h',t:'hard',pool:[5],mls:[150],fmt:n=>`Atteindre la zone ${n} en une partie`,key:'bestZoneInGame',mode:'gte'},   // hard slot of players who never won
 ];
 
 function generateDaily(){
   const id=dayId(),seed=strHash(id),rand=mulberry32(seed);
-  const infUnlocked=localStorage.getItem('theone_won')==='1';
-  const tiers=['easy','medium','hard'];
+  const won=localStorage.getItem('theone_won')==='1';   // infinite mode and the win-based challenges only exist once the player has won
   const picked=[];
-  for(const t of tiers){
-    const opts=CH_TEMPLATES.filter(c=>c.t===t&&(infUnlocked||c.id!=='inf_h'));
+  for(const t of ['easy','medium','hard']){
+    const opts=CH_TEMPLATES.filter(c=>{
+      if(c.t!==t)return false;
+      if(c.id==='zone_h')return !won;
+      if(!won&&(c.t==='hard'||c.id==='inf_m'))return false;
+      return true;
+    });
     const tpl=opts[Math.floor(rand()*opts.length)];
-    const target=tpl.pool[Math.floor(rand()*tpl.pool.length)];
-    picked.push({id:tpl.id+'_'+t,tplId:tpl.id,t,target,ml:tpl.ml,fmt:tpl.fmt(target),completed:false});
+    const k=Math.floor(rand()*tpl.pool.length),target=tpl.pool[k];
+    picked.push({id:tpl.id+'_'+t,tplId:tpl.id,t,target,ml:tpl.mls[k],fmt:tpl.fmt(target),completed:false});
   }
   return picked;
 }
@@ -1030,26 +1036,26 @@ function weekId(){
   d.setDate(d.getDate()-daysFromMon); // reculer au lundi de cette semaine
   return Math.floor(d.getTime()/86400000); // numéro du jour = ID stable
 }
+/* Weekly challenges: one from group a (easy / medium) and one from group b (hard). Reward grows with the target; `tiers` gives the difficulty of each target. */
 const WK_TEMPLATES=[
-  {id:'wk_kill',ml:300,pool:[1000,1600,2400],fmt:n=>`Éliminer ${n} rivaux cette semaine`,key:'killsWeek',mode:'gte'},
-  {id:'wk_helm',ml:200,pool:[50,80,130],fmt:n=>`Ramasser ${n} casques cette semaine`,key:'helmetsWeek',mode:'gte'},
-  {id:'wk_time',ml:250,pool:[60,90,140],fmt:n=>`Jouer ${n} min cette semaine`,key:'timeWeek',mode:'gte',scale:60000},
-  {id:'wk_wins',ml:500,pool:[5,8,13],fmt:n=>`Gagner ${n} parties cette semaine`,key:'winsWeek',mode:'gte'},
-  {id:'wk_inf',ml:600,pool:[180,240,300],fmt:n=>`Survivre ${Math.floor(n/60)} min en mode infini`,key:'bestInfInGame',mode:'gte',scale:1000},
-  {id:'wk_speed',ml:800,pool:[300,240],fmt:n=>`Gagner en moins de ${Math.floor(n/60)}:${(n%60).toString().padStart(2,'0')}`,key:'bestWinInGame',mode:'lte',scale:1000},
-  {id:'wk_zone',ml:400,pool:[5,10,18],fmt:n=>`Atteindre ${n} fois la zone 5`,key:'zone5Week',mode:'gte'},
+  {id:'wk_time',g:'a',pool:[60,90,140],mls:[150,220,300],tiers:['easy','easy','easy'],fmt:n=>`Jouer ${n} min cette semaine`,key:'timeWeek',mode:'gte',scale:60000},
+  {id:'wk_helm',g:'a',pool:[40,70,100],mls:[150,220,300],tiers:['easy','easy','easy'],fmt:n=>`Ramasser ${n} casques cette semaine`,key:'helmetsWeek',mode:'gte'},
+  {id:'wk_kill',g:'a',pool:[1000,1600,2400],mls:[250,350,500],tiers:['medium','medium','medium'],fmt:n=>`Éliminer ${n} rivaux cette semaine`,key:'killsWeek',mode:'gte'},
+  {id:'wk_zone',g:'a',pool:[3,6,10],mls:[250,350,500],tiers:['medium','medium','medium'],fmt:n=>`Atteindre ${n} fois la zone 5`,key:'zone5Week',mode:'gte'},
+  {id:'wk_wins',g:'b',pool:[3,5,8],mls:[250,400,600],tiers:['medium','hard','hard'],fmt:n=>`Gagner ${n} parties cette semaine`,key:'winsWeek',mode:'gte'},
+  {id:'wk_inf',g:'b',pool:[180,240,300],mls:[350,500,700],tiers:['hard','hard','hard'],fmt:n=>`Survivre ${Math.floor(n/60)} min en mode infini`,key:'bestInfInGame',mode:'gte',scale:1000},
+  {id:'wk_speed',g:'b',pool:[195,185,175],mls:[250,350,450],tiers:['hard','hard','hard'],fmt:n=>`Gagner en moins de ${Math.floor(n/60)}:${(n%60).toString().padStart(2,'0')}`,key:'bestWinInGame',mode:'lte',scale:1000},
 ];
 function generateWeekly(){
   const id=weekId(),seed=strHash('w'+id),rand=mulberry32(seed);
-  const infUnlocked=localStorage.getItem('theone_won')==='1';
-  const pool=WK_TEMPLATES.filter(c=>infUnlocked||c.id!=='wk_inf');
+  const won=localStorage.getItem('theone_won')==='1';
+  const groups=[WK_TEMPLATES.filter(c=>c.g==='a'),WK_TEMPLATES.filter(c=>c.g==='b'&&(won||c.id==='wk_wins'))];
   const picked=[];
-  for(let i=0;i<2;i++){
-    const idx=Math.floor(rand()*pool.length);
-    const tpl=pool.splice(idx,1)[0];
-    const target=tpl.pool[Math.floor(rand()*tpl.pool.length)];
-    picked.push({id:tpl.id+'_'+i,tplId:tpl.id,target,ml:tpl.ml,fmt:tpl.fmt(target),completed:false});
-  }
+  groups.forEach((grp,i)=>{
+    const tpl=grp[Math.floor(rand()*grp.length)];
+    const k=Math.floor(rand()*tpl.pool.length),target=tpl.pool[k];
+    picked.push({id:tpl.id+'_'+i,tplId:tpl.id,t:tpl.tiers[k],target,ml:tpl.mls[k],fmt:tpl.fmt(target),completed:false});
+  });
   return picked;
 }
 function loadWeekly(){
@@ -2518,6 +2524,42 @@ const EndScreen=React.memo(function EndScreen(p){
 
 /* ══ Windows (sheets): shared pieces ══ */
 const U_FONT="Sora,'Helvetica Neue',Arial,sans-serif";
+/* Horizontal chip rows: same soft fade as FadeScroll, only on the side where chips are hidden */
+function HFadeScroll({children,style}){
+  const ref=React.useRef(null);
+  const [f,setF]=React.useState({l:false,r:false});
+  const upd=React.useCallback(()=>{
+    const el=ref.current;if(!el)return;
+    const l=el.scrollLeft>4,r=el.scrollLeft+el.clientWidth<el.scrollWidth-4;
+    setF(s=>s.l===l&&s.r===r?s:{l,r});
+  },[]);
+  React.useEffect(()=>{
+    upd();const el=ref.current;let ro;
+    if(window.ResizeObserver&&el){ro=new ResizeObserver(upd);ro.observe(el);Array.from(el.children).forEach(c=>ro.observe(c));}
+    return()=>{if(ro)ro.disconnect();};
+  },[]);
+  React.useEffect(upd);
+  const mask=`linear-gradient(to right,rgba(0,0,0,${f.l?0:1}) 0,#000 ${f.l?28:0}px,#000 calc(100% - ${f.r?28:0}px),rgba(0,0,0,${f.r?0:1}) 100%)`;
+  return<div ref={ref} onScroll={upd} className="ui-noscroll" style={{...style,WebkitMaskImage:mask,maskImage:mask}}>{children}</div>;
+}
+/* Scrolling body of a window: its edges dissolve into a soft fade, but only on the side where content is actually hidden */
+function FadeScroll({children,style}){
+  const ref=React.useRef(null);
+  const [f,setF]=React.useState({t:false,b:false});
+  const upd=React.useCallback(()=>{
+    const el=ref.current;if(!el)return;
+    const t=el.scrollTop>4,b=el.scrollTop+el.clientHeight<el.scrollHeight-4;
+    setF(s=>s.t===t&&s.b===b?s:{t,b});
+  },[]);
+  React.useEffect(()=>{
+    upd();const el=ref.current;let ro;
+    if(window.ResizeObserver&&el){ro=new ResizeObserver(upd);ro.observe(el);Array.from(el.children).forEach(c=>ro.observe(c));}
+    return()=>{if(ro)ro.disconnect();};
+  },[]);
+  React.useEffect(upd);
+  const mask=`linear-gradient(to bottom,rgba(0,0,0,${f.t?0:1}) 0,#000 ${f.t?24:0}px,#000 calc(100% - ${f.b?24:0}px),rgba(0,0,0,${f.b?0:1}) 100%)`;
+  return<div ref={ref} onScroll={upd} className="ui-scroll" style={{...style,WebkitMaskImage:mask,maskImage:mask}}>{children}</div>;
+}
 function Sheet({title,right,onClose,SAT,SAB,fixed,children}){
   return<div onClick={onClose} style={{position:'absolute',inset:0,zIndex:10,background:'var(--dim)',fontFamily:U_FONT,color:'#fff'}}>
     <UiCol style={{maxWidth:560}}>
@@ -2528,7 +2570,7 @@ function Sheet({title,right,onClose,SAT,SAB,fixed,children}){
           <RBtn label={tr('Fermer')} onClick={onClose}><Ic n="close" s={20}/></RBtn>
         </div>
         {fixed&&<div style={{padding:'0 14px 8px',flex:'none'}}>{fixed}</div>}
-        <div className="ui-scroll" style={{flex:1,minHeight:0,padding:'4px 14px 18px'}}>{children}</div>
+        <FadeScroll style={{flex:1,minHeight:0,padding:'4px 14px 18px'}}>{children}</FadeScroll>
       </div>
     </UiCol>
   </div>;
@@ -2599,9 +2641,9 @@ function ShopModal({onClose,SAT,SAB,mL,owned,equipped,onEquip,onBuy}){
     fixed={<>
       <Tabs value={cat} onChange={c=>{setCat(c);setSt('all');setRa('all');}} items={[['skins',tr('Skins')],['trails',tr('Traînées')],['vics',tr('Victoires')]]}/>
       <div style={{marginTop:8}}><Tabs soft value={st} onChange={setSt} items={[['all',tr('Tous'),cnt.all],['owned',tr('Possédés'),cnt.owned],['new',tr('À débloquer'),cnt.new]]}/></div>
-      <div className="ui-noscroll" style={{display:'flex',gap:6,marginTop:8,overflowX:'auto',overflowY:'hidden',paddingBottom:2}}>
+      <HFadeScroll style={{display:'flex',gap:6,marginTop:8,overflowX:'auto',overflowY:'hidden',paddingBottom:2}}>
         {[['all',tr('Toutes'),'#fff'],...RARITY.map(r=>[r.name,tr(r.name),r.c])].map(([k,l,c])=><button key={k} className="ui-btn" onClick={()=>setRa(k)} style={{flex:'none',height:30,padding:'0 12px',borderRadius:99,display:'flex',alignItems:'center',gap:6,fontSize:11.5,fontWeight:700,color:ra===k?'#fff':'var(--text-2)',background:ra===k?'rgba(255,255,255,.14)':'rgba(255,255,255,.04)',border:`1px solid ${ra===k?c:'rgba(255,255,255,.1)'}`}}>{k!=='all'&&<span style={{width:7,height:7,borderRadius:4,background:c}}/>}{l}</button>)}
-      </div>
+      </HFadeScroll>
     </>}>
     <SecLabel right={`${list.length} ${noun}`} style={{marginTop:6}}>{tr('RÉSULTATS')}</SecLabel>
     {list.length===0&&<div style={{textAlign:'center',fontSize:12.5,color:'var(--text-3)',padding:'34px 0'}}>{tr(cat==='skins'?'Aucun skin ne correspond':'Aucun objet ne correspond')}</div>}
@@ -2671,9 +2713,9 @@ function RewardsModal({onClose,SAT,SAB,achSet,stats,bestInf}){
         </div>
         <div style={{marginTop:8,height:6,borderRadius:3,background:'rgba(255,255,255,.1)',overflow:'hidden'}}><div style={{width:`${n/N*100}%`,height:'100%',background:'var(--gold-grad)'}}/></div>
       </div>
-      <div className="ui-noscroll" style={{display:'flex',gap:6,marginTop:10,overflowX:'auto',overflowY:'hidden',paddingBottom:2}}>
+      <HFadeScroll style={{display:'flex',gap:6,marginTop:10,overflowX:'auto',overflowY:'hidden',paddingBottom:2}}>
         {[['all',tr('Tous'),'#fff'],...['easy','medium','hard','extreme'].map(t=>[t,tr(TIERS[t].label),TIERS[t].color])].map(([k,l,c])=><button key={k} className="ui-btn" onClick={()=>setTab(k)} style={{flex:'none',height:34,padding:'0 15px',borderRadius:99,fontSize:12,fontWeight:800,...(tab===k?{background:k==='all'?'#fff9f4':c,color:'#1a0618',border:'1px solid transparent'}:{background:'rgba(255,255,255,.04)',color:k==='all'?'#fff':c,border:`1px solid ${k==='all'?'rgba(255,255,255,.3)':c+'88'}`})}}>{l}</button>)}
-      </div>
+      </HFadeScroll>
     </>}>
     {tiers.map(t=>{
       const all=ACHIEVEMENTS.filter(a=>a.tier===t),got=all.filter(a=>achSet.has(a.id)).length,col=TIERS[t].color;
@@ -2917,10 +2959,10 @@ function RewardsOverlay({aList,dList,SAT,SAB,onDone}){
   const H=({c,children})=><div style={{textAlign:'center',fontSize:11.5,fontWeight:800,letterSpacing:3,color:c,margin:'8px 0 12px'}}>{children}</div>;
   return<div onClick={onDone} style={{position:'absolute',inset:0,zIndex:25,background:'rgba(8,2,10,.94)',fontFamily:U_FONT,color:'#fff'}}>
     <UiCol style={{display:'flex',flexDirection:'column',padding:`${SAT+28}px 16px ${SAB+14}px`,boxSizing:'border-box'}}>
-      <div className="ui-scroll" style={{flex:1,minHeight:0}}>
+      <FadeScroll style={{flex:1,minHeight:0}}>
         {aList.length>0&&<><H c="#ffd25e">{aList.length>1?tr('NOUVELLES RÉCOMPENSES'):tr('NOUVELLE RÉCOMPENSE')}</H>{aList.map(a=><Row key={a.id} col={TIERS[a.tier].color} title={a.name} desc={a.desc} ml={a.ml}/>)}</>}
         {dList.length>0&&<><div style={{height:aList.length?14:0}}/><H c="#7ee0a0">{dList.length>1?tr('DÉFIS RÉUSSIS'):tr('DÉFI RÉUSSI')}</H>{dList.map(c=><Row key={c.id} col={TIERS[chTier(c)].color} tag={tr(TIERS[chTier(c)].label)} title={c.fmt} ml={c.ml}/>)}</>}
-      </div>
+      </FadeScroll>
       <div style={{textAlign:'center',padding:'12px 0 2px',fontSize:11,fontWeight:600,letterSpacing:1,color:'var(--text-3)'}}>{tr('Touche pour continuer')}</div>
     </UiCol>
   </div>;
@@ -2954,22 +2996,35 @@ function ModePopup({SAB,mode,infUnlocked,onPick,onClose}){
   </div>;
 }
 
-/* Rotating challenge card of the home screen */
+/* Rotating challenge card of the home screen: two compact lines, the challenge slides sideways to the next one */
 function HomeChallenge({list,onOpen}){
-  const [i,setI]=React.useState(0);
-  React.useEffect(()=>{if(list.length<2)return;const t=setInterval(()=>setI(v=>v+1),4500);return()=>clearInterval(t);},[list.length]);
-  const k=list.length?i%list.length:0,c=list[k];
-  return<button className="ui-btn" onClick={onOpen} style={{marginTop:12,display:'block',width:'100%',padding:'12px 14px 10px',borderRadius:18,textAlign:'left',flex:'none',...U_GLASS,color:'#fff'}}>
-    {c?<div key={k} style={{animation:'popIn .3s ease-out'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
-        <span style={{display:'flex',alignItems:'center',gap:6,fontSize:9.5,fontWeight:800,letterSpacing:2,color:c.col,textTransform:'uppercase'}}><Ic n="target" s={13}/>{c.week?tr('Défi de la semaine'):tr('Défi du jour')}</span>
-        <span style={{display:'flex',alignItems:'center',gap:3,fontSize:13,fontWeight:800,color:'#ff8fa8',fontVariantNumeric:'tabular-nums'}}><Ic n="drop" s={11}/>+{c.ml}</span>
-      </div>
-      <div style={{fontSize:15,fontWeight:800,marginTop:4,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{c.label}</div>
-      <div style={{display:'flex',alignItems:'center',gap:10,marginTop:8}}><GoalBar p={c.p} c={c.col} h={6}/><span style={{fontSize:11,fontWeight:700,color:'var(--text-2)',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{c.txt}</span></div>
+  const [st,setSt]=React.useState({cur:0,prev:null});
+  React.useEffect(()=>{
+    if(list.length<2)return;
+    const t=setInterval(()=>setSt(s=>({cur:(s.cur+1)%list.length,prev:s.cur})),4500);
+    return()=>clearInterval(t);
+  },[list.length]);
+  React.useEffect(()=>{if(st.prev===null)return;const t=setTimeout(()=>setSt(s=>({cur:s.cur,prev:null})),520);return()=>clearTimeout(t);},[st.cur]);
+  const k=list.length?st.cur%list.length:0;
+  const item=(c,anim,key)=><div key={key} style={{position:'absolute',left:0,right:0,top:0,animation:anim}}>
+    <div style={{display:'flex',alignItems:'center',gap:7,height:16}}>
+      <span style={{width:7,height:7,borderRadius:4,background:c.col,flex:'none'}}/>
+      <span style={{flex:1,minWidth:0,fontSize:13,fontWeight:800,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{c.label}</span>
+      <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap',flex:'none'}}>{c.txt}</span>
     </div>
-    :<div style={{display:'flex',alignItems:'center',gap:10,height:58,fontSize:14,fontWeight:800,color:'#7ee0a0'}}><Ic n="check" s={20} sw={2.8}/>{tr('Tous les défis réussis !')}</div>}
-    {list.length>1&&<div style={{display:'flex',justifyContent:'center',gap:5,marginTop:9}}>{list.map((_,q)=><span key={q} style={{width:q===k?16:5,height:5,borderRadius:3,background:q===k?'#ff8fa8':'rgba(255,255,255,.22)',transition:'width .2s'}}/>)}</div>}
+    <div style={{display:'flex',alignItems:'center',gap:8,marginTop:7,height:16,paddingRight:list.length>1?6+list.length*5+10:0}}>
+      <GoalBar p={c.p} c={c.col} h={5}/>
+      <span style={{fontSize:12,fontWeight:800,color:'#ff8fa8',fontVariantNumeric:'tabular-nums',flex:'none'}}>+{c.ml}</span>
+    </div>
+  </div>;
+  const cur=list[k],prev=st.prev!==null?list[st.prev%list.length]:null;
+  return<button className="ui-btn" onClick={onOpen} style={{marginTop:10,display:'block',width:'100%',padding:'9px 12px 10px',borderRadius:16,textAlign:'left',flex:'none',...U_GLASS,color:'#fff'}}>
+    {cur?<div style={{position:'relative',height:39,overflow:'hidden'}}>
+      {prev&&item(prev,'chOut .45s cubic-bezier(.4,0,.2,1) forwards','p'+st.prev)}
+      {item(cur,prev?'chIn .45s cubic-bezier(.4,0,.2,1) both':'none','c'+k)}
+      {list.length>1&&<span style={{position:'absolute',right:0,bottom:6,display:'flex',gap:3}}>{list.map((_,q)=><span key={q} style={{width:q===k?10:3,height:3,borderRadius:2,background:q===k?'#ff8fa8':'rgba(255,255,255,.25)',transition:'width .3s ease'}}/>)}</span>}
+    </div>
+    :<div style={{display:'flex',alignItems:'center',gap:8,height:39,fontSize:13,fontWeight:800,color:'#7ee0a0'}}><Ic n="check" s={18} sw={2.8}/>{tr('Tous les défis réussis !')}</div>}
   </button>;
 }
 /* Streak popup (top-left flame) */
@@ -3231,7 +3286,7 @@ function Game(){
       const txt=inf?trf('TheOne ∞ — {t} de survie 🏆',{t:fmtTime(g.playT)}):(won?trf('TheOne — Victoire avec {n} rivaux ! 🥚',{n:g.score}):trf('TheOne — {n} rivaux éliminés',{n:g.score}));
       if(navigator.share){
         const blob=await(await fetch(url)).blob();
-        try{await navigator.share({title:'TheOne',text:txt+'\n'+link,url:link,files:[new File([blob],'theone.png',{type:'image/png'})]});}
+        try{await navigator.share({title:'TheOne',text:txt+'\n'+link,files:[new File([blob],'theone.png',{type:'image/png'})]});}
         catch(e){if(e&&e.name==='AbortError')return;setShareImg(url);}
       }else setShareImg(url);
     }catch(e){console.log(e);}

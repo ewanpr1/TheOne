@@ -852,13 +852,14 @@ function loadStats(){
   try{s=JSON.parse(localStorage.getItem(STATS_KEY)||'{}');}catch(e){}
   s=Object.assign({games:0,wins:0,rivals:0,timeNorm:0,timeInf:0},s);
   if(!Array.isArray(s.loss)||s.loss.length!==5)s.loss=[0,0,0,0,0];   // lost games per zone (index 4 = the ovule's membrane)
+  if(!s.lossM||!s.lossM.n)s.lossM={n:s.loss.slice(),h:[0,0,0,0,0]};   // same, split by mode (hardcore started empty; older losses count as normal)
   return s;
 }
 function saveStats(p){localStorage.setItem(STATS_KEY,JSON.stringify(p));return p;}
-function recordGame({won,rivals,playT,infinite,helmets,zone}){
+function recordGame({won,rivals,playT,infinite,helmets,zone,mode}){
   const s=loadStats();
   s.games++;if(won)s.wins++;s.rivals+=rivals||0;
-  if(!won&&!infinite)s.loss[clamp(zone||0,0,4)]++;
+  if(!won&&!infinite){const zi=clamp(zone||0,0,4);s.loss[zi]++;s.lossM[mode==='h'?'h':'n'][zi]++;}
   if(infinite)s.timeInf+=playT||0;else s.timeNorm+=playT||0;
   s.helmets=(s.helmets||0)+(helmets||0);
   // streak
@@ -965,7 +966,7 @@ function loginTick(){
   if(o&&o.last===today)return{streak:o.streak,reward:0};
   d.setDate(d.getDate()-1);
   const yest=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
-  const streak=(o&&o.last===yest)?o.streak+1:1,reward=LOGIN_REWARDS[(streak-1)%7];
+  const streak=(o&&o.last===yest)?o.streak+1:1,reward=LOGIN_REWARDS[Math.min(streak,7)-1];
   try{localStorage.setItem(LOGIN_KEY,JSON.stringify({last:today,streak}));localStorage.setItem('theone_ml',String(Number(localStorage.getItem('theone_ml')||'0')+reward));}catch(e){}
   return{streak,reward};
 }
@@ -2299,7 +2300,7 @@ function UiCol({children,style}){   // phone-width column centred on wide screen
 const HomeScreen=React.memo(function HomeScreen(p){
   const {SAT,SAB,mode,rec,mL,streak,skin,discrete,chals,pending,api,eco}=p;
   const rar=rarityOf(skin.cost),mc=MODE_CFG[mode];
-  const pos=(streak-1)%7;
+  const pos=Math.min(streak,7)-1;
   const playLabel=tr('JOUER'),pfs=playLabel.length<=5?24:playLabel.length<=6?21:18;
   const cardBtn={...U_GLASS,color:'#fff'};
   return<div style={{position:'absolute',inset:0,zIndex:5,color:'#fff',fontFamily:"Sora,'Helvetica Neue',Arial,sans-serif",pointerEvents:'none'}}>
@@ -2672,13 +2673,13 @@ function progressOf(tpl,state,c){
 function ChallengesModal({onClose,SAT,SAB,daily,weekly}){
   const [tab,setTab]=React.useState('day');
   const list=[...(tab==='day'?daily:weekly).ch].sort((a,b)=>TIERS[chTier(a)].n-TIERS[chTier(b)].n);
-  const streak=LOGIN0.streak,pos=(streak-1)%7;
+  const streak=LOGIN0.streak,pos=Math.min(streak,7)-1;
   const left=tab==='day'?msToMidnight():msToMonday();
   return<Sheet title={tr('Défis')} onClose={onClose} SAT={SAT} SAB={SAB}>
     <div style={{padding:'11px 12px',borderRadius:18,background:'linear-gradient(180deg,rgba(255,196,63,.14),rgba(255,196,63,.04))',border:'1px solid rgba(255,196,63,.4)'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:9}}>
         <span style={{display:'flex',alignItems:'center',gap:6,color:'#ffd25e',fontWeight:800,fontSize:13.5}}><Ic n="flame" s={16}/>{streak>1?trf('Série de {n} jours',{n:streak}):trf('Série de {n} jour',{n:streak})}</span>
-        <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)'}}>{trf('Demain : +{n} mL',{n:LOGIN_REWARDS[streak%7]})}</span>
+        <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)'}}>{trf('Demain : +{n} mL',{n:LOGIN_REWARDS[Math.min(streak,6)]})}</span>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(7,minmax(0,1fr))',gap:5}}>
         {LOGIN_REWARDS.map((r,i)=>{const done=i<pos,cur=i===pos;return<div key={i} style={{height:58,borderRadius:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2,fontSize:10,fontWeight:800,background:cur?'var(--gold-grad)':'rgba(255,196,63,.1)',border:`1px solid ${cur?'#ffe88f':done?'rgba(255,196,63,.55)':'rgba(255,255,255,.1)'}`,color:cur?'var(--ink-on-gold)':done?'#ffd25e':'var(--text-3)'}}>
@@ -2735,7 +2736,7 @@ function StatsModal({onClose,SAT,SAB,stats,rec,discrete}){
   const T=[[stats.games,tr('PARTIES')],[stats.wins,tr('VICTOIRES'),'#ffd25e'],[stats.games?Math.round(stats.wins/stats.games*100)+' %':'—',tr('RÉUSSITE')],[stats.rivals.toLocaleString('fr-FR'),tr('RIVAUX')],[hm((stats.timeNorm||0)+(stats.timeInf||0)),tr('TEMPS')],[stats.helmets||0,tr('CASQUES')]];
   const medal=['linear-gradient(135deg,#ffe88f,#ffc43f)','linear-gradient(135deg,#f4f4f8,#b9bcc8)','linear-gradient(135deg,#f0b48a,#b86f3f)'];
   const list=rec[m].slice(0,3);
-  const loss=stats.loss||[0,0,0,0,0],mx=Math.max(1,...loss);
+  const loss=(stats.lossM&&stats.lossM[m])||[0,0,0,0,0],mx=Math.max(1,...loss);
   return<Sheet title={tr('Statistiques')} onClose={onClose} SAT={SAT} SAB={SAB}>
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:8}}>
       {T.map(([v,l,c],i)=><div key={i} style={{padding:'9px 10px',borderRadius:14,...U_GLASS}}><div style={{fontSize:20,fontWeight:800,color:c||'#fff',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{v}</div><div style={{fontSize:8.5,fontWeight:700,letterSpacing:1.8,color:'var(--text-3)',marginTop:2}}>{l}</div></div>)}
@@ -2758,6 +2759,7 @@ function StatsModal({onClose,SAT,SAB,stats,rec,discrete}){
         </div>;})}
     </div>
     <div style={{fontSize:10.5,color:'var(--text-3)',margin:'6px 2px 0'}}>{m==='i'?tr('Classés par temps de survie.'):tr('Classés par issue, puis par rivaux éliminés.')}</div>
+    {m!=='i'&&<>
     <SecLabel>{tr('OÙ TU PERDS')}</SecLabel>
     <div style={{padding:'10px 12px',borderRadius:16,...U_GLASS,display:'flex',flexDirection:'column',gap:9}}>
       {[0,1,2,3,4].map(i=><div key={i} style={{display:'flex',alignItems:'center',gap:10,fontSize:11.5,fontWeight:700}}>
@@ -2766,6 +2768,7 @@ function StatsModal({onClose,SAT,SAB,stats,rec,discrete}){
         <span style={{width:28,textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{loss[i]}</span>
       </div>)}
     </div>
+    </>}
   </Sheet>;
 }
 
@@ -3010,11 +3013,11 @@ function HomeChallenge({list,onOpen}){
     <div style={{display:'flex',alignItems:'center',gap:7,height:16}}>
       <span style={{width:7,height:7,borderRadius:4,background:c.col,flex:'none'}}/>
       <span style={{flex:1,minWidth:0,fontSize:13,fontWeight:800,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{c.label}</span>
-      <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap',flex:'none'}}>{c.txt}</span>
+      <span style={{fontSize:12,fontWeight:800,color:'#ff8fa8',fontVariantNumeric:'tabular-nums',flex:'none'}}>+{c.ml}</span>
     </div>
     <div style={{display:'flex',alignItems:'center',gap:8,marginTop:7,height:16,paddingRight:list.length>1?6+list.length*5+10:0}}>
       <GoalBar p={c.p} c={c.col} h={5}/>
-      <span style={{fontSize:12,fontWeight:800,color:'#ff8fa8',fontVariantNumeric:'tabular-nums',flex:'none'}}>+{c.ml}</span>
+      <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap',flex:'none'}}>{c.txt}</span>
     </div>
   </div>;
   const cur=list[k],prev=st.prev!==null?list[st.prev%list.length]:null;
@@ -3029,11 +3032,11 @@ function HomeChallenge({list,onOpen}){
 }
 /* Streak popup (top-left flame) */
 function StreakPopup({SAT,onClose,streak,onChallenges}){
-  const pos=(streak-1)%7;
+  const pos=Math.min(streak,7)-1;
   return<UiPopup onClose={onClose} SAT={SAT} anchor="left" width={340} targetId="tos-streak-btn">
     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
       <span style={{display:'flex',alignItems:'center',gap:7,color:'#ffd25e',fontWeight:800,fontSize:17}}><Ic n="flame" s={20}/>{streak>1?trf('Série de {n} jours',{n:streak}):trf('Série de {n} jour',{n:streak})}</span>
-      <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)'}}>{trf('Demain : +{n} mL',{n:LOGIN_REWARDS[streak%7]})}</span>
+      <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)'}}>{trf('Demain : +{n} mL',{n:LOGIN_REWARDS[Math.min(streak,6)]})}</span>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(7,minmax(0,1fr))',gap:5}}>
       {LOGIN_REWARDS.map((r,i)=>{const done=i<pos,cur=i===pos;return<div key={i} style={{height:62,borderRadius:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2,fontSize:10,fontWeight:800,background:cur?'var(--gold-grad)':'rgba(255,196,63,.1)',border:`1px solid ${cur?'#ffe88f':done?'rgba(255,196,63,.55)':'rgba(255,255,255,.1)'}`,color:cur?'var(--ink-on-gold)':done?'#ffd25e':'var(--text-3)'}}>
@@ -3307,7 +3310,7 @@ function Game(){
       if(g.infinite){setHighScoresInf(saveHSInf(g.playT));}
       else{setHighScores(saveHS(g.score,won?4:g.zone,won));}
       setRec(saveRecRun(modeKeyOf(g),{won:!!won,zone:won?4:g.zone,rivals:g.score,time:g.playT,ts:Date.now()}));
-      const newStats=recordGame({won,rivals:g.score,playT:g.playT,infinite:g.infinite,helmets:g.helmetsPicked,zone:g.zone});
+      const newStats=recordGame({won,rivals:g.score,playT:g.playT,infinite:g.infinite,helmets:g.helmetsPicked,zone:g.zone,mode:modeKeyOf(g)});
       setStats(newStats);
       const bestInf=loadHSInf()[0]?.time||0;
       const ac=checkAchievements(newStats,bestInf,won?{perfectWin:g.lives===3,noHelmetWin:g.helmetsPicked===0}:{});
@@ -3713,7 +3716,7 @@ function Game(){
     ACHIEVEMENTS.forEach(a=>{if(achSet.has(a.id))return;const pr=achProg(a,sExt);out.push({ic:'trophy',c:TIERS[a.tier].color,title:trf('Succès « {n} »',{n:tr(a.name)}),sub:pr.txt,p:pr.p,ml:a.ml});});
     out.sort((x,y)=>y.p-x.p);
     const top=out.slice(0,2);
-    top.push({ic:'flame',c:'#ffc43f',title:'Série : reviens demain',sub:trf('Jour {n} de ta série',{n:LOGIN0.streak}),p:null,ml:LOGIN_REWARDS[LOGIN0.streak%7]});
+    top.push({ic:'flame',c:'#ffc43f',title:'Série : reviens demain',sub:trf('Jour {n} de ta série',{n:LOGIN0.streak}),p:null,ml:LOGIN_REWARDS[Math.min(LOGIN0.streak,6)]});
     return top;
   },[daily,weekly,achSet,stats,rec]);
   // stable handler bag for the memoised screens (always points at the latest closures)

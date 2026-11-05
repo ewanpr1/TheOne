@@ -188,7 +188,7 @@ const ZONES = [{
   minGaps: 1,
   spermSpd: 0.7
 }];
-const APP_VERSION = "v103";
+const APP_VERSION = "v104";
 const TUTO_KEY = 'theone_tuto',
   TUTO_STEPS = 3;
 let DISCRETE_MODE = false;
@@ -1431,6 +1431,10 @@ function loadStats() {
     timeInf: 0
   }, s);
   if (!Array.isArray(s.loss) || s.loss.length !== 5) s.loss = [0, 0, 0, 0, 0];
+  if (!s.lossM || !s.lossM.n) s.lossM = {
+    n: s.loss.slice(),
+    h: [0, 0, 0, 0, 0]
+  };
   return s;
 }
 function saveStats(p) {
@@ -1443,13 +1447,18 @@ function recordGame({
   playT,
   infinite,
   helmets,
-  zone
+  zone,
+  mode
 }) {
   const s = loadStats();
   s.games++;
   if (won) s.wins++;
   s.rivals += rivals || 0;
-  if (!won && !infinite) s.loss[clamp(zone || 0, 0, 4)]++;
+  if (!won && !infinite) {
+    const zi = clamp(zone || 0, 0, 4);
+    s.loss[zi]++;
+    s.lossM[mode === 'h' ? 'h' : 'n'][zi]++;
+  }
   if (infinite) s.timeInf += playT || 0;else s.timeNorm += playT || 0;
   s.helmets = (s.helmets || 0) + (helmets || 0);
   if (won) {
@@ -2029,7 +2038,7 @@ function loginTick() {
   d.setDate(d.getDate() - 1);
   const yest = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
   const streak = o && o.last === yest ? o.streak + 1 : 1,
-    reward = LOGIN_REWARDS[(streak - 1) % 7];
+    reward = LOGIN_REWARDS[Math.min(streak, 7) - 1];
   try {
     localStorage.setItem(LOGIN_KEY, JSON.stringify({
       last: today,
@@ -6153,7 +6162,7 @@ const HomeScreen = React.memo(function HomeScreen(p) {
   } = p;
   const rar = rarityOf(skin.cost),
     mc = MODE_CFG[mode];
-  const pos = (streak - 1) % 7;
+  const pos = Math.min(streak, 7) - 1;
   const playLabel = tr('JOUER'),
     pfs = playLabel.length <= 5 ? 24 : playLabel.length <= 6 ? 21 : 18;
   const cardBtn = {
@@ -8200,7 +8209,7 @@ function ChallengesModal({
   const [tab, setTab] = React.useState('day');
   const list = [...(tab === 'day' ? daily : weekly).ch].sort((a, b) => TIERS[chTier(a)].n - TIERS[chTier(b)].n);
   const streak = LOGIN0.streak,
-    pos = (streak - 1) % 7;
+    pos = Math.min(streak, 7) - 1;
   const left = tab === 'day' ? msToMidnight() : msToMonday();
   return React.createElement(Sheet, {
     title: tr('Défis'),
@@ -8244,7 +8253,7 @@ function ChallengesModal({
       color: 'var(--text-2)'
     }
   }, trf('Demain : +{n} mL', {
-    n: LOGIN_REWARDS[streak % 7]
+    n: LOGIN_REWARDS[Math.min(streak, 6)]
   }))), React.createElement("div", {
     style: {
       display: 'grid',
@@ -8533,7 +8542,7 @@ function StatsModal({
   const T = [[stats.games, tr('PARTIES')], [stats.wins, tr('VICTOIRES'), '#ffd25e'], [stats.games ? Math.round(stats.wins / stats.games * 100) + ' %' : '—', tr('RÉUSSITE')], [stats.rivals.toLocaleString('fr-FR'), tr('RIVAUX')], [hm((stats.timeNorm || 0) + (stats.timeInf || 0)), tr('TEMPS')], [stats.helmets || 0, tr('CASQUES')]];
   const medal = ['linear-gradient(135deg,#ffe88f,#ffc43f)', 'linear-gradient(135deg,#f4f4f8,#b9bcc8)', 'linear-gradient(135deg,#f0b48a,#b86f3f)'];
   const list = rec[m].slice(0, 3);
-  const loss = stats.loss || [0, 0, 0, 0, 0],
+  const loss = stats.lossM && stats.lossM[m] || [0, 0, 0, 0, 0],
     mx = Math.max(1, ...loss);
   return React.createElement(Sheet, {
     title: tr('Statistiques'),
@@ -8669,7 +8678,7 @@ function StatsModal({
       color: 'var(--text-3)',
       margin: '6px 2px 0'
     }
-  }, m === 'i' ? tr('Classés par temps de survie.') : tr('Classés par issue, puis par rivaux éliminés.')), React.createElement(SecLabel, null, tr('OÙ TU PERDS')), React.createElement("div", {
+  }, m === 'i' ? tr('Classés par temps de survie.') : tr('Classés par issue, puis par rivaux éliminés.')), m !== 'i' && React.createElement(React.Fragment, null, React.createElement(SecLabel, null, tr('OÙ TU PERDS')), React.createElement("div", {
     style: {
       padding: '10px 12px',
       borderRadius: 16,
@@ -8718,7 +8727,7 @@ function StatsModal({
       textAlign: 'right',
       fontVariantNumeric: 'tabular-nums'
     }
-  }, loss[i])))));
+  }, loss[i]))))));
 }
 const OFFSETS = [[0, 'Aucun'], [28, 'Petit'], [48, 'Moyen'], [68, 'Grand']];
 function Switch({
@@ -10160,14 +10169,13 @@ function HomeChallenge({
     }
   }, c.label), React.createElement("span", {
     style: {
-      fontSize: 11,
-      fontWeight: 700,
-      color: 'var(--text-2)',
+      fontSize: 12,
+      fontWeight: 800,
+      color: '#ff8fa8',
       fontVariantNumeric: 'tabular-nums',
-      whiteSpace: 'nowrap',
       flex: 'none'
     }
-  }, c.txt)), React.createElement("div", {
+  }, "+", c.ml)), React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'center',
@@ -10182,13 +10190,14 @@ function HomeChallenge({
     h: 5
   }), React.createElement("span", {
     style: {
-      fontSize: 12,
-      fontWeight: 800,
-      color: '#ff8fa8',
+      fontSize: 11,
+      fontWeight: 700,
+      color: 'var(--text-2)',
       fontVariantNumeric: 'tabular-nums',
+      whiteSpace: 'nowrap',
       flex: 'none'
     }
-  }, "+", c.ml)));
+  }, c.txt)));
   const cur = list[k],
     prev = st.prev !== null ? list[st.prev % list.length] : null;
   return React.createElement("button", {
@@ -10250,7 +10259,7 @@ function StreakPopup({
   streak,
   onChallenges
 }) {
-  const pos = (streak - 1) % 7;
+  const pos = Math.min(streak, 7) - 1;
   return React.createElement(UiPopup, {
     onClose: onClose,
     SAT: SAT,
@@ -10287,7 +10296,7 @@ function StreakPopup({
       color: 'var(--text-2)'
     }
   }, trf('Demain : +{n} mL', {
-    n: LOGIN_REWARDS[streak % 7]
+    n: LOGIN_REWARDS[Math.min(streak, 6)]
   }))), React.createElement("div", {
     style: {
       display: 'grid',
@@ -10879,7 +10888,8 @@ function Game() {
         playT: g.playT,
         infinite: g.infinite,
         helmets: g.helmetsPicked,
-        zone: g.zone
+        zone: g.zone,
+        mode: modeKeyOf(g)
       });
       setStats(newStats);
       const bestInf = loadHSInf()[0]?.time || 0;
@@ -11548,7 +11558,7 @@ function Game() {
         n: LOGIN0.streak
       }),
       p: null,
-      ml: LOGIN_REWARDS[LOGIN0.streak % 7]
+      ml: LOGIN_REWARDS[Math.min(LOGIN0.streak, 6)]
     });
     return top;
   }, [daily, weekly, achSet, stats, rec]);

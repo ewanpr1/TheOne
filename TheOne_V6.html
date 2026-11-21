@@ -188,7 +188,7 @@ const ZONES = [{
   minGaps: 1,
   spermSpd: 0.7
 }];
-const APP_VERSION = "v104";
+const APP_VERSION = "v115";
 const TUTO_KEY = 'theone_tuto',
   TUTO_STEPS = 3;
 let DISCRETE_MODE = false;
@@ -280,7 +280,7 @@ Object.assign(EN, {
   "Glisse pour naviguer — évite, percute, survis": "Drag to steer — dodge, ram, survive",
   "MEILLEURS SCORES": "BEST SCORES",
   "RIVAUX": "RIVALS",
-  "Aucun score encore — à toi de jouer !": "No score yet — your turn to play!",
+  "Aucun score pour l’instant": "No score yet",
   "MEILLEUR TEMPS ∞": "BEST TIME ∞",
   "MEILLEURS TEMPS": "BEST TIMES",
   "Mode Infini": "Infinite Mode",
@@ -312,7 +312,7 @@ Object.assign(EN, {
   "Tourne ton téléphone": "Rotate your phone",
   "TheOne se joue uniquement en mode portrait.": "TheOne is played in portrait mode only.",
   "La partie est en pause.": "The game is paused.",
-  "Fécondation !": "Fertilization!",
+  "Fécondation": "Fertilization",
   "Une nouvelle vie commence…": "A new life begins…",
   "Touche pour passer": "Tap to skip",
   "Col de l'Utérus": "Cervix",
@@ -413,7 +413,7 @@ Object.assign(EN, {
   "Nouveaux défis chaque lundi": "New challenges every Monday",
   "Du jour": "Daily",
   "De la semaine": "Weekly",
-  "Tous les défis sont réussis !": "All challenges complete!",
+  "Tous les défis réussis": "All challenges complete",
   "sur": "of",
   "Renouvellement dans": "Renews in",
   "HEBDOMADAIRE": "WEEKLY",
@@ -568,7 +568,6 @@ Object.assign(EN, {
   "dev": "dev",
   "VICTOIRES": "WINS",
   "☠ MODE HARDCORE": "☠ HARDCORE MODE",
-  "Victoire !": "Victory!",
   "TheOne — la course du sperme": "TheOne — the sperm race",
   "S O I S   L E   P R E M I E R": "B E   T H E   F I R S T",
   "TheOne ∞ — {t} de survie 🏆": "TheOne ∞ — survived {t} 🏆",
@@ -598,7 +597,7 @@ Object.assign(EN, {
   "MODE": "MODE",
   "RECORD": "RECORD",
   "Aucun record pour l’instant": "No record yet",
-  "Ovule atteint !": "Egg reached!",
+  "Ovule atteint": "Egg reached",
   "rivaux": "rivals",
   "Zone {n}": "Zone {n}",
   "Réglages rapides": "Quick settings",
@@ -680,7 +679,7 @@ Object.assign(EN, {
   "ÉTAPE": "STEP",
   "Retour": "Back",
   "Suivant": "Next",
-  "Jouer !": "Play!",
+  "Jouer": "Play",
   "Pilote avec le doigt": "Steer with your finger",
   "Glisse n’importe où : ton spermatozoïde suit le mouvement et remonte le canal.": "Slide anywhere: your sperm follows the movement and swims up the canal.",
   "DÉCALAGE RÉGLABLE": "ADJUSTABLE OFFSET",
@@ -756,13 +755,32 @@ Object.assign(EN, {
   "Arrêté à la zone {n}": "Stopped at zone {n}",
   "zone {n}/5": "zone {n}/5"
 });
+Object.assign(EN, {
+  "Têtard": "Tadpole",
+  "Bébé": "Baby",
+  "Pirate": "Pirate",
+  "Astronaute": "Astronaut",
+  "Pixel": "Pixel",
+  "Père Noël": "Santa",
+  "Ange": "Angel",
+  "Démon": "Devil",
+  "Disco": "Disco",
+  "Gouttes": "Drops",
+  "Éclairs": "Lightning",
+  "Bébés": "Babies",
+  "Cadeaux": "Gifts",
+  "Podium": "Podium",
+  "Pluie de cadeaux": "Gift rain",
+  "Cigogne": "Stork",
+  "Paparazzi": "Paparazzi"
+});
 EN_RULES.push([/^Éliminer (\d+) rivaux en une partie$/, 'Eliminate $1 rivals in one game'], [/^Ramasser (\d+) casques aujourd'hui$/, 'Collect $1 helmets today'], [/^Jouer (\d+) min aujourd'hui$/, 'Play $1 min today'], [/^Éliminer (\d+) rivaux aujourd'hui$/, 'Eliminate $1 rivals today'], [/^Atteindre la zone (\d+) en une partie$/, 'Reach zone $1 in one game'], [/^Gagner 1 partie aujourd'hui$/, 'Win 1 game today'], [/^Gagner (\d+) parties aujourd'hui$/, 'Win $1 games today'], [/^Survivre (\d+)s en mode infini$/, 'Survive $1s in infinite mode'], [/^Survivre (\d+) min en mode infini$/, 'Survive $1 min in infinite mode'], [/^Gagner en moins de (\d+:\d+)$/, 'Win in under $1'], [/^Éliminer (\d+) rivaux cette semaine$/, 'Eliminate $1 rivals this week'], [/^Ramasser (\d+) casques cette semaine$/, 'Collect $1 helmets this week'], [/^Jouer (\d+) min cette semaine$/, 'Play $1 min this week'], [/^Gagner (\d+) parties cette semaine$/, 'Win $1 games this week'], [/^Atteindre (\d+) fois la zone 5$/, 'Reach zone 5 $1 times'], [/^ZONE (\d+) \/ (\d+)$/, 'ZONE $1 / $2'], [/^1 défi à réussir$/, '1 challenge to complete'], [/^(\d+) défis à réussir$/, '$1 challenges to complete'], [/^Record (\S+) · cible (\S+)$/, 'Record $1 · target $2'], [/^Cible : (\S+)$/, 'Target: $1'], [/^(\d+) j (\d+) h$/, '$1 d $2 h'], [/^1 succès débloqué$/, '1 achievement unlocked'], [/^(\d+) succès débloqués?$/, '$1 achievements unlocked']);
 Object.assign(XL, {
   "BE THE FIRST": ["SEI DER ERSTE", "SÉ EL PRIMERO"],
   "Drag to steer — dodge, ram, survive": ["Ziehen zum Steuern — ausweichen, rammen, überleben", "Desliza para dirigir — esquiva, embiste, sobrevive"],
   "BEST SCORES": ["BESTE PUNKTE", "MEJORES PUNTUACIONES"],
   "RIVALS": ["RIVALEN", "RIVALES"],
-  "No score yet — your turn to play!": ["Noch kein Ergebnis — du bist dran!", "Aún sin puntuación — ¡te toca jugar!"],
+  "No score yet": ["Noch kein Ergebnis", "Aún sin puntuación"],
   "BEST TIME ∞": ["BESTZEIT ∞", "MEJOR TIEMPO ∞"],
   "BEST TIMES": ["BESTZEITEN", "MEJORES TIEMPOS"],
   "Infinite Mode": ["Endlos-Modus", "Modo Infinito"],
@@ -794,7 +812,7 @@ Object.assign(XL, {
   "Rotate your phone": ["Dreh dein Handy", "Gira tu teléfono"],
   "TheOne is played in portrait mode only.": ["TheOne wird nur im Hochformat gespielt.", "TheOne solo se juega en vertical."],
   "The game is paused.": ["Das Spiel ist pausiert.", "El juego está en pausa."],
-  "Fertilization!": ["Befruchtung!", "¡Fecundación!"],
+  "Fertilization": ["Befruchtung", "Fecundación"],
   "A new life begins…": ["Ein neues Leben beginnt …", "Comienza una nueva vida…"],
   "Tap to skip": ["Tippen zum Überspringen", "Toca para saltar"],
   "Cervix": ["Gebärmutterhals", "Cuello uterino"],
@@ -897,7 +915,7 @@ Object.assign(XL, {
   "New challenges every Monday": ["Jeden Montag neue Herausforderungen", "Nuevos desafíos cada lunes"],
   "Daily": ["Täglich", "Diarios"],
   "Weekly": ["Wöchentlich", "Semanales"],
-  "All challenges complete!": ["Alle Herausforderungen geschafft!", "¡Todos los desafíos completados!"],
+  "All challenges complete": ["Alle Herausforderungen geschafft", "Todos los desafíos completados"],
   "of": ["von", "de"],
   "Renews in": ["Erneuert sich in", "Se renueva en"],
   "WEEKLY": ["WÖCHENTLICH", "SEMANAL"],
@@ -1055,7 +1073,6 @@ Object.assign(XL, {
   "dev": ["dev", "dev"],
   "WINS": ["SIEGE", "VICTORIAS"],
   "☠ HARDCORE MODE": ["☠ HARDCORE-MODUS", "☠ MODO HARDCORE"],
-  "Victory!": ["Sieg!", "¡Victoria!"],
   "TheOne — the sperm race": ["TheOne — das Spermien-Rennen", "TheOne — la carrera de los espermatozoides"],
   "B E   T H E   F I R S T": ["S E I   D E R   E R S T E", "S É   E L   P R I M E R O"],
   "TheOne ∞ — survived {t} 🏆": ["TheOne ∞ — {t} überlebt 🏆", "TheOne ∞ — he sobrevivido {t} 🏆"],
@@ -1095,7 +1112,7 @@ Object.assign(XL, {
   "Effects": ["Effekte", "Efectos"],
   "Egg membrane": ["Membran der Eizelle", "Membrana del óvulo"],
   "Egg reached · zone {n}/5": ["Eizelle erreicht · Zone {n}/5", "Óvulo alcanzado · zona {n}/5"],
-  "Egg reached!": ["Eizelle erreicht!", "¡Óvulo alcanzado!"],
+  "Egg reached": ["Eizelle erreicht", "Óvulo alcanzado"],
   "Enabled": ["An", "Activadas"],
   "Enter the egg": ["Dring in die Eizelle ein", "Entra en el óvulo"],
   "Export my progress": ["Meinen Fortschritt exportieren", "Exportar mi progreso"],
@@ -1140,7 +1157,7 @@ Object.assign(XL, {
   "Pick up the helmet": ["Sammle den Helm ein", "Recoge el casco"],
   "Pick up the helmet: it absorbs the next hit for 8 seconds. No helmet in Hardcore mode.": ["Sammle den Helm ein: Er fängt 8 Sekunden lang den nächsten Treffer ab. Im Hardcore-Modus gibt es keinen Helm.", "Recoge el casco: absorbe el siguiente golpe durante 8 segundos. No hay casco en modo Hardcore."],
   "Play for free": ["Kostenlos spielen", "Juega gratis"],
-  "Play!": ["Spielen!", "¡Jugar!"],
+  "Play": ["Spielen", "Jugar"],
   "Previous skin": ["Vorheriger Skin", "Skin anterior"],
   "QUICKEST TODAY": ["AM SCHNELLSTEN HEUTE", "LO MÁS RÁPIDO HOY"],
   "Quick settings": ["Schnell-Einstellungen", "Ajustes rápidos"],
@@ -1240,7 +1257,62 @@ Object.assign(XL, {
   "Stopped in the Uterus": ["Gestoppt in der Gebärmutter", "Detenido en el útero"],
   "zone {n}/5": ["Zone {n}/5", "zona {n}/5"]
 });
+Object.assign(XL, {
+  "Angel": ["Engel", "Ángel"],
+  "Astronaut": ["Astronaut", "Astronauta"],
+  "Babies": ["Babys", "Bebés"],
+  "Baby": ["Baby", "Bebé"],
+  "Devil": ["Teufel", "Demonio"],
+  "Disco": ["Disco", "Disco"],
+  "Drops": ["Tropfen", "Gotas"],
+  "Gift rain": ["Geschenkregen", "Lluvia de regalos"],
+  "Gifts": ["Geschenke", "Regalos"],
+  "Lightning": ["Blitze", "Rayos"],
+  "Paparazzi": ["Paparazzi", "Paparazzi"],
+  "Pirate": ["Pirat", "Pirata"],
+  "Pixel": ["Pixel", "Píxel"],
+  "Podium": ["Podium", "Podio"],
+  "Santa": ["Weihnachtsmann", "Papá Noel"],
+  "Stork": ["Storch", "Cigüeña"],
+  "Tadpole": ["Kaulquappe", "Renacuajo"]
+});
 XL_RULES.push([/^Éliminer (\d+) rivaux en une partie$/, 'Schalte $1 Rivalen in einer Partie aus', 'Elimina $1 rivales en una partida'], [/^Ramasser (\d+) casques aujourd'hui$/, 'Sammle heute $1 Helme ein', 'Recoge $1 cascos hoy'], [/^Jouer (\d+) min aujourd'hui$/, 'Spiel heute $1 Min', 'Juega $1 min hoy'], [/^Éliminer (\d+) rivaux aujourd'hui$/, 'Schalte heute $1 Rivalen aus', 'Elimina $1 rivales hoy'], [/^Atteindre la zone (\d+) en une partie$/, 'Erreiche Zone $1 in einer Partie', 'Alcanza la zona $1 en una partida'], [/^Gagner 1 partie aujourd'hui$/, 'Gewinne heute 1 Partie', 'Gana 1 partida hoy'], [/^Gagner (\d+) parties aujourd'hui$/, 'Gewinne heute $1 Partien', 'Gana $1 partidas hoy'], [/^Survivre (\d+)s en mode infini$/, 'Überlebe $1 s im Endlos-Modus', 'Sobrevive $1 s en modo infinito'], [/^Survivre (\d+) min en mode infini$/, 'Überlebe $1 Min im Endlos-Modus', 'Sobrevive $1 min en modo infinito'], [/^Gagner en moins de (\d+:\d+)$/, 'Gewinne in unter $1', 'Gana en menos de $1'], [/^Éliminer (\d+) rivaux cette semaine$/, 'Schalte diese Woche $1 Rivalen aus', 'Elimina $1 rivales esta semana'], [/^Ramasser (\d+) casques cette semaine$/, 'Sammle diese Woche $1 Helme ein', 'Recoge $1 cascos esta semana'], [/^Jouer (\d+) min cette semaine$/, 'Spiel diese Woche $1 Min', 'Juega $1 min esta semana'], [/^Gagner (\d+) parties cette semaine$/, 'Gewinne diese Woche $1 Partien', 'Gana $1 partidas esta semana'], [/^Atteindre (\d+) fois la zone 5$/, 'Erreiche $1 Mal Zone 5', 'Alcanza $1 veces la zona 5'], [/^ZONE (\d+) \/ (\d+)$/, 'ZONE $1 / $2', 'ZONA $1 / $2'], [/^1 défi à réussir$/, '1 Herausforderung offen', '1 desafío por cumplir'], [/^(\d+) défis à réussir$/, '$1 Herausforderungen offen', '$1 desafíos por cumplir'], [/^Record (\S+) · cible (\S+)$/, 'Rekord $1 · Ziel $2', 'Récord $1 · meta $2'], [/^Cible : (\S+)$/, 'Ziel: $1', 'Meta: $1'], [/^(\d+) j (\d+) h$/, '$1 T $2 Std', '$1 d $2 h'], [/^1 succès débloqué$/, '1 Erfolg freigeschaltet', '1 logro desbloqueado'], [/^(\d+) succès débloqués?$/, '$1 Erfolge freigeschaltet', '$1 logros desbloqueados']);
+Object.assign(EN, {
+  "Fidèle": "Faithful",
+  "Série de connexion de 7 jours": "7-day login streak",
+  "Inconditionnel": "Die-hard",
+  "Série de connexion de 30 jours": "30-day login streak",
+  "Collectionneur": "Collector",
+  "Posséder 10 skins": "Own 10 skins",
+  "Survivant": "Survivor",
+  "Gagner une partie en Hardcore": "Win a game in Hardcore",
+  "Chasseur de défis": "Challenge hunter",
+  "Réussir 50 défis": "Complete 50 challenges",
+  "Assidu": "Regular",
+  "Jouer 100 parties": "Play 100 games"
+});
+Object.assign(XL, {
+  "Faithful": ["Treu", "Fiel"],
+  "7-day login streak": ["7 Tage Anmelde-Serie", "Racha de conexión de 7 días"],
+  "Die-hard": ["Eingefleischt", "Incondicional"],
+  "30-day login streak": ["30 Tage Anmelde-Serie", "Racha de conexión de 30 días"],
+  "Collector": ["Sammler", "Coleccionista"],
+  "Own 10 skins": ["10 Skins besitzen", "Tener 10 skins"],
+  "Survivor": ["Überlebender", "Superviviente"],
+  "Win a game in Hardcore": ["Gewinne eine Partie im Hardcore-Modus", "Gana una partida en Hardcore"],
+  "Challenge hunter": ["Herausforderungsjäger", "Cazador de desafíos"],
+  "Complete 50 challenges": ["Schaffe 50 Herausforderungen", "Completa 50 desafíos"],
+  "Regular": ["Stammspieler", "Constante"],
+  "Play 100 games": ["Spiel 100 Partien", "Juega 100 partidas"]
+});
+EN_RULES.push([/^Ne laisser passer aucun rival jusqu'à la zone (\d+)$/, 'Let no rival get past before zone $1'], [/^Réussir (\d+) défis du jour cette semaine$/, 'Complete $1 daily challenges this week'], [/^Éliminer (\d+) rivaux en Hardcore$/, 'Eliminate $1 rivals in Hardcore'], [/^Gagner (\d+) parties en Hardcore$/, 'Win $1 games in Hardcore']);
+XL_RULES.push([/^Ne laisser passer aucun rival jusqu'à la zone (\d+)$/, 'Lass vor Zone $1 keinen Rivalen durch', 'No dejes pasar ningún rival antes de la zona $1'], [/^Réussir (\d+) défis du jour cette semaine$/, 'Schaffe diese Woche $1 tägliche Herausforderungen', 'Completa $1 desafíos diarios esta semana'], [/^Éliminer (\d+) rivaux en Hardcore$/, 'Schalte $1 Rivalen im Hardcore-Modus aus', 'Elimina $1 rivales en Hardcore'], [/^Gagner (\d+) parties en Hardcore$/, 'Gewinne $1 Partien im Hardcore-Modus', 'Gana $1 partidas en Hardcore']);
+Object.assign(EN, {
+  "Jusqu’au 25 déc.": "Until Dec 25"
+});
+Object.assign(XL, {
+  "Until Dec 25": ["Bis 25. Dez.", "Hasta el 25 dic."]
+});
 window.__i18n = {
   EN,
   XL
@@ -1411,11 +1483,10 @@ function loadAchDates() {
 function fmtDuration(ms) {
   const s = Math.floor(ms / 1000),
     h = Math.floor(s / 3600),
-    m = Math.floor(s % 3600 / 60),
-    r = s % 60;
-  if (h > 0) return h + 'h ' + m + 'm';
-  if (m > 0) return m + 'm ' + r + 's';
-  return r + 's';
+    m = Math.floor(s % 3600 / 60);
+  if (h > 0) return h + ' h ' + String(m).padStart(2, '0');
+  if (m > 0) return m + ' min';
+  return s + ' s';
 }
 const STATS_KEY = 'theone_stats';
 function loadStats() {
@@ -1468,6 +1539,7 @@ function recordGame({
   if (won && !infinite) {
     if (!s.bestWinTime || playT < s.bestWinTime) s.bestWinTime = playT;
   }
+  if (won && mode === 'h') s.hcWins = (s.hcWins || 0) + 1;
   return saveStats(s);
 }
 const ACH_KEY = 'theone_ach';
@@ -1590,6 +1662,33 @@ const ACHIEVEMENTS = [{
   target: 1800000,
   fmt: 'time'
 }, {
+  id: 'faithful',
+  tier: 'medium',
+  name: 'Fidèle',
+  desc: 'Série de connexion de 7 jours',
+  ml: 150,
+  get: s => s.loginBest || 0,
+  target: 7,
+  fmt: 'count'
+}, {
+  id: 'assidu',
+  tier: 'medium',
+  name: 'Assidu',
+  desc: 'Jouer 100 parties',
+  ml: 350,
+  get: s => s.games,
+  target: 100,
+  fmt: 'count'
+}, {
+  id: 'endurance',
+  tier: 'hard',
+  name: 'Endurance',
+  desc: '1 h de jeu cumulé',
+  ml: 200,
+  get: s => s.timeNorm + s.timeInf,
+  target: 3600000,
+  fmt: 'time'
+}, {
   id: 'legend',
   tier: 'hard',
   name: 'Légende',
@@ -1607,15 +1706,6 @@ const ACHIEVEMENTS = [{
   get: s => s.rivals,
   target: 2500,
   fmt: 'count'
-}, {
-  id: 'endurance',
-  tier: 'hard',
-  name: 'Endurance',
-  desc: '1 h de jeu cumulé',
-  ml: 200,
-  get: s => s.timeNorm + s.timeInf,
-  target: 3600000,
-  fmt: 'time'
 }, {
   id: 'inf3',
   tier: 'hard',
@@ -1635,6 +1725,15 @@ const ACHIEVEMENTS = [{
   target: 170000,
   fmt: 'speed'
 }, {
+  id: 'collector',
+  tier: 'hard',
+  name: 'Collectionneur',
+  desc: 'Posséder 10 skins',
+  ml: 500,
+  get: s => s.skinsOwned || 0,
+  target: 10,
+  fmt: 'count'
+}, {
   id: 'bare_hands',
   tier: 'hard',
   name: 'À mains nues',
@@ -1642,6 +1741,24 @@ const ACHIEVEMENTS = [{
   ml: 600,
   get: s => s.noHelmetWin ? 1 : 0,
   target: 1,
+  fmt: 'count'
+}, {
+  id: 'survivor',
+  tier: 'hard',
+  name: 'Survivant',
+  desc: 'Gagner une partie en Hardcore',
+  ml: 600,
+  get: s => s.hcWins || 0,
+  target: 1,
+  fmt: 'count'
+}, {
+  id: 'hunter',
+  tier: 'hard',
+  name: 'Chasseur de défis',
+  desc: 'Réussir 50 défis',
+  ml: 800,
+  get: s => s.chDone || 0,
+  target: 50,
   fmt: 'count'
 }, {
   id: 'flawless',
@@ -1653,6 +1770,15 @@ const ACHIEVEMENTS = [{
   target: 1,
   fmt: 'count'
 }, {
+  id: 'diehard',
+  tier: 'extreme',
+  name: 'Inconditionnel',
+  desc: 'Série de connexion de 30 jours',
+  ml: 1000,
+  get: s => s.loginBest || 0,
+  target: 30,
+  fmt: 'count'
+}, {
   id: 'massacre',
   tier: 'extreme',
   name: 'Massacre',
@@ -1660,15 +1786,6 @@ const ACHIEVEMENTS = [{
   ml: 1500,
   get: s => s.rivals,
   target: 10000,
-  fmt: 'count'
-}, {
-  id: 'chosen',
-  tier: 'extreme',
-  name: "L'Élu",
-  desc: '50 victoires',
-  ml: 1750,
-  get: s => s.wins,
-  target: 50,
   fmt: 'count'
 }, {
   id: 'inf5',
@@ -1687,6 +1804,15 @@ const ACHIEVEMENTS = [{
   ml: 2500,
   get: s => s.bestStreak,
   target: 3,
+  fmt: 'count'
+}, {
+  id: 'chosen',
+  tier: 'extreme',
+  name: "L'Élu",
+  desc: '50 victoires',
+  ml: 3000,
+  get: s => s.wins,
+  target: 50,
   fmt: 'count'
 }];
 function achComplete(a, s) {
@@ -1716,11 +1842,28 @@ const TIERS = {
     n: 4
   }
 };
+function achExtra() {
+  let lb = 0,
+    n = 0;
+  try {
+    const o = JSON.parse(localStorage.getItem(LOGIN_KEY) || 'null');
+    lb = o ? o.best || o.streak || 0 : 0;
+  } catch (e) {}
+  try {
+    const ow = loadOwned();
+    n = SKINS.filter(x => ow.has(x.id)).length;
+  } catch (e) {}
+  return {
+    loginBest: lb,
+    skinsOwned: n
+  };
+}
 function checkAchievements(stats, bestInfTime, perGame = {}) {
   const s = {
     ...stats,
     bestInfTime: bestInfTime || 0,
-    ...perGame
+    ...perGame,
+    ...achExtra()
   };
   const ach = loadAch();
   let ml = loadML();
@@ -1998,6 +2141,140 @@ const SKINS = [{
   pearl: true,
   holo: true,
   trail: 'holo'
+}, {
+  id: 'tadpole',
+  name: 'Têtard',
+  cost: 200,
+  body: '#8a9a48',
+  bodyGrad: true,
+  eye: '#3a2a10',
+  pupil: '#120a02',
+  tail: 'rgba(111,125,52,0.95)',
+  cheek: 'rgba(200,120,60,0.35)',
+  mouth: '#3d4a12',
+  shine: 0.45,
+  tailW: 1.5,
+  fin: true,
+  spots: true
+}, {
+  id: 'baby',
+  name: 'Bébé',
+  cost: 250,
+  body: '#ffe6d8',
+  bodyGrad: true,
+  eye: '#5b9bd5',
+  pupil: '#1a2535',
+  tail: 'rgba(255,225,210,0.9)',
+  cheek: 'rgba(255,120,140,0.55)',
+  mouth: '#c06070',
+  shine: 0.55,
+  acc: 'baby'
+}, {
+  id: 'pirate',
+  name: 'Pirate',
+  cost: 600,
+  body: '#f6dcc4',
+  bodyGrad: true,
+  eye: '#3a6a40',
+  pupil: '#10200f',
+  tail: 'rgba(246,220,196,0.9)',
+  cheek: 'rgba(220,120,90,0.45)',
+  mouth: '#8a4a30',
+  shine: 0.45,
+  acc: 'pirate',
+  hat: true
+}, {
+  id: 'astro',
+  name: 'Astronaute',
+  cost: 800,
+  body: '#ffffff',
+  bodyGrad: true,
+  eye: '#5b9bd5',
+  pupil: '#1a2535',
+  tail: 'rgba(235,240,250,0.9)',
+  cheek: 'rgba(232,145,130,0.5)',
+  mouth: '#b06050',
+  shine: 0.55,
+  acc: 'astro',
+  hat: true,
+  trail: 'stars'
+}, {
+  id: 'pixel',
+  name: 'Pixel',
+  cost: 1000,
+  body: '#ffffff',
+  bodyGrad: false,
+  eye: '#1a2535',
+  pupil: '#1a2535',
+  tail: '#f0f3f8',
+  cheek: '#ffb3c4',
+  mouth: '#b06050',
+  shine: 0,
+  pixel: true
+}, {
+  id: 'santa',
+  name: 'Père Noël',
+  cost: 1200,
+  body: '#ffd9c4',
+  bodyGrad: true,
+  eye: '#5b9bd5',
+  pupil: '#1a2535',
+  tail: 'rgba(255,230,215,0.9)',
+  cheek: 'rgba(255,90,110,0.6)',
+  mouth: '#a04050',
+  shine: 0.5,
+  acc: 'santa',
+  hat: true,
+  trail: 'gifts',
+  season: 'xmas'
+}, {
+  id: 'angel',
+  name: 'Ange',
+  cost: 2000,
+  body: '#fffaf0',
+  bodyGrad: true,
+  eye: '#7ab8ff',
+  pupil: '#1a2535',
+  tail: 'rgba(255,248,230,0.92)',
+  cheek: 'rgba(255,170,190,0.45)',
+  mouth: '#b07060',
+  shine: 0.7,
+  glow: '#fff3c4',
+  acc: 'angel',
+  hat: true,
+  trail: 'diamond'
+}, {
+  id: 'demon',
+  name: 'Démon',
+  cost: 2000,
+  body: '#e4405a',
+  bodyGrad: true,
+  eye: '#ffd25e',
+  pupil: '#2a0008',
+  tail: 'rgba(192,42,64,0.95)',
+  cheek: 'rgba(140,10,30,0.45)',
+  mouth: '#5a0a18',
+  shine: 0.5,
+  glow: '#ff4a5a',
+  acc: 'demon',
+  hat: true,
+  trail: 'fire'
+}, {
+  id: 'disco',
+  name: 'Disco',
+  cost: 6000,
+  body: '#8d97aa',
+  bodyGrad: false,
+  eye: '#5b9bd5',
+  pupil: '#1a2535',
+  tail: 'url(#chromeGradV)',
+  cheek: 'rgba(255,140,200,0.35)',
+  mouth: '#2a3546',
+  shine: 0.9,
+  glow: '#e0d4ff',
+  disco: true,
+  sparkle: true,
+  trail: 'comet'
 }];
 const OWNED_KEY = 'theone_owned';
 const SKIN_KEY = 'theone_skin';
@@ -2042,7 +2319,8 @@ function loginTick() {
   try {
     localStorage.setItem(LOGIN_KEY, JSON.stringify({
       last: today,
-      streak
+      streak,
+      best: Math.max(o && (o.best || o.streak) || 0, streak)
     }));
     localStorage.setItem('theone_ml', String(Number(localStorage.getItem('theone_ml') || '0') + reward));
   } catch (e) {}
@@ -2184,10 +2462,34 @@ const CH_TEMPLATES = [{
   key: 'noHelmetWin',
   mode: 'eq'
 }, {
-  id: 'zone_h',
+  id: 'noesc_e',
+  t: 'easy',
+  pool: [4],
+  mls: [40],
+  fmt: n => `Ne laisser passer aucun rival jusqu'à la zone ${n}`,
+  key: 'noEscZone',
+  mode: 'gte'
+}, {
+  id: 'noesc_m',
   t: 'hard',
   pool: [5],
-  mls: [150],
+  mls: [200],
+  fmt: n => `Ne laisser passer aucun rival jusqu'à la zone ${n}`,
+  key: 'noEscZone',
+  mode: 'gte'
+}, {
+  id: 'hc_win',
+  t: 'hard',
+  pool: [1],
+  mls: [350],
+  fmt: () => `Gagner une partie en Hardcore`,
+  key: 'hardcoreWin',
+  mode: 'eq'
+}, {
+  id: 'zone_h',
+  t: 'medium',
+  pool: [5],
+  mls: [110],
   fmt: n => `Atteindre la zone ${n} en une partie`,
   key: 'bestZoneInGame',
   mode: 'gte'
@@ -2202,6 +2504,7 @@ function generateDaily() {
     const opts = CH_TEMPLATES.filter(c => {
       if (c.t !== t) return false;
       if (c.id === 'zone_h') return !won;
+      if (c.id === 'noesc_m') return true;
       if (!won && (c.t === 'hard' || c.id === 'inf_m')) return false;
       return true;
     });
@@ -2316,6 +2619,33 @@ const WK_TEMPLATES = [{
   key: 'bestWinInGame',
   mode: 'lte',
   scale: 1000
+}, {
+  id: 'wk_daily',
+  g: 'a',
+  pool: [10],
+  mls: [400],
+  tiers: ['medium'],
+  fmt: n => `Réussir ${n} défis du jour cette semaine`,
+  key: 'dailyDoneWeek',
+  mode: 'gte'
+}, {
+  id: 'wk_hckill',
+  g: 'a',
+  pool: [300],
+  mls: [200],
+  tiers: ['medium'],
+  fmt: n => `Éliminer ${n} rivaux en Hardcore`,
+  key: 'hcKillsWeek',
+  mode: 'gte'
+}, {
+  id: 'wk_hcwin',
+  g: 'b',
+  pool: [2],
+  mls: [500],
+  tiers: ['hard'],
+  fmt: n => `Gagner ${n} parties en Hardcore`,
+  key: 'hcWinsWeek',
+  mode: 'gte'
 }];
 function generateWeekly() {
   const id = weekId(),
@@ -2343,7 +2673,14 @@ function generateWeekly() {
 function loadWeekly() {
   try {
     const w = JSON.parse(localStorage.getItem(WEEKLY_KEY) || 'null');
-    if (w && w.wid === weekId()) return w;
+    if (w && w.wid === weekId()) {
+      w.ws = Object.assign({
+        hcKillsWeek: 0,
+        hcWinsWeek: 0,
+        dailyDoneWeek: 0
+      }, w.ws);
+      return w;
+    }
   } catch {}
   const fresh = {
     wid: weekId(),
@@ -2353,7 +2690,10 @@ function loadWeekly() {
       helmetsWeek: 0,
       timeWeek: 0,
       winsWeek: 0,
-      zone5Week: 0
+      zone5Week: 0,
+      hcKillsWeek: 0,
+      hcWinsWeek: 0,
+      dailyDoneWeek: 0
     }
   };
   localStorage.setItem(WEEKLY_KEY, JSON.stringify(fresh));
@@ -2366,6 +2706,9 @@ function saveWeekly(w) {
 function checkWeekly(w, gameStats) {
   w.ws.killsWeek = (w.ws.killsWeek || 0) + (gameStats.killsInGame || 0);
   w.ws.helmetsWeek = (w.ws.helmetsWeek || 0) + (gameStats.helmetsInGame || 0);
+  if (gameStats.hardcore) w.ws.hcKillsWeek = (w.ws.hcKillsWeek || 0) + (gameStats.killsInGame || 0);
+  if (gameStats.hardcoreWin) w.ws.hcWinsWeek = (w.ws.hcWinsWeek || 0) + 1;
+  w.ws.dailyDoneWeek = (w.ws.dailyDoneWeek || 0) + (gameStats.dailyDone || 0);
   w.ws.timeWeek = (w.ws.timeWeek || 0) + (gameStats.playT || 0);
   if (gameStats.won && !gameStats.infinite) w.ws.winsWeek = (w.ws.winsWeek || 0) + 1;
   if ((gameStats.bestZoneInGame || 0) >= 5) w.ws.zone5Week = (w.ws.zone5Week || 0) + 1;
@@ -2984,6 +3327,267 @@ const HelmetShape = React.memo(function HelmetShape() {
     opacity: "0.7"
   }));
 });
+const PIX_CELLS = (() => {
+  const inside = (x, y) => x * x / (22 * 22) + y * y / (23.5 * 23.5) < 1,
+    cells = [];
+  for (let gx = -25; gx < 25; gx += 5) for (let gy = -25; gy < 25; gy += 5) {
+    const cx = gx + 2.5,
+      cy = gy + 2.5;
+    if (!inside(cx, cy)) continue;
+    cells.push([gx, gy, !inside(cx - 5, cy) || !inside(cx + 5, cy) || !inside(cx, cy - 5) || !inside(cx, cy + 5)]);
+  }
+  return cells;
+})();
+const DISCO_CELLS = (() => {
+  const out = [],
+    s = 4.4,
+    pal = ['#ff8fd0', '#8ff0ff', '#ffe08a', '#c8a8ff'];
+  let k = 0;
+  for (let x = -22; x < 22; x += s) for (let y = -23.5; y < 23.5; y += s) {
+    const cx = x + s / 2,
+      cy = y + s / 2;
+    if (cx * cx / (21 * 21) + cy * cy / (22.5 * 22.5) >= 1) continue;
+    k++;
+    out.push({
+      x: f1(x + 0.25),
+      y: f1(y + 0.25),
+      h: hrnd(k * 7 + 3),
+      col: k % 6 === 0 ? pal[k % 4] : null
+    });
+  }
+  return out;
+})();
+function SkinBack({
+  sk,
+  ph
+}) {
+  if (sk.acc !== 'angel') return null;
+  const f = Math.sin(ph * 3) * 7;
+  const wing = s => React.createElement("g", {
+    transform: `scale(${s},1) rotate(${f1(f)},-12,-2)`
+  }, React.createElement("path", {
+    d: "M -12 -4 Q -36 -24 -38 -2 Q -34 10 -14 7 Z",
+    fill: "#fff",
+    stroke: "#e7dcc4",
+    strokeWidth: "1"
+  }), React.createElement("path", {
+    d: "M -18 -2 Q -28 -6 -32 2 M -18 3 Q -26 2 -30 6",
+    stroke: "#e2d6bd",
+    strokeWidth: "1",
+    fill: "none",
+    strokeLinecap: "round"
+  }));
+  return React.createElement("g", null, wing(1), wing(-1));
+}
+function SkinFront({
+  sk,
+  ph
+}) {
+  switch (sk.acc) {
+    case 'pirate':
+      return React.createElement("g", null, React.createElement("path", {
+        d: "M 2 -7 L -14 -10 M 13 -4 L 22 0",
+        stroke: "#1a1a1a",
+        strokeWidth: "1.4"
+      }), React.createElement("ellipse", {
+        cx: "7.5",
+        cy: "-2",
+        rx: "6.4",
+        ry: "7.2",
+        fill: "#1a1a1a"
+      }), React.createElement("ellipse", {
+        cx: "5.8",
+        cy: "-4.6",
+        rx: "2",
+        ry: "1.2",
+        fill: "#fff",
+        opacity: "0.25"
+      }), React.createElement("path", {
+        d: "M -21 -7 Q -21 -25 0 -26 Q 21 -25 21 -7 Q 0 -14 -21 -7 Z",
+        fill: "#d8243a"
+      }), React.createElement("path", {
+        d: "M -21 -7 Q 0 -14 21 -7",
+        stroke: "#a3132a",
+        strokeWidth: "1.5",
+        fill: "none"
+      }), [[-10, -19], [2, -21], [12, -15]].map(([cx, cy], i) => React.createElement("circle", {
+        key: i,
+        cx: cx,
+        cy: cy,
+        r: "1.6",
+        fill: "#fff",
+        opacity: "0.9"
+      })), React.createElement("path", {
+        d: "M 19 -10 L 30 -15 L 28 -6 Z M 19 -9 L 29 -2 L 22 -1 Z",
+        fill: "#c01e33"
+      }));
+    case 'baby':
+      return React.createElement("g", null, React.createElement("path", {
+        d: "M -15 15 Q 0 34 15 15 Q 0 23 -15 15 Z",
+        fill: "#fff",
+        stroke: "#9fd0ff",
+        strokeWidth: "1.4"
+      }), React.createElement("ellipse", {
+        cx: "0",
+        cy: "11",
+        rx: "6.2",
+        ry: "3.6",
+        fill: "#7cc4ff",
+        stroke: "#4a8fd0",
+        strokeWidth: "0.9"
+      }), React.createElement("circle", {
+        cx: "0",
+        cy: "15.2",
+        r: "3.2",
+        fill: "none",
+        stroke: "#ffd25e",
+        strokeWidth: "1.6"
+      }), React.createElement("path", {
+        d: "M -1 -23 Q 3 -30 6 -25 Q 3 -22 1 -25",
+        stroke: "#c98a5a",
+        strokeWidth: "1.6",
+        fill: "none",
+        strokeLinecap: "round"
+      }));
+    case 'astro':
+      return React.createElement("g", null, React.createElement("circle", {
+        r: PR + 7,
+        fill: "rgba(190,225,255,0.13)",
+        stroke: "rgba(255,255,255,0.6)",
+        strokeWidth: "1.6"
+      }), React.createElement("path", {
+        d: "M -19 -14 A 25 25 0 0 1 -4 -27",
+        stroke: "#fff",
+        strokeWidth: "2.4",
+        strokeLinecap: "round",
+        fill: "none",
+        opacity: "0.8"
+      }), React.createElement("path", {
+        d: "M -20 22 Q 0 34 20 22",
+        stroke: "#b8c0cc",
+        strokeWidth: "5",
+        fill: "none",
+        strokeLinecap: "round"
+      }), React.createElement("circle", {
+        cx: "12",
+        cy: "27.5",
+        r: "1.6",
+        fill: "#ff6a8a"
+      }));
+    case 'santa':
+      {
+        const sw = f1(Math.sin(ph * 1.5) * 1.5);
+        return React.createElement("g", null, React.createElement("path", {
+          d: "M -18 6 Q -23 24 -10 30 Q 0 35 10 30 Q 23 24 18 6 Q 13 13 6 12 Q 0 15 -6 12 Q -13 13 -18 6 Z",
+          fill: "#fff",
+          stroke: "#e3e6ee",
+          strokeWidth: "1"
+        }), React.createElement("path", {
+          d: "M 0 9.5 Q -5 6 -10 9.5 Q -5 12 0 9.5 Q 5 12 10 9.5 Q 5 6 0 9.5 Z",
+          fill: "#fff",
+          stroke: "#d8dbe4",
+          strokeWidth: "0.8"
+        }), React.createElement("path", {
+          d: `M -17 -18 Q -6 -44 ${18 + sw} -40 Q 6 -31 17 -18 Z`,
+          fill: "#d8243a"
+        }), React.createElement("circle", {
+          cx: 19 + sw,
+          cy: "-40",
+          r: "4.6",
+          fill: "#fff"
+        }), React.createElement("rect", {
+          x: "-20",
+          y: "-21",
+          width: "40",
+          height: "7",
+          rx: "3.5",
+          fill: "#fff"
+        }));
+      }
+    case 'angel':
+      return React.createElement("g", {
+        transform: `translate(0,${f1(-31 + Math.sin(ph * 2) * 1.5)})`
+      }, React.createElement("ellipse", {
+        rx: "13",
+        ry: "3.8",
+        fill: "none",
+        stroke: "#ffe08a",
+        strokeWidth: "2.8"
+      }), React.createElement("ellipse", {
+        rx: "13",
+        ry: "3.8",
+        fill: "none",
+        stroke: "#fff6cf",
+        strokeWidth: "1"
+      }));
+    case 'demon':
+      return React.createElement("g", null, React.createElement("path", {
+        d: "M -15 -15 Q -22 -28 -12 -33 Q -14 -24 -7 -20 Z",
+        fill: "#7a1020",
+        stroke: "#4a0610",
+        strokeWidth: "0.8"
+      }), React.createElement("path", {
+        d: "M 15 -15 Q 22 -28 12 -33 Q 14 -24 7 -20 Z",
+        fill: "#7a1020",
+        stroke: "#4a0610",
+        strokeWidth: "0.8"
+      }), React.createElement("path", {
+        d: "M -12 -9 L -4 -6 M 12 -9 L 4 -6",
+        stroke: "#5a0a18",
+        strokeWidth: "1.8",
+        strokeLinecap: "round"
+      }));
+  }
+  return null;
+}
+function PodiumFx({
+  wob = 0
+}) {
+  const step = (x, y, w, h, fill, stroke, n) => React.createElement("g", null, React.createElement("rect", {
+    x: x,
+    y: y,
+    width: w,
+    height: h,
+    rx: "2.5",
+    fill: fill,
+    stroke: stroke,
+    strokeWidth: "1"
+  }), React.createElement("rect", {
+    x: x,
+    y: y,
+    width: w,
+    height: "4",
+    rx: "2",
+    fill: "#fff",
+    opacity: "0.25"
+  }), React.createElement("text", {
+    x: x + w / 2,
+    y: y + Math.min(22, h - 5),
+    textAnchor: "middle",
+    fontSize: "16",
+    fontWeight: "800",
+    fontFamily: "Sora,Arial",
+    fill: "#3a1d02",
+    opacity: "0.75"
+  }, n));
+  return React.createElement("g", null, step(-72, 118, 46, 32, '#c9d0dc', '#8e98aa', '2'), step(26, 128, 46, 22, '#d99a62', '#9c5f2e', '3'), step(-24, 100, 48, 50, 'url(#goldMetal)', '#a8620a', '1'), React.createElement("g", {
+    transform: "rotate(-6,-49,118)"
+  }, React.createElement(SpermEnemy, {
+    x: -49,
+    y: 46,
+    wob: wob,
+    vx: 0,
+    v: 0
+  })), React.createElement("g", {
+    transform: "rotate(6,49,128)"
+  }, React.createElement(SpermEnemy, {
+    x: 49,
+    y: 56,
+    wob: wob + 40,
+    vx: 0,
+    v: 0
+  })));
+}
 function SpermPlayer({
   x,
   y,
@@ -3043,6 +3647,94 @@ function SpermPlayer({
     fill: "#fff",
     opacity: "0.8"
   }));
+  if (sk.pixel) {
+    const eh = blink < 1 ? 1.5 : 5;
+    return React.createElement("g", {
+      transform: `translate(${x},${y}) rotate(${td})`,
+      shapeRendering: "crispEdges"
+    }, !DISCRETE_MODE && tailK > 0.04 && pts.slice(3).map((p, i) => {
+      const s = Math.max(2.5, 5 - i * 0.12);
+      return React.createElement("rect", {
+        key: i,
+        x: Math.round(p[0] / 2.5) * 2.5 - s / 2,
+        y: Math.round(p[1] / 2.5) * 2.5 - s / 2,
+        width: s,
+        height: s,
+        fill: i % 2 ? '#e3e8f2' : '#f7f9fc'
+      });
+    }), PIX_CELLS.map(([gx, gy, e], i) => React.createElement("rect", {
+      key: i,
+      x: gx,
+      y: gy,
+      width: "5",
+      height: "5",
+      fill: e ? '#cdd4e4' : '#fff'
+    })), React.createElement("rect", {
+      x: "-10",
+      y: -5 + (5 - eh) / 2,
+      width: "5",
+      height: eh,
+      fill: "#1a2535"
+    }), React.createElement("rect", {
+      x: "5",
+      y: -5 + (5 - eh) / 2,
+      width: "5",
+      height: eh,
+      fill: "#1a2535"
+    }), blink === 1 && React.createElement(React.Fragment, null, React.createElement("rect", {
+      x: "-7.5",
+      y: "-5",
+      width: "2.5",
+      height: "2.5",
+      fill: "#fff"
+    }), React.createElement("rect", {
+      x: "7.5",
+      y: "-5",
+      width: "2.5",
+      height: "2.5",
+      fill: "#fff"
+    })), React.createElement("rect", {
+      x: "-17.5",
+      y: "5",
+      width: "5",
+      height: "2.5",
+      fill: "#ffb3c4"
+    }), React.createElement("rect", {
+      x: "12.5",
+      y: "5",
+      width: "5",
+      height: "2.5",
+      fill: "#ffb3c4"
+    }), React.createElement("rect", {
+      x: "-5",
+      y: "10",
+      width: "10",
+      height: "2.5",
+      fill: "#b06050"
+    }), React.createElement("rect", {
+      x: "-7.5",
+      y: "7.5",
+      width: "2.5",
+      height: "2.5",
+      fill: "#b06050"
+    }), React.createElement("rect", {
+      x: "5",
+      y: "7.5",
+      width: "2.5",
+      height: "2.5",
+      fill: "#b06050"
+    }), shield && React.createElement("g", null, React.createElement("g", {
+      transform: "translate(0,-1)"
+    }, React.createElement(HelmetShape, null)), React.createElement("circle", {
+      cx: "0",
+      cy: "0",
+      r: PR + 16,
+      fill: "url(#orbFill)",
+      stroke: "#ffe08a",
+      strokeOpacity: "0.5",
+      strokeWidth: "1"
+    })));
+  }
   return React.createElement("g", {
     transform: `translate(${x},${y}) rotate(${td})`
   }, sk.glow && React.createElement("circle", {
@@ -3110,11 +3802,15 @@ function SpermPlayer({
       fill: "#fff"
     }));
   }), !DISCRETE_MODE && tailK > 0.04 && React.createElement("g", null, FX < 1 && React.createElement("path", {
-    d: ribbon(pts, 16, 4),
+    d: ribbon(pts, 16 * (sk.tailW || 1), 4),
     fill: tailFill,
     opacity: "0.16"
+  }), sk.fin && React.createElement("path", {
+    d: ribbon(pts, 22, 3),
+    fill: tailFill,
+    opacity: "0.32"
   }), React.createElement("path", {
-    d: ribbon(pts, 8.5, 0.9),
+    d: ribbon(pts, 8.5 * (sk.tailW || 1), 0.9 * (sk.tailW || 1)),
     fill: tailFill
   }), React.createElement("path", {
     d: polyD(pts.slice(0, 12)),
@@ -3123,7 +3819,21 @@ function SpermPlayer({
     strokeWidth: "1.3",
     fill: "none",
     strokeLinecap: "round"
-  })), fxBehind, React.createElement("ellipse", {
+  }), sk.acc === 'demon' && (() => {
+    const a = pts[21],
+      b = pts[22],
+      ang = Math.atan2(b[1] - a[1], b[0] - a[0]) * 57.3 - 90;
+    return React.createElement("path", {
+      d: "M 0 8 L 5.5 -2 L 0 1 L -5.5 -2 Z",
+      transform: `translate(${f1(b[0])},${f1(b[1])}) rotate(${f1(ang)})`,
+      fill: "#c02a40",
+      stroke: "#7a1020",
+      strokeWidth: "0.8"
+    });
+  })()), React.createElement(SkinBack, {
+    sk: sk,
+    ph: ph
+  }), fxBehind, React.createElement("ellipse", {
     cx: "0",
     cy: "4",
     rx: PR + 1,
@@ -3168,7 +3878,22 @@ function SpermPlayer({
     fill: "#ff7ad9",
     opacity: "0.18",
     transform: `rotate(${-25 + Math.sin(ph * 0.4) * 8},4,6)`
-  }), React.createElement("ellipse", {
+  }), sk.spots && [[-9, -14, 2.6], [7, -16, 2], [14, -6, 2.4], [-15, 2, 1.8], [2, -20, 1.4]].map(([cx, cy, r], i) => React.createElement("circle", {
+    key: i,
+    cx: cx,
+    cy: cy,
+    r: r,
+    fill: "#5f6b2c",
+    opacity: "0.7"
+  })), sk.disco && DISCO_CELLS.map((c, i) => React.createElement("rect", {
+    key: i,
+    x: c.x,
+    y: c.y,
+    width: "3.9",
+    height: "3.9",
+    fill: c.col || '#fff',
+    opacity: f1(0.15 + 0.85 * Math.max(0, Math.sin(ph * 2.4 + c.h * 6.28)))
+  })), React.createElement("ellipse", {
     cx: "0",
     cy: "0",
     rx: PR,
@@ -3335,6 +4060,9 @@ function SpermPlayer({
     r: "1.4",
     fill: "#fff",
     opacity: sk.shine * 0.8
+  }), sk.acc && React.createElement(SkinFront, {
+    sk: sk,
+    ph: ph
   }), sk.crown && !shield && React.createElement("g", {
     transform: `translate(0,${-20.5 + Math.sin(ph * 1.2) * 0.8}) scale(0.72)`
   }, React.createElement(Crown, null)), shield && React.createElement("g", null, React.createElement("g", {
@@ -4702,7 +5430,7 @@ function MenuBtn({
       padding: '13px 0',
       borderRadius: 99,
       fontSize: 15,
-      fontWeight: 800,
+      fontWeight: 600,
       letterSpacing: 1,
       cursor: 'pointer',
       background: primary ? 'linear-gradient(135deg,#ff9e8a,#ff6a8a 55%,#d4407f)' : 'rgba(255,255,255,0.08)',
@@ -4742,6 +5470,10 @@ const TRAILS = [{
   name: 'Bulles',
   cost: 150
 }, {
+  id: 'drops',
+  name: 'Gouttes',
+  cost: 200
+}, {
   id: 'hearts',
   name: 'Cœurs',
   cost: 300
@@ -4750,6 +5482,15 @@ const TRAILS = [{
   name: 'Pétales',
   cost: 450
 }, {
+  id: 'music',
+  name: 'Musique',
+  cost: 500
+}, {
+  id: 'gifts',
+  name: 'Cadeaux',
+  cost: 600,
+  season: 'xmas'
+}, {
   id: 'confetti',
   name: 'Confettis',
   cost: 700
@@ -4757,6 +5498,10 @@ const TRAILS = [{
   id: 'stars',
   name: 'Étoiles',
   cost: 900
+}, {
+  id: 'lightning',
+  name: 'Éclairs',
+  cost: 1100
 }, {
   id: 'comet',
   name: 'Bling-bling',
@@ -4771,18 +5516,53 @@ const VICS = [{
   name: 'Feux d’artifice',
   cost: 500
 }, {
+  id: 'podium',
+  name: 'Podium',
+  cost: 600
+}, {
   id: 'hearts',
   name: 'Pluie de cœurs',
   cost: 700
+}, {
+  id: 'gifts',
+  name: 'Pluie de cadeaux',
+  cost: 800,
+  season: 'xmas'
+}, {
+  id: 'stork',
+  name: 'Cigogne',
+  cost: 900
 }, {
   id: 'gold',
   name: 'Pluie d’or',
   cost: 1100
 }, {
+  id: 'paparazzi',
+  name: 'Paparazzi',
+  cost: 1200
+}, {
   id: 'cosmos',
   name: 'Cosmos',
   cost: 1600
+}, {
+  id: 'disco',
+  name: 'Disco',
+  cost: 2000
 }];
+const SEASONS = {
+  xmas: {
+    from: 1101,
+    to: 1225,
+    label: 'Jusqu’au 25 déc.'
+  }
+};
+function seasonOpen(k) {
+  if (!k) return true;
+  const S = SEASONS[k],
+    d = new Date(),
+    v = (d.getMonth() + 1) * 100 + d.getDate();
+  return v >= S.from && v <= S.to;
+}
 const trailOwned = (owned, id) => TRAILS.find(t => t.id === id)?.cost === 0 || owned.has('trail:' + id);
 const vicOwned = (owned, id) => VICS.find(t => t.id === id)?.cost === 0 || owned.has('vic:' + id);
 const HEART_D = 'M 0 3.2 C -5.4 -0.6 -3.8 -5.4 0 -2.6 C 3.8 -5.4 5.4 -0.6 0 3.2 Z';
@@ -4988,6 +5768,97 @@ function TrailDot({
       fill: "#fff"
     }));
   }
+  if (p.type === 'music') {
+    const c = ['#ff8fa8', '#8ff0ff', '#ffd25e', '#c88bff'][Math.floor(p.seed) % 4];
+    return React.createElement("g", {
+      transform: `translate(${p.x},${p.y}) rotate(${f1(Math.sin(p.seed + (1 - a) * 3) * 16)}) scale(${(0.6 + a * 0.5).toFixed(2)})`,
+      opacity: a
+    }, React.createElement("ellipse", {
+      cx: "-1.6",
+      cy: "3",
+      rx: "2.5",
+      ry: "1.9",
+      transform: "rotate(-20,-1.6,3)",
+      fill: c
+    }), React.createElement("path", {
+      d: "M 0.7 3 V -5",
+      stroke: c,
+      strokeWidth: "1.2",
+      strokeLinecap: "round"
+    }), React.createElement("path", {
+      d: "M 0.7 -5 Q 4.2 -3.6 3.6 -0.4",
+      stroke: c,
+      strokeWidth: "1.2",
+      fill: "none",
+      strokeLinecap: "round"
+    }));
+  }
+  if (p.type === 'lightning') {
+    const fl = 0.55 + 0.45 * Math.abs(Math.sin(p.seed * 30 + (1 - a) * 40));
+    return React.createElement("g", {
+      transform: `translate(${p.x},${p.y}) rotate(${f1(p.seed * 37)}) scale(${(0.6 + a * 0.6).toFixed(2)})`,
+      opacity: a * fl
+    }, React.createElement("circle", {
+      r: "6",
+      fill: "url(#glowBlue)"
+    }), React.createElement("path", {
+      d: "M -1 -5.5 L 2.2 -1 L -0.2 -0.4 L 1.8 5.5 L -2.4 0.6 L 0.2 0 Z",
+      fill: "#fff6a8",
+      stroke: "#7cc4ff",
+      strokeWidth: "0.7",
+      strokeLinejoin: "round"
+    }));
+  }
+  if (p.type === 'drops') return React.createElement("g", {
+    transform: `translate(${p.x},${p.y}) scale(${(0.55 + a * 0.55).toFixed(2)})`,
+    opacity: a * 0.92
+  }, React.createElement("path", {
+    d: "M 0 -4.6 C 2.9 -1 3.1 1.6 0 3.6 C -3.1 1.6 -2.9 -1 0 -4.6 Z",
+    fill: "#fffaf2",
+    stroke: "#e6d8c8",
+    strokeWidth: "0.6"
+  }), React.createElement("circle", {
+    cx: "-0.9",
+    cy: "0.2",
+    r: "0.8",
+    fill: "#fff"
+  }));
+  if (p.type === 'gifts') {
+    const c = [['#e8344a', '#ffd25e'], ['#2fb36a', '#fff'], ['#5aa9ff', '#ffd25e'], ['#ffd25e', '#e8344a']][Math.floor(p.seed) % 4];
+    return React.createElement("g", {
+      transform: `translate(${p.x},${p.y}) rotate(${f1(p.seed * 21 + (1 - a) * 90)}) scale(${(0.6 + a * 0.5).toFixed(2)})`,
+      opacity: a
+    }, React.createElement("rect", {
+      x: "-3.2",
+      y: "-3.2",
+      width: "6.4",
+      height: "6.4",
+      rx: "0.8",
+      fill: c[0]
+    }), React.createElement("rect", {
+      x: "-0.6",
+      y: "-3.2",
+      width: "1.2",
+      height: "6.4",
+      fill: c[1]
+    }), React.createElement("rect", {
+      x: "-3.2",
+      y: "-0.6",
+      width: "6.4",
+      height: "1.2",
+      fill: c[1]
+    }), React.createElement("circle", {
+      cx: "-1",
+      cy: "-3.8",
+      r: "1",
+      fill: c[1]
+    }), React.createElement("circle", {
+      cx: "1",
+      cy: "-3.8",
+      r: "1",
+      fill: c[1]
+    }));
+  }
   return null;
 }
 const TRAIL_FX = {
@@ -5017,6 +5888,29 @@ const TRAIL_FX = {
     rate: 2.6,
     vy: 0.12,
     vx: 0.35
+  },
+  music: {
+    life: 46,
+    rate: 0.7,
+    vy: -0.3,
+    vx: 0.2
+  },
+  lightning: {
+    life: 22,
+    rate: 1.3,
+    vy: 0.15,
+    vx: 0.3
+  },
+  drops: {
+    life: 40,
+    rate: 1.1,
+    vy: 0.7
+  },
+  gifts: {
+    life: 44,
+    rate: 0.8,
+    vy: 0.45,
+    vx: 0.25
   }
 };
 function VictoryFx({
@@ -5151,6 +6045,271 @@ function VictoryFx({
         opacity: tw
       });
     }));
+  }
+  if (type === 'podium') {
+    return React.createElement("g", null, [0, 1].map(k => {
+      const sx = k ? W * 1.05 : -W * 0.05,
+        tx = W / 2 + Math.sin(t * 0.9 + k * 2) * W * 0.12,
+        ty = H * 0.32;
+      const dx = tx - sx,
+        dy = ty + 20,
+        len = Math.hypot(dx, dy),
+        nx = -dy / len * W * 0.13,
+        ny = dx / len * W * 0.13;
+      return React.createElement("path", {
+        key: k,
+        d: `M ${f1(sx)} -20 L ${f1(tx + nx)} ${f1(ty + ny)} L ${f1(tx - nx)} ${f1(ty - ny)} Z`,
+        fill: "#fff6d8",
+        opacity: "0.09"
+      });
+    }), Array.from({
+      length: 14
+    }, (_, i) => {
+      const sp = 30 + hrnd(i + 5) * 30,
+        y = (t * sp + hrnd(i) * (H + 20)) % (H + 20) - 10,
+        x = hrnd(i + 9) * W;
+      return React.createElement("rect", {
+        key: i,
+        x: f1(x),
+        y: f1(y),
+        width: f1(3 * sc),
+        height: f1(6 * sc),
+        rx: "1",
+        fill: ['#ffd25e', '#ff6f91', '#8ff0ff'][i % 3],
+        transform: `rotate(${f1((t * 120 + i * 40) % 360)},${f1(x)},${f1(y)})`,
+        opacity: "0.8"
+      });
+    }));
+  }
+  if (type === 'stork') {
+    const P = 6,
+      u = t % P / P,
+      x = -80 * sc + u * (W + 160 * sc),
+      y = H * 0.16 + Math.sin(u * Math.PI * 2) * 12 * sc,
+      fl = Math.sin(t * 7),
+      s = sc * 1.25;
+    return React.createElement("g", {
+      transform: `translate(${f1(x)},${f1(y)}) scale(${s.toFixed(2)})`
+    }, React.createElement("path", {
+      d: "M -16 4 L -44 9 M -16 6 L -44 14",
+      stroke: "#ff8a3d",
+      strokeWidth: "2",
+      strokeLinecap: "round"
+    }), React.createElement("path", {
+      d: "M -18 -2 L -32 -7 L -30 5 Z",
+      fill: "#1d1d24"
+    }), React.createElement("ellipse", {
+      rx: "22",
+      ry: "10",
+      fill: "#fff"
+    }), React.createElement("path", {
+      d: "M 14 -4 Q 25 -16 31 -14",
+      stroke: "#fff",
+      strokeWidth: "6",
+      fill: "none",
+      strokeLinecap: "round"
+    }), React.createElement("circle", {
+      cx: "32",
+      cy: "-15",
+      r: "5.5",
+      fill: "#fff"
+    }), React.createElement("circle", {
+      cx: "33.5",
+      cy: "-16.5",
+      r: "1",
+      fill: "#1d1d24"
+    }), React.createElement("path", {
+      d: "M 36 -16 L 54 -12 L 36 -12.5 Z",
+      fill: "#ff8a3d"
+    }), React.createElement("g", {
+      transform: `rotate(${f1(-fl * 28)},-4,-6)`
+    }, React.createElement("path", {
+      d: "M -14 -6 Q -2 -36 20 -32 Q 12 -16 6 -6 Z",
+      fill: "#fff",
+      stroke: "#e6e9f0",
+      strokeWidth: "1"
+    }), React.createElement("path", {
+      d: "M 6 -31 Q 16 -34 20 -32 Q 15 -24 11 -19 Z",
+      fill: "#1d1d24"
+    })), React.createElement("g", {
+      transform: `rotate(${f1(Math.sin(t * 3) * 8)},50,-12)`
+    }, React.createElement("path", {
+      d: "M 50 -12 L 45 6 M 50 -12 L 55 6",
+      stroke: "#d9c9b8",
+      strokeWidth: "1"
+    }), React.createElement("path", {
+      d: "M 50 4 Q 38 8 41 20 Q 50 30 59 20 Q 62 8 50 4 Z",
+      fill: "#ffc2d6",
+      stroke: "#e98fb0",
+      strokeWidth: "1"
+    }), React.createElement("circle", {
+      cx: "50",
+      cy: "16",
+      r: "5",
+      fill: "#ffe3d6"
+    }), React.createElement("circle", {
+      cx: "48.2",
+      cy: "15.6",
+      r: "0.8",
+      fill: "#3a2a2a"
+    }), React.createElement("circle", {
+      cx: "51.8",
+      cy: "15.6",
+      r: "0.8",
+      fill: "#3a2a2a"
+    })));
+  }
+  if (type === 'paparazzi') {
+    return React.createElement("g", null, Array.from({
+      length: 10
+    }, (_, k) => {
+      const P = 1.1 + hrnd(k) * 1.4,
+        tt = t + hrnd(k + 5) * P,
+        n = Math.floor(tt / P),
+        ph = tt - n * P;
+      if (ph >= 0.24) return null;
+      const fl = 1 - ph / 0.24,
+        x = hrnd(n * 13 + k * 7) * W,
+        y = (0.04 + hrnd(n * 17 + k * 3) * 0.92) * H,
+        r = (40 + hrnd(n * 5 + k) * 30) * sc;
+      return React.createElement("g", {
+        key: k,
+        transform: `translate(${f1(x)},${f1(y)})`,
+        opacity: f1(fl)
+      }, React.createElement("circle", {
+        r: f1(r),
+        fill: "url(#glowWhite)"
+      }), React.createElement("path", {
+        d: `M 0 ${f1(-r * 0.55)} Q ${f1(r * 0.04)} ${f1(-r * 0.04)} ${f1(r * 0.55)} 0 Q ${f1(r * 0.04)} ${f1(r * 0.04)} 0 ${f1(r * 0.55)} Q ${f1(-r * 0.04)} ${f1(r * 0.04)} ${f1(-r * 0.55)} 0 Q ${f1(-r * 0.04)} ${f1(-r * 0.04)} 0 ${f1(-r * 0.55)} Z`,
+        fill: "#fff"
+      }), React.createElement("circle", {
+        r: f1(r * 0.12),
+        fill: "#fff"
+      }));
+    }));
+  }
+  if (type === 'disco') {
+    const bx = W / 2,
+      by = H * 0.07,
+      r = 24 * sc,
+      cols = ['#ff6f91', '#8ff0ff', '#ffd25e', '#b77bff', '#7ee0a0', '#ff8a5a'];
+    const facets = [];
+    {
+      const s = r / 5;
+      let k = 0;
+      for (let fx = -r; fx < r; fx += s) for (let fy = -r; fy < r; fy += s) {
+        const cx = fx + s / 2,
+          cy = fy + s / 2;
+        if (cx * cx + cy * cy >= r * r * 0.92) continue;
+        k++;
+        facets.push(React.createElement("rect", {
+          key: k,
+          x: f1(bx + fx + s * 0.08),
+          y: f1(by + fy + s * 0.08),
+          width: f1(s * 0.84),
+          height: f1(s * 0.84),
+          fill: k % 5 === 0 ? cols[k % 6] : '#fff',
+          opacity: f1(0.2 + 0.8 * Math.max(0, Math.sin(t * 3 + k * 1.7)))
+        }));
+      }
+    }
+    return React.createElement("g", null, cols.map((c, i) => {
+      const a = (90 + Math.sin(t * 0.7 + i * 1.3) * 62) * Math.PI / 180,
+        L = H * 1.2,
+        w = 0.07;
+      return React.createElement("path", {
+        key: i,
+        d: `M ${f1(bx)} ${f1(by)} L ${f1(bx + Math.cos(a - w) * L)} ${f1(by + Math.sin(a - w) * L)} L ${f1(bx + Math.cos(a + w) * L)} ${f1(by + Math.sin(a + w) * L)} Z`,
+        fill: c,
+        opacity: "0.13"
+      });
+    }), Array.from({
+      length: 16
+    }, (_, i) => React.createElement("circle", {
+      key: i,
+      cx: f1(W * (0.5 + 0.42 * Math.sin(t * 0.6 + i * 1.9))),
+      cy: f1(H * (0.55 + 0.35 * Math.cos(t * 0.45 + i * 2.3))),
+      r: f1((4 + hrnd(i) * 6) * sc),
+      fill: cols[i % 6],
+      opacity: "0.35"
+    })), React.createElement("line", {
+      x1: bx,
+      y1: "0",
+      x2: bx,
+      y2: f1(by - r),
+      stroke: "#9aa3b5",
+      strokeWidth: f1(1.2 * sc)
+    }), React.createElement("circle", {
+      cx: bx,
+      cy: by,
+      r: f1(r),
+      fill: "#7d879a"
+    }), facets, React.createElement("circle", {
+      cx: f1(bx - r * 0.35),
+      cy: f1(by - r * 0.35),
+      r: f1(r * 0.25),
+      fill: "#fff",
+      opacity: "0.35"
+    }));
+  }
+  if (type === 'gifts') {
+    const cols = [['#e8344a', '#ffd25e'], ['#2fb36a', '#ffffff'], ['#5aa9ff', '#ffd25e'], ['#ffd25e', '#e8344a'], ['#c88bff', '#ffffff']];
+    return React.createElement("g", null, Array.from({
+      length: 18
+    }, (_, i) => {
+      const sp = 34 + hrnd(i + 4) * 40,
+        y = (t * sp + hrnd(i + 2) * (H + 40)) % (H + 40) - 20,
+        x = hrnd(i + 11) * W + Math.sin(t * 1.1 + i) * 8 * sc,
+        s = (8 + hrnd(i + 6) * 6) * sc,
+        c = cols[i % 5],
+        rot = Math.sin(t * 1.4 + i) * 22;
+      return React.createElement("g", {
+        key: i,
+        transform: `translate(${f1(x)},${f1(y)}) rotate(${f1(rot)})`
+      }, React.createElement("rect", {
+        x: f1(-s),
+        y: f1(-s),
+        width: f1(2 * s),
+        height: f1(2 * s),
+        rx: f1(s * 0.15),
+        fill: c[0]
+      }), React.createElement("rect", {
+        x: f1(-s * 0.18),
+        y: f1(-s),
+        width: f1(s * 0.36),
+        height: f1(2 * s),
+        fill: c[1]
+      }), React.createElement("rect", {
+        x: f1(-s),
+        y: f1(-s * 0.18),
+        width: f1(2 * s),
+        height: f1(s * 0.36),
+        fill: c[1]
+      }), React.createElement("ellipse", {
+        cx: f1(-s * 0.32),
+        cy: f1(-s * 1.15),
+        rx: f1(s * 0.36),
+        ry: f1(s * 0.22),
+        fill: c[1],
+        transform: `rotate(-25,${f1(-s * 0.32)},${f1(-s * 1.15)})`
+      }), React.createElement("ellipse", {
+        cx: f1(s * 0.32),
+        cy: f1(-s * 1.15),
+        rx: f1(s * 0.36),
+        ry: f1(s * 0.22),
+        fill: c[1],
+        transform: `rotate(25,${f1(s * 0.32)},${f1(-s * 1.15)})`
+      }));
+    }), Array.from({
+      length: 22
+    }, (_, i) => React.createElement("circle", {
+      key: 's' + i,
+      cx: f1(hrnd(i + 41) * W + Math.sin(t * 0.8 + i) * 6 * sc),
+      cy: f1((t * (14 + hrnd(i + 31) * 16) + hrnd(i + 21) * (H + 10)) % (H + 10) - 5),
+      r: f1((1 + hrnd(i + 51) * 1.6) * sc + 0.3),
+      fill: "#fff",
+      opacity: "0.75"
+    })));
   }
   return null;
 }
@@ -5302,7 +6461,7 @@ function VicPreview({
       background: 'radial-gradient(90% 80% at 50% 30%,rgba(255,210,94,0.18),rgba(8,2,10,0.5))'
     }
   }, id === 'classic' ? React.createElement("g", {
-    transform: `translate(60,56) rotate(${w * 12 % 360})`
+    transform: `translate(60,62) rotate(${w * 12 % 360})`
   }, Array.from({
     length: 8
   }, (_, i) => React.createElement("path", {
@@ -5317,8 +6476,10 @@ function VicPreview({
     W: 120,
     H: 112
   }), React.createElement("g", {
-    transform: "translate(60,62) scale(0.5)"
-  }, React.createElement(SpermPlayer, {
+    transform: id === 'podium' ? 'translate(60,30) scale(0.4)' : 'translate(60,62) scale(0.5)'
+  }, id === 'podium' && React.createElement(PodiumFx, {
+    wob: w * 50
+  }), React.createElement(SpermPlayer, {
     x: 0,
     y: 0,
     wob: w * 50,
@@ -5509,7 +6670,7 @@ function FertScene({
     fontWeight: "800",
     letterSpacing: "-1",
     fontFamily: "Sora,Helvetica Neue,Arial"
-  }, tr('Fécondation !'))), t > 5.9 && React.createElement("text", {
+  }, 'Fécondation')), t > 5.9 && React.createElement("text", {
     x: cx,
     y: H * 0.775 + 26,
     textAnchor: "middle",
@@ -5962,7 +7123,7 @@ function RecLine({
     won = true;
   } else {
     reached = e.zone || 0;
-    label = reached >= 4 ? discrete ? zname(4, true) : tr('Ovule atteint !') : zname(reached, discrete);
+    label = reached >= 4 ? discrete ? zname(4, true) : tr('Ovule atteint') : zname(reached, discrete);
   }
   return React.createElement(Tag, {
     className: "ui-btn",
@@ -5971,7 +7132,7 @@ function RecLine({
   }, React.createElement("span", {
     style: {
       flex: 'none',
-      fontSize: 9.5,
+      fontSize: 11,
       fontWeight: 700,
       letterSpacing: 2
     }
@@ -5990,7 +7151,7 @@ function RecLine({
       minWidth: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      fontWeight: 800,
+      fontWeight: 600,
       color
     }
   }, label), React.createElement("span", {
@@ -6208,7 +7369,7 @@ const HomeScreen = React.memo(function HomeScreen(p) {
       display: 'flex',
       alignItems: 'center',
       gap: 5,
-      fontWeight: 800,
+      fontWeight: 600,
       fontSize: 14,
       fontVariantNumeric: 'tabular-nums'
     }
@@ -6231,7 +7392,7 @@ const HomeScreen = React.memo(function HomeScreen(p) {
       display: 'flex',
       alignItems: 'center',
       gap: 6,
-      fontWeight: 800,
+      fontWeight: 600,
       fontSize: 14,
       fontVariantNumeric: 'tabular-nums'
     }
@@ -6349,7 +7510,7 @@ const HomeScreen = React.memo(function HomeScreen(p) {
   }, React.createElement("div", {
     style: {
       fontSize: 14,
-      fontWeight: 800,
+      fontWeight: 600,
       lineHeight: 1.1
     }
   }, skin.name), React.createElement("div", {
@@ -6357,7 +7518,7 @@ const HomeScreen = React.memo(function HomeScreen(p) {
       display: 'flex',
       alignItems: 'center',
       gap: 5,
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: 700,
       letterSpacing: 1.5,
       color: rar.c,
@@ -6451,14 +7612,14 @@ const HomeScreen = React.memo(function HomeScreen(p) {
   }))), React.createElement("span", {
     style: {
       fontSize: 12,
-      fontWeight: 800
+      fontWeight: 600
     }
   }, mc.label), React.createElement("span", {
     style: {
       display: 'flex',
       alignItems: 'center',
       gap: 2,
-      fontSize: 9,
+      fontSize: 11,
       fontWeight: 700,
       letterSpacing: 1,
       color: 'rgba(255,225,215,.7)'
@@ -6517,7 +7678,7 @@ const HomeScreen = React.memo(function HomeScreen(p) {
       borderRadius: 9,
       ...U_GOLD,
       fontSize: 11,
-      fontWeight: 800,
+      fontWeight: 600,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
@@ -6634,11 +7795,11 @@ function QuickSettings({
   }), React.createElement("span", {
     style: {
       fontSize: 11.5,
-      fontWeight: 800
+      fontWeight: 600
     }
   }, label), React.createElement("span", {
     style: {
-      fontSize: 9.5,
+      fontSize: 11,
       fontWeight: 700,
       opacity: .75
     }
@@ -6694,7 +7855,7 @@ function QuickSettings({
     }
   }, tr('Réglages rapides')), React.createElement("span", {
     style: {
-      fontSize: 10,
+      fontSize: 11,
       color: 'var(--text-3)',
       fontWeight: 700
     }
@@ -6785,7 +7946,7 @@ function QuickSettings({
       border: '1px solid rgba(255,106,138,.55)',
       color: '#ff8fa8',
       fontSize: 12,
-      fontWeight: 800,
+      fontWeight: 600,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -6829,7 +7990,7 @@ function EarnPopup({
       alignItems: 'center',
       gap: 4,
       color: '#ff8fa8',
-      fontWeight: 800,
+      fontWeight: 600,
       fontSize: 13,
       fontVariantNumeric: 'tabular-nums'
     }
@@ -6838,7 +7999,7 @@ function EarnPopup({
     s: 13
   }), mL.toLocaleString('fr-FR'))), React.createElement("div", {
     style: {
-      fontSize: 9.5,
+      fontSize: 11,
       fontWeight: 700,
       letterSpacing: 2.5,
       color: 'var(--text-2)',
@@ -6883,14 +8044,14 @@ function EarnPopup({
   }, React.createElement("div", {
     style: {
       fontSize: 12.5,
-      fontWeight: 800,
+      fontWeight: 600,
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis'
     }
   }, it.title), React.createElement("div", {
     style: {
-      fontSize: 10.5,
+      fontSize: 11,
       color: 'var(--text-3)',
       whiteSpace: 'nowrap',
       overflow: 'hidden',
@@ -6917,7 +8078,7 @@ function EarnPopup({
       alignItems: 'center',
       gap: 3,
       color: '#ff8fa8',
-      fontWeight: 800,
+      fontWeight: 600,
       fontSize: 12,
       fontVariantNumeric: 'tabular-nums',
       flex: 'none'
@@ -6927,7 +8088,7 @@ function EarnPopup({
     s: 11
   }), "+", it.ml)))), React.createElement("div", {
     style: {
-      fontSize: 9.5,
+      fontSize: 11,
       fontWeight: 700,
       letterSpacing: 2.5,
       color: 'var(--text-2)',
@@ -6952,7 +8113,7 @@ function EarnPopup({
       alignItems: 'center',
       gap: 3,
       color: '#ff8fa8',
-      fontWeight: 800,
+      fontWeight: 600,
       fontSize: 15
     }
   }, React.createElement(Ic, {
@@ -6960,7 +8121,7 @@ function EarnPopup({
     s: 12
   }), "+1"), React.createElement("div", {
     style: {
-      fontSize: 10.5,
+      fontSize: 11,
       color: 'var(--text-3)'
     }
   }, tr('tous les 10 rivaux'))), React.createElement("div", {
@@ -6977,7 +8138,7 @@ function EarnPopup({
       alignItems: 'center',
       gap: 3,
       color: '#ffd25e',
-      fontWeight: 800,
+      fontWeight: 600,
       fontSize: 15
     }
   }, React.createElement(Ic, {
@@ -6985,7 +8146,7 @@ function EarnPopup({
     s: 12
   }), "+15"), React.createElement("div", {
     style: {
-      fontSize: 10.5,
+      fontSize: 11,
       color: 'var(--text-3)'
     }
   }, tr('par victoire')))), React.createElement("div", {
@@ -7017,7 +8178,7 @@ function EarnPopup({
       border: 0,
       ...U_GOLD,
       fontSize: 12.5,
-      fontWeight: 800,
+      fontWeight: 600,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -7088,7 +8249,7 @@ function RewardToast({
       alignItems: 'center',
       gap: 3,
       fontSize: 13,
-      fontWeight: 800,
+      fontWeight: 600,
       color: '#ffd25e'
     }
   }, React.createElement(Ic, {
@@ -7163,14 +8324,14 @@ const EndTile = ({
 }, React.createElement("b", {
   style: {
     fontSize: 22,
-    fontWeight: 800,
+    fontWeight: 600,
     color,
     fontVariantNumeric: 'tabular-nums',
     lineHeight: 1
   }
 }, value), React.createElement("span", {
   style: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: 700,
     letterSpacing: 1.8,
     color: 'var(--text-3)'
@@ -7200,7 +8361,7 @@ function EndHero({
       background: won ? 'radial-gradient(45% 45% at 50% 38%,rgba(255,196,63,.30),transparent 72%)' : 'radial-gradient(45% 45% at 50% 38%,rgba(255,106,138,.22),transparent 72%)'
     }
   }), vis && (won ? React.createElement("svg", {
-    viewBox: "-60 -62 120 180",
+    viewBox: SET.vic === 'podium' ? '-78 -62 156 216' : '-60 -62 120 180',
     style: {
       height: '100%',
       width: 'auto',
@@ -7217,7 +8378,9 @@ function EndHero({
     fill: "#ffd25e",
     opacity: "0.08",
     transform: `rotate(${i * 30})`
-  }))), React.createElement(SpermPlayer, {
+  }))), SET.vic === 'podium' && React.createElement(PodiumFx, {
+    wob: w
+  }), React.createElement(SpermPlayer, {
     x: 0,
     y: 0,
     wob: w,
@@ -7225,7 +8388,7 @@ function EndHero({
     shield: false,
     tilt: 0,
     skin: skin
-  }), React.createElement("g", {
+  }), !skin.hat && React.createElement("g", {
     transform: "translate(0,-21)"
   }, React.createElement(Crown, null))) : React.createElement("svg", {
     viewBox: "-50 -34 100 172",
@@ -7260,7 +8423,7 @@ const EndScreen = React.memo(function EndScreen(p) {
   } = p;
   const gold = won,
     tcol = won ? 'linear-gradient(180deg,#fff2b8,#ffc43f)' : 'linear-gradient(180deg,#ffd0dc,#ff6a8a)';
-  const title = won ? tr('Victoire !') : tr('Éliminé');
+  const title = won ? tr('Victoire') : tr('Éliminé');
   const mlTxt = runML > 0 ? '+' + runML : '+0';
   return React.createElement("div", {
     style: {
@@ -7323,8 +8486,8 @@ const EndScreen = React.memo(function EndScreen(p) {
       marginTop: 4,
       padding: '3px 12px',
       borderRadius: 99,
-      fontSize: 10,
-      fontWeight: 800,
+      fontSize: 11,
+      fontWeight: 600,
       letterSpacing: 2,
       color: hard ? '#ff7a8a' : '#ffd25e',
       border: `1px solid ${hard ? 'rgba(255,122,138,.5)' : 'rgba(255,210,94,.5)'}`
@@ -7352,21 +8515,21 @@ const EndScreen = React.memo(function EndScreen(p) {
   }, tr('Tu as survécu')), React.createElement("span", {
     style: {
       color: '#7cc4ff',
-      fontWeight: 800,
+      fontWeight: 600,
       fontSize: 14,
       fontVariantNumeric: 'tabular-nums'
     }
   }, fmtTime(time))) : React.createElement(React.Fragment, null, React.createElement("div", {
     style: {
       fontSize: 12.5,
-      fontWeight: 800,
+      fontWeight: 600,
       marginBottom: 8,
       color: won ? '#ffd25e' : '#fff',
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis'
     }
-  }, won ? tr('Ovule atteint !') : discrete ? trf('Arrêté à la zone {n}', {
+  }, won ? tr('Ovule atteint') : discrete ? trf('Arrêté à la zone {n}', {
     n: zone + 1
   }) : tr(['Arrêté au Col de l’utérus', 'Arrêté à l’Utérus', 'Arrêté aux Trompes', 'Arrêté à l’Approche finale', 'Arrêté à la membrane de l’ovule'][clamp(zone, 0, 4)]), React.createElement("span", {
     style: {
@@ -7415,7 +8578,7 @@ const EndScreen = React.memo(function EndScreen(p) {
       borderRadius: 99,
       ...U_PLAY,
       fontSize: 19,
-      fontWeight: 800,
+      fontWeight: 600,
       letterSpacing: 2.5,
       display: 'flex',
       alignItems: 'center',
@@ -7466,7 +8629,7 @@ const EndScreen = React.memo(function EndScreen(p) {
       border: '1px solid rgba(255,210,94,.5)',
       color: '#ffd25e',
       fontSize: 13,
-      fontWeight: 800,
+      fontWeight: 600,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -7623,7 +8786,7 @@ function Sheet({
       flex: 1,
       minWidth: 0,
       fontSize: 28,
-      fontWeight: 800,
+      fontWeight: 600,
       letterSpacing: -.8,
       lineHeight: 1.15,
       ...U_TITLE
@@ -7659,7 +8822,7 @@ const MlBalance = ({
     borderRadius: 99,
     background: 'linear-gradient(180deg,rgba(255,143,168,.18),rgba(255,143,168,.06))',
     border: '1px solid rgba(255,143,168,.42)',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 13,
     fontVariantNumeric: 'tabular-nums',
     whiteSpace: 'nowrap'
@@ -7672,7 +8835,7 @@ const MlBalance = ({
   }
 }), v.toLocaleString('fr-FR'), React.createElement("span", {
   style: {
-    fontSize: 10.5,
+    fontSize: 11,
     color: '#ff8fa8'
   }
 }, "mL"));
@@ -7685,7 +8848,7 @@ const SecLabel = ({
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: 700,
     letterSpacing: 3,
     color: 'var(--text-2)',
@@ -7729,7 +8892,7 @@ function Tabs({
         border: 0,
         borderRadius: 99,
         fontSize: 12.5,
-        fontWeight: 800,
+        fontWeight: 600,
         color: on ? soft ? '#fff' : 'var(--ink-on-gold)' : 'var(--text-2)',
         background: on ? soft ? 'rgba(255,255,255,.16)' : 'var(--gold-grad)' : 'transparent',
         boxShadow: on && !soft ? 'var(--shadow-gold,0 4px 14px rgba(255,196,63,.3))' : 'none',
@@ -7839,8 +9002,8 @@ function GoalCard({
     style: {
       display: 'flex',
       alignItems: 'center',
-      fontSize: 9.5,
-      fontWeight: 800,
+      fontSize: 11,
+      fontWeight: 600,
       letterSpacing: 1.6,
       color: col,
       textTransform: 'uppercase'
@@ -7851,7 +9014,7 @@ function GoalCard({
   }), tierLabel), React.createElement("div", {
     style: {
       fontSize: 14,
-      fontWeight: 800,
+      fontWeight: 600,
       lineHeight: '18px',
       marginTop: tierLabel ? 2 : 0
     }
@@ -7863,8 +9026,8 @@ function GoalCard({
     }
   }, desc), done ? React.createElement("div", {
     style: {
-      fontSize: 9.5,
-      fontWeight: 800,
+      fontSize: 11,
+      fontWeight: 600,
       letterSpacing: 1.4,
       color: col,
       marginTop: 3
@@ -7881,7 +9044,7 @@ function GoalCard({
     c: col
   }), React.createElement("span", {
     style: {
-      fontSize: 10.5,
+      fontSize: 11,
       fontWeight: 700,
       color: 'var(--text-3)',
       fontVariantNumeric: 'tabular-nums',
@@ -7894,7 +9057,7 @@ function GoalCard({
       gap: 3,
       flex: 'none',
       fontSize: 15,
-      fontWeight: 800,
+      fontWeight: 600,
       color: done ? '#ffd25e' : '#ff8fa8',
       fontVariantNumeric: 'tabular-nums'
     }
@@ -7910,7 +9073,8 @@ function ShopCard2({
   name,
   price,
   onClick,
-  legendary
+  legendary,
+  limited
 }) {
   const eq = state === 'equipped',
     own = eq || state === 'owned',
@@ -7938,8 +9102,8 @@ function ShopCard2({
     }
   }, React.createElement("span", {
     style: {
-      fontSize: 9,
-      fontWeight: 800,
+      fontSize: 11,
+      fontWeight: 600,
       letterSpacing: 1.6,
       color: rarity.c,
       textTransform: 'uppercase'
@@ -7959,7 +9123,28 @@ function ShopCard2({
   }, React.createElement(Ic, {
     n: "lock",
     s: 12
-  }))), React.createElement("div", {
+  }))), limited && React.createElement("div", {
+    style: {
+      alignSelf: 'center',
+      marginTop: 4,
+      height: 22,
+      padding: '0 9px',
+      borderRadius: 99,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 4,
+      fontSize: 11,
+      fontWeight: 600,
+      color: '#ffb0b0',
+      background: 'rgba(230,57,70,.18)',
+      border: '1px solid rgba(255,110,110,.45)',
+      whiteSpace: 'nowrap'
+    }
+  }, React.createElement(Ic, {
+    n: "clock",
+    s: 11,
+    sw: 2.4
+  }), tr(limited)), React.createElement("div", {
     style: {
       flex: 1,
       display: 'flex',
@@ -7972,7 +9157,7 @@ function ShopCard2({
     style: {
       textAlign: 'center',
       fontSize: 14.5,
-      fontWeight: 800,
+      fontWeight: 600,
       marginBottom: 8
     }
   }, name), React.createElement("button", {
@@ -7988,7 +9173,7 @@ function ShopCard2({
       justifyContent: 'center',
       gap: 6,
       fontSize: 13,
-      fontWeight: 800,
+      fontWeight: 600,
       cursor: eq || state === 'cant' ? 'default' : 'pointer',
       ...(eq ? {
         background: 'rgba(126,224,160,.12)',
@@ -8037,6 +9222,7 @@ function ShopModal({
     key: s.id,
     name: s.name,
     cost: s.cost,
+    season: s.season,
     own: owned.has(s.id),
     eq: equipped === s.id,
     preview: React.createElement(SkinPreview, {
@@ -8047,6 +9233,7 @@ function ShopModal({
     key: 'trail:' + t.id,
     name: t.name,
     cost: t.cost,
+    season: t.season,
     own: trailOwned(owned, t.id),
     eq: SET.trail === t.id,
     preview: React.createElement(TrailPreview, {
@@ -8057,6 +9244,7 @@ function ShopModal({
     key: 'vic:' + t.id,
     name: t.name,
     cost: t.cost,
+    season: t.season,
     own: vicOwned(owned, t.id),
     eq: SET.vic === t.id,
     preview: React.createElement(VicPreview, {
@@ -8064,7 +9252,7 @@ function ShopModal({
     }),
     R: t.cost === 0 ? RARITY[0] : rarityOf(t.cost * 2)
   }));
-  const byRar = entries.filter(e => ra === 'all' || e.R.name === ra);
+  const byRar = entries.filter(e => (e.own || seasonOpen(e.season)) && (ra === 'all' || e.R.name === ra));
   const cnt = {
     all: byRar.length,
     owned: byRar.filter(e => e.own).length,
@@ -8161,6 +9349,7 @@ function ShopModal({
       name: tr(e.name),
       price: e.cost,
       legendary: e.R.name === 'Légendaire',
+      limited: !e.own && e.season ? SEASONS[e.season].label : null,
       onClick: ev => {
         ev.stopPropagation();
         if (e.eq) return;
@@ -8236,7 +9425,7 @@ function ChallengesModal({
       alignItems: 'center',
       gap: 6,
       color: '#ffd25e',
-      fontWeight: 800,
+      fontWeight: 600,
       fontSize: 13.5
     }
   }, React.createElement(Ic, {
@@ -8273,15 +9462,15 @@ function ChallengesModal({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 2,
-        fontSize: 10,
-        fontWeight: 800,
+        fontSize: 11,
+        fontWeight: 600,
         background: cur ? 'var(--gold-grad)' : 'rgba(255,196,63,.1)',
         border: `1px solid ${cur ? '#ffe88f' : done ? 'rgba(255,196,63,.55)' : 'rgba(255,255,255,.1)'}`,
         color: cur ? 'var(--ink-on-gold)' : done ? '#ffd25e' : 'var(--text-3)'
       }
     }, React.createElement("span", {
       style: {
-        fontSize: 9,
+        fontSize: 11,
         opacity: .8
       }
     }, "J", i + 1), done || cur ? React.createElement(Ic, {
@@ -8347,7 +9536,8 @@ function RewardsModal({
   const [tab, setTab] = React.useState('all');
   const sExt = {
     ...stats,
-    bestInfTime: bestInf
+    bestInfTime: bestInf,
+    ...achExtra()
   };
   const dates = loadAchDates();
   const earned = ACHIEVEMENTS.filter(a => achSet.has(a.id)).reduce((s, a) => s + a.ml, 0);
@@ -8379,7 +9569,7 @@ function RewardsModal({
       }
     }, React.createElement("div", null, React.createElement("div", {
       style: {
-        fontSize: 9.5,
+        fontSize: 11,
         fontWeight: 700,
         letterSpacing: 2.5,
         color: 'var(--text-2)'
@@ -8387,7 +9577,7 @@ function RewardsModal({
     }, tr('SUCCÈS')), React.createElement("div", {
       style: {
         fontSize: 28,
-        fontWeight: 800,
+        fontWeight: 600,
         lineHeight: 1.05,
         fontVariantNumeric: 'tabular-nums'
       }
@@ -8402,7 +9592,7 @@ function RewardsModal({
       }
     }, React.createElement("div", {
       style: {
-        fontSize: 9.5,
+        fontSize: 11,
         fontWeight: 700,
         letterSpacing: 2.5,
         color: 'var(--text-2)'
@@ -8414,7 +9604,7 @@ function RewardsModal({
         justifyContent: 'flex-end',
         gap: 4,
         fontSize: 24,
-        fontWeight: 800,
+        fontWeight: 600,
         color: '#ffd25e',
         fontVariantNumeric: 'tabular-nums'
       }
@@ -8454,7 +9644,7 @@ function RewardsModal({
         padding: '0 15px',
         borderRadius: 99,
         fontSize: 12,
-        fontWeight: 800,
+        fontWeight: 600,
         ...(tab === k ? {
           background: k === 'all' ? '#fff9f4' : c,
           color: '#1a0618',
@@ -8474,7 +9664,7 @@ function RewardsModal({
       a,
       un: achSet.has(a.id),
       pr: achProg(a, sExt)
-    })).sort((x, y) => x.un - y.un || y.pr.p - x.pr.p);
+    })).sort((x, y) => x.a.ml - y.a.ml);
     return React.createElement("div", {
       key: t
     }, React.createElement("div", {
@@ -8490,7 +9680,7 @@ function RewardsModal({
         alignItems: 'center',
         gap: 7,
         fontSize: 12.5,
-        fontWeight: 800,
+        fontWeight: 600,
         color: col
       }
     }, React.createElement("span", {
@@ -8534,12 +9724,7 @@ function StatsModal({
   discrete
 }) {
   const [m, setM] = React.useState('n');
-  const hm = ms => {
-    const h = Math.floor(ms / 3600000),
-      mi = Math.floor(ms % 3600000 / 60000);
-    return h > 0 ? `${h} h ${String(mi).padStart(2, '0')}` : `${mi} min`;
-  };
-  const T = [[stats.games, tr('PARTIES')], [stats.wins, tr('VICTOIRES'), '#ffd25e'], [stats.games ? Math.round(stats.wins / stats.games * 100) + ' %' : '—', tr('RÉUSSITE')], [stats.rivals.toLocaleString('fr-FR'), tr('RIVAUX')], [hm((stats.timeNorm || 0) + (stats.timeInf || 0)), tr('TEMPS')], [stats.helmets || 0, tr('CASQUES')]];
+  const T = [[stats.games, tr('PARTIES')], [stats.wins, tr('VICTOIRES'), '#ffd25e'], [stats.games ? Math.round(stats.wins / stats.games * 100) + ' %' : '—', tr('RÉUSSITE')], [stats.rivals.toLocaleString('fr-FR'), tr('RIVAUX')], [fmtDuration((stats.timeNorm || 0) + (stats.timeInf || 0)), tr('TEMPS')], [stats.helmets || 0, tr('CASQUES')]];
   const medal = ['linear-gradient(135deg,#ffe88f,#ffc43f)', 'linear-gradient(135deg,#f4f4f8,#b9bcc8)', 'linear-gradient(135deg,#f0b48a,#b86f3f)'];
   const list = rec[m].slice(0, 3);
   const loss = stats.lossM && stats.lossM[m] || [0, 0, 0, 0, 0],
@@ -8565,14 +9750,14 @@ function StatsModal({
   }, React.createElement("div", {
     style: {
       fontSize: 20,
-      fontWeight: 800,
+      fontWeight: 600,
       color: c || '#fff',
       fontVariantNumeric: 'tabular-nums',
       whiteSpace: 'nowrap'
     }
   }, v), React.createElement("div", {
     style: {
-      fontSize: 8.5,
+      fontSize: 11,
       fontWeight: 700,
       letterSpacing: 1.8,
       color: 'var(--text-3)',
@@ -8596,7 +9781,7 @@ function StatsModal({
       fontSize: 12,
       color: 'var(--text-3)'
     }
-  }, tr('Aucun score encore — à toi de jouer !')), list.map((e, i) => {
+  }, tr('Aucun score pour l’instant')), list.map((e, i) => {
     const inf = m === 'i';
     return React.createElement("div", {
       key: i,
@@ -8619,7 +9804,7 @@ function StatsModal({
         background: medal[i],
         color: '#3a1d02',
         fontSize: 12,
-        fontWeight: 800
+        fontWeight: 600
       }
     }, i + 1), !inf && React.createElement(Frise, {
       reached: e.zone || 0,
@@ -8638,7 +9823,7 @@ function StatsModal({
         display: 'flex',
         alignItems: 'center',
         gap: 5,
-        fontWeight: 800,
+        fontWeight: 600,
         fontSize: 15,
         color: '#7cc4ff'
       }
@@ -8648,16 +9833,16 @@ function StatsModal({
       sw: 2.2
     }), fmtTime(e.time)) : React.createElement("div", {
       style: {
-        fontWeight: 800,
+        fontWeight: 600,
         fontSize: 13,
         color: e.won ? '#ffd25e' : '#fff',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis'
       }
-    }, e.won ? tr('Victoire') : e.zone >= 4 ? discrete ? zname(4, true) : tr('Ovule atteint !') : zname(e.zone || 0, discrete)), React.createElement("div", {
+    }, e.won ? tr('Victoire') : e.zone >= 4 ? discrete ? zname(4, true) : tr('Ovule atteint') : zname(e.zone || 0, discrete)), React.createElement("div", {
       style: {
-        fontSize: 10,
+        fontSize: 11,
         color: 'var(--text-3)'
       }
     }, inf ? `${e.rivals || 0} ${tr('rivaux')} · ` : '', recDate(e))), !inf && React.createElement("span", {
@@ -8666,7 +9851,7 @@ function StatsModal({
         alignItems: 'center',
         gap: 6,
         fontSize: 18,
-        fontWeight: 800,
+        fontWeight: 600,
         fontVariantNumeric: 'tabular-nums'
       }
     }, React.createElement(MiniRival, {
@@ -8674,7 +9859,7 @@ function StatsModal({
     }), e.rivals || 0));
   })), React.createElement("div", {
     style: {
-      fontSize: 10.5,
+      fontSize: 11,
       color: 'var(--text-3)',
       margin: '6px 2px 0'
     }
@@ -8808,7 +9993,7 @@ const SetRow = ({
 }, React.createElement("div", {
   style: {
     fontSize: 14,
-    fontWeight: 800
+    fontWeight: 600
   }
 }, title), sub && React.createElement("div", {
   style: {
@@ -8858,7 +10043,7 @@ function VolCard({
     style: {
       flex: 1,
       fontSize: 14,
-      fontWeight: 800
+      fontWeight: 600
     }
   }, label), React.createElement("span", {
     style: {
@@ -9084,13 +10269,13 @@ function SettingsModal({
         alignItems: 'center',
         gap: 8,
         fontSize: 14,
-        fontWeight: 800
+        fontWeight: 600
       }
     }, tr(l), rec && React.createElement("span", {
       style: {
-        fontSize: 8.5,
+        fontSize: 11,
         letterSpacing: 1.2,
-        fontWeight: 800,
+        fontWeight: 600,
         padding: '2px 7px',
         borderRadius: 99,
         color: '#ffd25e',
@@ -9192,7 +10377,7 @@ function SettingsModal({
   }, React.createElement("div", {
     style: {
       fontSize: 16,
-      fontWeight: 800,
+      fontWeight: 600,
       color: c || '#fff',
       fontVariantNumeric: 'tabular-nums'
     }
@@ -9238,7 +10423,7 @@ function SettingsModal({
       background: 'var(--play-grad)',
       color: '#fff',
       fontSize: 14,
-      fontWeight: 800,
+      fontWeight: 600,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -9332,8 +10517,8 @@ function HowToPlay({
       border: `1px solid ${c}88`,
       background: `${c}1f`,
       color: c,
-      fontSize: 9.5,
-      fontWeight: 800,
+      fontSize: 11,
+      fontWeight: 600,
       letterSpacing: 1,
       display: 'inline-flex',
       alignItems: 'center',
@@ -9396,7 +10581,7 @@ function HowToPlay({
   }, ic), React.createElement("span", {
     style: {
       fontSize: 14,
-      fontWeight: 800,
+      fontWeight: 600,
       color: c
     }
   }, tr(name)), React.createElement("span", {
@@ -9486,79 +10671,83 @@ function HowToPlay({
       y: 0,
       pulse: pulse,
       r: 24
-    })), [[-95, '−1'], [0, '−1'], [95, '⏱']].map(([x, l], k) => React.createElement("text", {
+    })), [[-95, '−1'], [0, '−1']].map(([x, l], k) => React.createElement("text", {
       key: k,
       x: x,
       y: "62",
       textAnchor: "middle",
-      fill: k === 2 ? '#b6e83a' : '#ff7a8a',
+      fill: "#ff7a8a",
       fontSize: "13",
-      fontWeight: "800",
+      fontWeight: "600",
       fontFamily: "Sora,Arial"
-    }, l)))
+    }, l)), React.createElement("g", {
+      transform: "translate(95,56)",
+      fill: "none",
+      stroke: "#b6e83a",
+      strokeWidth: "1.8",
+      strokeLinecap: "round"
+    }, React.createElement("circle", {
+      r: "7"
+    }), React.createElement("path", {
+      d: "M 0 -3.5 V 0 L 2.6 1.8"
+    })))
   }, {
     t: 'Ramasse le casque',
     d: 'Il absorbe le prochain coup pendant 8 secondes. Il n’apparaît pas en mode Hardcore.',
     b: [['BOUCLIER 8 S', '#ffc94d']],
-    art: React.createElement("g", null, React.createElement("g", {
-      transform: "translate(40,70) scale(.9)"
-    }, React.createElement("path", {
-      d: "M18 64 C 18 36, 34 22, 50 22 C 66 22, 82 36, 82 64 Z",
-      fill: "#ffc43f",
-      stroke: "#b87a10",
-      strokeWidth: "3"
-    }), React.createElement("path", {
-      d: "M12 64 H88 V72 H12 Z",
-      fill: "#e8a52a",
-      stroke: "#b87a10",
-      strokeWidth: "3",
-      strokeLinejoin: "round"
-    }), React.createElement("ellipse", {
-      cx: "38",
-      cy: "38",
-      rx: "9",
-      ry: "5",
-      transform: "rotate(-30 38 38)",
-      fill: "#fff",
-      opacity: ".6"
-    })), React.createElement("path", {
-      d: "M140 115 H175",
-      stroke: "#ffd25e",
-      strokeWidth: "3",
-      strokeDasharray: "2 7",
-      strokeLinecap: "round"
-    }), React.createElement("path", {
-      d: "M170 108 l8 7 -8 7",
-      fill: "none",
-      stroke: "#ffd25e",
-      strokeWidth: "3",
-      strokeLinecap: "round",
-      strokeLinejoin: "round"
-    }), React.createElement("circle", {
-      cx: "238",
-      cy: "84",
-      r: "44",
-      fill: "rgba(255,210,94,.1)",
-      stroke: "#ffd25e",
-      strokeWidth: "3"
-    }), React.createElement("circle", {
-      cx: "238",
-      cy: "84",
-      r: "44",
-      fill: "none",
-      stroke: "#ffd25e",
-      strokeWidth: "5",
-      strokeDasharray: "200 77",
-      strokeLinecap: "round",
-      transform: "rotate(-90 238 84)"
-    }), P(238, 84, 0.8, 0), React.createElement("text", {
-      x: "214",
-      y: "162",
-      fill: "#ffd25e",
-      fontSize: "22",
-      fontWeight: "800",
-      fontFamily: "Sora,Arial"
-    }, "8 s"))
+    art: (() => {
+      const f = 1 - w / 50 % 4 / 4,
+        C = 2 * Math.PI * 33;
+      return React.createElement("g", null, React.createElement("defs", null, arrow('hwA4')), React.createElement("g", {
+        transform: "translate(76,104) scale(1.25)"
+      }, React.createElement(Helmet, {
+        x: 0,
+        y: 0,
+        pulse: pulse
+      })), React.createElement("path", {
+        d: "M126 104 H172",
+        fill: "none",
+        stroke: "#ffd25e",
+        strokeWidth: "3",
+        strokeDasharray: "2 8",
+        strokeLinecap: "round",
+        markerEnd: "url(#hwA4)"
+      }), React.createElement("g", {
+        transform: "translate(238,104)"
+      }, React.createElement(SpermPlayer, {
+        x: 0,
+        y: 0,
+        wob: w,
+        hit: false,
+        shield: true,
+        tilt: 0,
+        skin: skin
+      }), React.createElement("circle", {
+        r: "33",
+        fill: "none",
+        stroke: "rgba(255,210,94,.18)",
+        strokeWidth: "3"
+      }), React.createElement("circle", {
+        r: "33",
+        fill: "none",
+        stroke: "#ffd25e",
+        strokeWidth: "3",
+        strokeLinecap: "round",
+        strokeDasharray: `${(C * f).toFixed(1)} ${C.toFixed(1)}`,
+        transform: "rotate(-90)"
+      }), React.createElement("text", {
+        x: "0",
+        y: "-46",
+        textAnchor: "middle",
+        fill: "#ffd25e",
+        fontSize: "20",
+        fontWeight: "800",
+        fontFamily: "Sora,Arial",
+        style: {
+          fontVariantNumeric: 'tabular-nums'
+        }
+      }, Math.max(1, Math.ceil(f * 8)), " s")));
+    })()
   }, {
     t: 'Entre dans l’ovule',
     d: 'Dans la dernière zone, passe par l’ouverture qui tourne. Toucher la membrane te coûte une vie.',
@@ -9627,7 +10816,7 @@ function HowToPlay({
         alignItems: 'center',
         gap: 3,
         color: c,
-        fontWeight: 800,
+        fontWeight: 600,
         fontSize: 15,
         minWidth: 48
       }
@@ -9724,7 +10913,7 @@ function HowToPlay({
     style: {
       margin: '20px 0 0',
       fontSize: 28,
-      fontWeight: 800,
+      fontWeight: 600,
       letterSpacing: -.8,
       lineHeight: 1.1,
       flex: 'none'
@@ -9796,7 +10985,7 @@ function HowToPlay({
       borderRadius: 99,
       ...U_PLAY,
       fontSize: 15,
-      fontWeight: 800,
+      fontWeight: 600,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -9805,7 +10994,7 @@ function HowToPlay({
   }, last ? React.createElement(React.Fragment, null, React.createElement(Ic, {
     n: "play",
     s: 16
-  }), tr('Jouer !')) : React.createElement(React.Fragment, null, tr('Suivant'), React.createElement(Ic, {
+  }), tr('Jouer')) : React.createElement(React.Fragment, null, tr('Suivant'), React.createElement(Ic, {
     n: "chevR",
     s: 16,
     sw: 2.6
@@ -9858,8 +11047,8 @@ function RewardsOverlay({
     }
   }, tag && React.createElement("div", {
     style: {
-      fontSize: 9.5,
-      fontWeight: 800,
+      fontSize: 11,
+      fontWeight: 600,
       letterSpacing: 1.6,
       color: col,
       textTransform: 'uppercase'
@@ -9867,7 +11056,7 @@ function RewardsOverlay({
   }, tag), React.createElement("div", {
     style: {
       fontSize: 14,
-      fontWeight: 800,
+      fontWeight: 600,
       lineHeight: '18px'
     }
   }, title), desc && React.createElement("div", {
@@ -9883,7 +11072,7 @@ function RewardsOverlay({
       gap: 3,
       flex: 'none',
       fontSize: 15,
-      fontWeight: 800,
+      fontWeight: 600,
       color: '#ffd25e',
       fontVariantNumeric: 'tabular-nums'
     }
@@ -9898,7 +11087,7 @@ function RewardsOverlay({
     style: {
       textAlign: 'center',
       fontSize: 11.5,
-      fontWeight: 800,
+      fontWeight: 600,
       letterSpacing: 3,
       color: c,
       margin: '8px 0 12px'
@@ -10018,7 +11207,7 @@ function ModePopup({
     }
   }), React.createElement("div", {
     style: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: 700,
       letterSpacing: 3,
       color: 'var(--text-2)',
@@ -10076,7 +11265,7 @@ function ModePopup({
     }, React.createElement("div", {
       style: {
         fontSize: 15,
-        fontWeight: 800
+        fontWeight: 600
       }
     }, tr(m.label)), React.createElement("div", {
       style: {
@@ -10162,7 +11351,7 @@ function HomeChallenge({
       flex: 1,
       minWidth: 0,
       fontSize: 13,
-      fontWeight: 800,
+      fontWeight: 600,
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis'
@@ -10170,7 +11359,7 @@ function HomeChallenge({
   }, c.label), React.createElement("span", {
     style: {
       fontSize: 12,
-      fontWeight: 800,
+      fontWeight: 600,
       color: '#ff8fa8',
       fontVariantNumeric: 'tabular-nums',
       flex: 'none'
@@ -10244,14 +11433,14 @@ function HomeChallenge({
       gap: 8,
       height: 39,
       fontSize: 13,
-      fontWeight: 800,
+      fontWeight: 600,
       color: '#7ee0a0'
     }
   }, React.createElement(Ic, {
     n: "check",
     s: 18,
     sw: 2.8
-  }), tr('Tous les défis réussis !')));
+  }), tr('Tous les défis réussis')));
 }
 function StreakPopup({
   SAT,
@@ -10279,7 +11468,7 @@ function StreakPopup({
       alignItems: 'center',
       gap: 7,
       color: '#ffd25e',
-      fontWeight: 800,
+      fontWeight: 600,
       fontSize: 17
     }
   }, React.createElement(Ic, {
@@ -10316,15 +11505,15 @@ function StreakPopup({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 2,
-        fontSize: 10,
-        fontWeight: 800,
+        fontSize: 11,
+        fontWeight: 600,
         background: cur ? 'var(--gold-grad)' : 'rgba(255,196,63,.1)',
         border: `1px solid ${cur ? '#ffe88f' : done ? 'rgba(255,196,63,.55)' : 'rgba(255,255,255,.1)'}`,
         color: cur ? 'var(--ink-on-gold)' : done ? '#ffd25e' : 'var(--text-3)'
       }
     }, React.createElement("span", {
       style: {
-        fontSize: 9,
+        fontSize: 11,
         opacity: .8
       }
     }, "J", i + 1), done || cur ? React.createElement(Ic, {
@@ -10799,7 +11988,7 @@ function Game() {
           shield: false,
           tilt: 0,
           skin: sk
-        }), React.createElement("g", {
+        }), !sk.hat && React.createElement("g", {
           transform: "translate(0,-21)"
         }, React.createElement(Crown, null))));
         if (pl) ctx.drawImage(pl, W / 2 - 260, 380, 520, 780);
@@ -10908,7 +12097,10 @@ function Game() {
         infinite: false,
         perfectWin: g.hardcore ? g.lives === 1 : g.lives === 3,
         noHelmetWin: !g.hardcore && g.helmetsPicked === 0,
-        bestWinInGame: g.playT
+        bestWinInGame: g.playT,
+        hardcore: g.hardcore,
+        hardcoreWin: !!g.hardcore,
+        noEscZone: g.escZ || 5
       } : {
         killsInGame: g.score,
         helmetsInGame: g.helmetsPicked,
@@ -10916,12 +12108,20 @@ function Game() {
         bestZoneInGame: g.zone + 1,
         playT: g.playT,
         won: false,
-        infinite: g.infinite
+        infinite: g.infinite,
+        hardcore: g.hardcore,
+        noEscZone: g.escZ || g.zone + 1
       };
       const dr = checkDaily(loadDaily(), gSt);
       setDaily(dr.d);
+      gSt.dailyDone = dr.earned.length;
       const wr = checkWeekly(loadWeekly(), gSt);
       setWeekly(wr.w);
+      if (dr.earned.length + wr.earned.length) {
+        const s2 = loadStats();
+        s2.chDone = (s2.chDone || 0) + dr.earned.length + wr.earned.length;
+        setStats(saveStats(s2));
+      }
       const allEarned = [...dr.earned, ...wr.earned];
       if (allEarned.length) setDailyToast(allEarned);
       g.runML = runReward(g, won);
@@ -11284,6 +12484,7 @@ function Game() {
         e.svx = lerp(e.svx !== undefined ? e.svx : e.vx, e.vx, clamp(0.12 * (dt / 16), 0, 1));
         e.wob += dt * 0.08;
         if (e.y < -65) {
+          if (!g.escZ) g.escZ = g.zone + 1;
           g.hitFlash = 25;
           g.lives--;
           g.inv = 900;
@@ -11532,7 +12733,8 @@ function Game() {
     }));
     const sExt = {
       ...stats,
-      bestInfTime: rec.i[0] ? rec.i[0].time : 0
+      bestInfTime: rec.i[0] ? rec.i[0].time : 0,
+      ...achExtra()
     };
     ACHIEVEMENTS.forEach(a => {
       if (achSet.has(a.id)) return;
@@ -12110,7 +13312,7 @@ function Game() {
       alignItems: 'center',
       gap: 6,
       fontSize: 22,
-      fontWeight: 800,
+      fontWeight: 600,
       letterSpacing: -.5,
       fontVariantNumeric: 'tabular-nums'
     }
@@ -12207,7 +13409,7 @@ function Game() {
   }, countdown) : React.createElement(React.Fragment, null, React.createElement("div", {
     style: {
       fontSize: 34,
-      fontWeight: 800,
+      fontWeight: 600,
       letterSpacing: -1,
       marginBottom: 10,
       background: 'linear-gradient(180deg,#fff9f4,#ffcdb5 55%,#ff8fa8)',
@@ -12276,7 +13478,7 @@ function Game() {
   })), React.createElement("div", {
     style: {
       fontSize: 20,
-      fontWeight: 800
+      fontWeight: 600
     }
   }, "Tourne ton t\xE9l\xE9phone"), React.createElement("div", {
     style: {

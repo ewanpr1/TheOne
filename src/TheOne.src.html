@@ -21,6 +21,8 @@
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;background:#080208;overflow:hidden;font-family:Sora,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
   button{font-family:inherit}
+  @keyframes zoneIn{from{opacity:0}to{opacity:1}}
+  @keyframes zoneOut{from{opacity:1}to{opacity:0}}
   @keyframes cdpop{from{transform:scale(1.7);opacity:0}to{transform:scale(1);opacity:1}}
   #root{width:100%;height:100%}
   /* ── Design tokens (2026 redesign) ── */
@@ -108,7 +110,7 @@ const ZONES=[
   {id:5,name:"L'Ovule",dname:"La Cible",emoji:"✨",demoji:"🎯",
    bg1:'#3a2808',bg2:'#0a0602',acc:'#ffd06b',dur:999,
    types:['antibody','wbc','wbc','sperm'],
-   spd:[2.38,3.67],ms:[357,247],scr:[5.55,4.47],minGaps:1,spermSpd:0.7},
+   spd:[2.38,3.67],ms:[357,247],scr:[6.4,5.28],minGaps:1,spermSpd:0.7},
 ];
 
 // Shown on the home screen. build.ps1 replaces this with the service-worker cache number (e.g. v77).
@@ -1336,7 +1338,16 @@ function wallShape(side,pts){
   return smoothOpen(pts)+`L${edge} ${f1(pts[pts.length-1][1])}L${edge} ${f1(pts[0][1])}Z`;
 }
 
+const ZONE_FADE=1600;   // ms, colour change between zones (background, walls, bokeh)
 const Layers=React.memo(function Layers({acc,vbW,vbH,ox,S,fx}){
+  // Zone change: a copy in the old colour fades out over the new one fading in (opacity only, handled by the compositor)
+  const A=React.useRef({cur:acc,prev:null,k:0}).current;
+  if(A.cur!==acc){A.prev=A.cur;A.cur=acc;A.k++;}
+  const [,force]=React.useReducer(n=>n+1,0);
+  React.useEffect(()=>{if(!A.prev)return;const t=setTimeout(()=>{A.prev=null;force();},ZONE_FADE+150);return()=>clearTimeout(t);},[A.k]);
+  const fade=r=>[
+    A.prev&&<div key={'o'+A.k} style={{position:'absolute',left:0,top:0,willChange:'opacity',animation:`zoneOut ${ZONE_FADE}ms ease-in-out both`}}>{r(A.prev,'o')}</div>,
+    <div key={'n'+A.k} style={A.prev?{position:'relative',willChange:'opacity',animation:`zoneIn ${ZONE_FADE}ms ease-in-out both`}:{position:'relative'}}>{r(A.cur,'n')}</div>];
   const m=Math.ceil(vbH/BP)+1,H3=m*BP;
   // n circles per period, repeated m times so the layer can scroll seamlessly
   const dots=(n,seed,rMin,rMax,op,fill)=>{
@@ -1347,14 +1358,14 @@ const Layers=React.memo(function Layers({acc,vbW,vbH,ox,S,fx}){
     }
     return out;
   };
-  const bokeh=(id,n,seed,rMin,rMax,op)=>(
+  const bokeh=(id,n,seed,rMin,rMax,op,acc)=>(
     <svg viewBox={`0 0 ${vbW} ${H3}`} style={{display:'block',width:vbW,height:H3}}>
       <defs><radialGradient id={id}><stop offset="0%" stopColor={acc} stopOpacity="0.55"/><stop offset="50%" stopColor={acc} stopOpacity="0.2"/><stop offset="100%" stopColor={acc} stopOpacity="0"/></radialGradient></defs>
       {dots(n,seed,rMin,rMax,op,`url(#${id})`)}
     </svg>);
   const wallH=vbH+BP+40;
-  const wall=(side)=>{
-    const id=side<0?'bdWl':'bdWr';
+  const wall=(side,acc,suf)=>{
+    const id=(side<0?'bdWl':'bdWr')+suf;
     const back=wallPts(side,9,side<0?1.3:2.1,26,-BP-20,vbH+20),front=wallPts(side,6,side<0?0:3.4,14,-BP-20,vbH+20);
     const x1=side<0?0:WALL_W,x2=side<0?48:WALL_W-48;
     return(
@@ -1372,10 +1383,10 @@ const Layers=React.memo(function Layers({acc,vbW,vbH,ox,S,fx}){
   const rightX=POX+PW+ox;
   return(
     <div ref={setEl('root')} aria-hidden="true" style={{position:'absolute',left:0,top:0,width:vbW,height:vbH,overflow:'hidden',pointerEvents:'none',transformOrigin:'0 0',transform:S!==1?`scale(${S})`:undefined}}>
-      {fx<1&&<div ref={setEl('far')} style={lay}>{bokeh('bdBkA',4,100,55,115,0.22)}</div>}
-      {fx<1&&<div ref={setEl('near')} style={lay}>{bokeh('bdBkB',6,200,9,22,0.38)}</div>}
-      <div ref={setEl('wallL')} style={lay}>{wall(-1)}</div>
-      <div ref={setEl('wallR')} style={lay}>{wall(1)}</div>
+      {fx<1&&<div ref={setEl('far')} style={lay}>{fade((a,s)=>bokeh('bdBkA'+s,4,100,55,115,0.22,a))}</div>}
+      {fx<1&&<div ref={setEl('near')} style={lay}>{fade((a,s)=>bokeh('bdBkB'+s,6,200,9,22,0.38,a))}</div>}
+      <div ref={setEl('wallL')} style={lay}>{fade((a,s)=>wall(-1,a,s))}</div>
+      <div ref={setEl('wallR')} style={lay}>{fade((a,s)=>wall(1,a,s))}</div>
       {fx<1&&<div ref={setEl('spk')} style={lay}>
         <svg viewBox={`0 0 ${vbW} ${H3}`} style={{display:'block',width:vbW,height:H3}}>{dots(10,300,0.8,2.2,0.5,'#ffe9e2')}</svg>
       </div>}
@@ -2334,6 +2345,18 @@ function VictoryFx({type,t,W,H}){
   }
   return null;
 }
+
+/* Victory effect of the end screen, on its own layer with its own full-rate clock: the game drawn behind only
+   refreshes at ~30 fps on the end screens, and a frame of the effect no longer repaints the whole scene */
+const VicLive=React.memo(function VicLive({type,W,H}){
+  const [t,setT]=React.useState(0);
+  React.useEffect(()=>{
+    let r;const t0=performance.now();
+    const f=n=>{r=requestAnimationFrame(f);if(document.hidden)return;ReactDOM.flushSync(()=>setT((n-t0)/1000));};
+    r=requestAnimationFrame(f);return()=>cancelAnimationFrame(r);
+  },[]);
+  return<svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{position:'absolute',left:0,top:0,pointerEvents:'none',willChange:'transform'}}><VictoryFx type={type} t={t} W={W} H={H}/></svg>;
+});
 
 // Animation clock + visibility for previews (only runs while the preview is on screen)
 function useClock(ref,speed){
@@ -3755,13 +3778,14 @@ function Game(){
         if(g.fertV<1&&g.fertT>2.4){g.fertV=1;vibrate(40);}
         if(g.fertV<2&&g.fertT>4.55){g.fertV=2;vibrate([30,40,70]);}
         if(g.fertT>=FERT_DUR)endFert();
-        re();return;
+        ReactDOM.flushSync(re);return;
       }
       // Menus / paused screens only need ~30 fps
       if(g.phase!=='playing'||tutoRef.current!==null||landRef.current||pausedRef.current){
         // Menus run at ~30 fps; behind an open window: shop previews at ~15 fps, static windows not at all
         const m=modalRef.current;if(m===2)return;
-        if((frameRef.current++%(m===1?4:2))===0)re();return;
+        const sc=screenRef.current,every=m===1||sc==='win'||sc==='dead'?4:2;
+        if((frameRef.current++%every)===0)re();return;
       }
       watchFps(rawDt);
       if(g.inv>0)g.inv-=dt;
@@ -3770,7 +3794,7 @@ function Game(){
       if(g.shield){g.shieldT-=dt;if(g.shieldT<=0)g.shield=false;}
       if(g.zoneAnn){g.zoneAnn.t-=dt;if(g.zoneAnn.t<=0)g.zoneAnn=null;}
       // Smooth bg blend between zones
-      if(g.zoneBlend<1)g.zoneBlend=Math.min(1,g.zoneBlend+dt/1200);
+      if(g.zoneBlend<1)g.zoneBlend=Math.min(1,g.zoneBlend+dt/ZONE_FADE);
 
       // Player
       const fs=g.slowed>0?0.07:0.17;
@@ -3944,7 +3968,7 @@ function Game(){
         }
       }
 
-      re();
+      ReactDOM.flushSync(re);   // render now, in the same frame as the decor layers
     }
     raf.current=requestAnimationFrame(tick);
     return()=>cancelAnimationFrame(raf.current);
@@ -3955,8 +3979,10 @@ function Game(){
   const pz=ZONES[g.prevZone||0]||ZONES[0];
   const fz=clamp(g.tiz/(z.dur===999?60:z.dur),0,1);
   const totalProg=g.infinite&&g.zone===4?1:clamp((g.zone+(z.dur===999?0.99:fz))/ZONES.length,0,1);
-  const bgl=lerpHex(pz.bg1,z.bg1,g.zoneBlend||1);
-  const bgd=lerpHex(pz.bg2,z.bg2,g.zoneBlend||1);
+  const zb=g.zoneBlend===undefined?1:g.zoneBlend,ze=zb*zb*(3-2*zb);   // eased zone blend
+  const bgl=lerpHex(pz.bg1,z.bg1,ze);
+  const bgd=lerpHex(pz.bg2,z.bg2,ze);
+  const accB=ze>=1?z.acc:lerpHex(pz.acc,z.acc,ze);
   const fxLevel=FX;
   modalRef.current=(showShop||showStats||showAch||showDaily||showInfo||showSettings||showQuick||showEarn||showHow||showMode||showStreak)?2:0;   // every window animates itself or is static: no need to redraw the whole game behind
 
@@ -4125,7 +4151,6 @@ function Game(){
 
         {/* Dim behind the home / end-of-run screens (their content is HTML, see the UI overlays after the SVG) */}
         {(screen==='start'||screen==='dead'||screen==='win')&&<rect x={-ox} y={-oy} width={vbW} height={vbH} fill={screen==='win'?'rgba(14,9,2,0.86)':screen==='dead'?'rgba(16,2,8,0.86)':'rgba(10,2,8,0.5)'}/>}
-        {screen==='win'&&SET.vic!=='classic'&&<g transform={`translate(${-ox},${-oy})`}><VictoryFx type={SET.vic} t={g.pulse/80} W={vbW} H={vbH}/></g>}
         {/* Daily challenges modal — HTML overlay (outside SVG, see below) */}
 
         {/* Fertilization cinematic */}
@@ -4140,6 +4165,7 @@ function Game(){
         {/* Info modal — HTML overlay (outside SVG, see below) */}
 
       </svg>
+      {screen==='win'&&SET.vic!=='classic'&&<VicLive type={SET.vic} W={vbW} H={vbH}/>}
       {/* ── 2026 UI: home and end of run (HTML over the canvas) ── */}
       {!landscape&&!dailyToast&&!achToast&&screen==='start'&&<HomeScreen SAT={SAT} SAB={SAB} mode={mode} rec={rec} mL={mL} streak={LOGIN0.streak} skin={getSkin(equipped)} discrete={discreteMode} chals={chals} pending={pendingCh} api={api} eco={eco}/>}
       {!landscape&&!dailyToast&&!achToast&&(screen==='dead'||screen==='win')&&<EndScreen won={screen==='win'} inf={!!g.infinite} hard={!!g.hardcore} zone={g.zone} score={g.score} time={g.playT} runML={g.runML||0} mode={modeKeyOf(g)} e={rec[modeKeyOf(g)][0]} discrete={discreteMode} infUnlocked={infiniteUnlocked} skin={getSkin(equipped)} SAT={SAT} SAB={SAB} api={api} eco={eco}/>}
@@ -4157,7 +4183,7 @@ function Game(){
       {screen==='playing'&&(
         <div style={{position:'absolute',left:0,right:0,top:0,zIndex:4,pointerEvents:'none',fontFamily:"Sora,'Helvetica Neue',Arial,sans-serif",color:'#fff'}}>
           <div style={{position:'fixed',left:0,right:0,bottom:0,height:5,background:'rgba(255,255,255,.10)'}}>
-            <div style={{position:'absolute',left:0,top:0,bottom:0,width:`${totalProg*100}%`,background:`linear-gradient(90deg,${ZONES[0].acc},${z.acc})`,boxShadow:FX<2?`0 0 10px ${z.acc}`:'none',borderRadius:'0 2px 2px 0'}}/>
+            <div style={{position:'absolute',left:0,top:0,bottom:0,width:`${totalProg*100}%`,background:`linear-gradient(90deg,${ZONES[0].acc},${accB})`,boxShadow:FX<2?`0 0 10px ${accB}`:'none',borderRadius:'0 2px 2px 0'}}/>
             {[1,2,3,4].map(k=><div key={k} style={{position:'absolute',left:`${k*20}%`,top:0,bottom:0,width:2,background:'rgba(6,1,10,.8)'}}/>)}
           </div>
           <div style={{display:'flex',alignItems:'center',padding:`${10+SAT}px 14px 0`}}>

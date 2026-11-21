@@ -21,6 +21,8 @@
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;background:#080208;overflow:hidden;font-family:Sora,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
   button{font-family:inherit}
+  @keyframes zoneIn{from{opacity:0}to{opacity:1}}
+  @keyframes zoneOut{from{opacity:1}to{opacity:0}}
   @keyframes cdpop{from{transform:scale(1.7);opacity:0}to{transform:scale(1);opacity:1}}
   #root{width:100%;height:100%}
   /* ── Design tokens (2026 redesign) ── */
@@ -184,11 +186,11 @@ const ZONES = [{
   types: ['antibody', 'wbc', 'wbc', 'sperm'],
   spd: [2.38, 3.67],
   ms: [357, 247],
-  scr: [5.55, 4.47],
+  scr: [6.4, 5.28],
   minGaps: 1,
   spermSpd: 0.7
 }];
-const APP_VERSION = "v115";
+const APP_VERSION = "v118";
 const TUTO_KEY = 'theone_tuto',
   TUTO_STEPS = 3;
 let DISCRETE_MODE = false;
@@ -3122,6 +3124,7 @@ function wallShape(side, pts) {
   const edge = side < 0 ? 0 : WALL_W;
   return smoothOpen(pts) + `L${edge} ${f1(pts[pts.length - 1][1])}L${edge} ${f1(pts[0][1])}Z`;
 }
+const ZONE_FADE = 1600;
 const Layers = React.memo(function Layers({
   acc,
   vbW,
@@ -3130,6 +3133,44 @@ const Layers = React.memo(function Layers({
   S,
   fx
 }) {
+  const A = React.useRef({
+    cur: acc,
+    prev: null,
+    k: 0
+  }).current;
+  if (A.cur !== acc) {
+    A.prev = A.cur;
+    A.cur = acc;
+    A.k++;
+  }
+  const [, force] = React.useReducer(n => n + 1, 0);
+  React.useEffect(() => {
+    if (!A.prev) return;
+    const t = setTimeout(() => {
+      A.prev = null;
+      force();
+    }, ZONE_FADE + 150);
+    return () => clearTimeout(t);
+  }, [A.k]);
+  const fade = r => [A.prev && React.createElement("div", {
+    key: 'o' + A.k,
+    style: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      willChange: 'opacity',
+      animation: `zoneOut ${ZONE_FADE}ms ease-in-out both`
+    }
+  }, r(A.prev, 'o')), React.createElement("div", {
+    key: 'n' + A.k,
+    style: A.prev ? {
+      position: 'relative',
+      willChange: 'opacity',
+      animation: `zoneIn ${ZONE_FADE}ms ease-in-out both`
+    } : {
+      position: 'relative'
+    }
+  }, r(A.cur, 'n'))];
   const m = Math.ceil(vbH / BP) + 1,
     H3 = m * BP;
   const dots = (n, seed, rMin, rMax, op, fill) => {
@@ -3147,7 +3188,7 @@ const Layers = React.memo(function Layers({
     }
     return out;
   };
-  const bokeh = (id, n, seed, rMin, rMax, op) => React.createElement("svg", {
+  const bokeh = (id, n, seed, rMin, rMax, op, acc) => React.createElement("svg", {
     viewBox: `0 0 ${vbW} ${H3}`,
     style: {
       display: 'block',
@@ -3170,8 +3211,8 @@ const Layers = React.memo(function Layers({
     stopOpacity: "0"
   }))), dots(n, seed, rMin, rMax, op, `url(#${id})`));
   const wallH = vbH + BP + 40;
-  const wall = side => {
-    const id = side < 0 ? 'bdWl' : 'bdWr';
+  const wall = (side, acc, suf) => {
+    const id = (side < 0 ? 'bdWl' : 'bdWr') + suf;
     const back = wallPts(side, 9, side < 0 ? 1.3 : 2.1, 26, -BP - 20, vbH + 20),
       front = wallPts(side, 6, side < 0 ? 0 : 3.4, 14, -BP - 20, vbH + 20);
     const x1 = side < 0 ? 0 : WALL_W,
@@ -3247,16 +3288,16 @@ const Layers = React.memo(function Layers({
   }, fx < 1 && React.createElement("div", {
     ref: setEl('far'),
     style: lay
-  }, bokeh('bdBkA', 4, 100, 55, 115, 0.22)), fx < 1 && React.createElement("div", {
+  }, fade((a, s) => bokeh('bdBkA' + s, 4, 100, 55, 115, 0.22, a))), fx < 1 && React.createElement("div", {
     ref: setEl('near'),
     style: lay
-  }, bokeh('bdBkB', 6, 200, 9, 22, 0.38)), React.createElement("div", {
+  }, fade((a, s) => bokeh('bdBkB' + s, 6, 200, 9, 22, 0.38, a))), React.createElement("div", {
     ref: setEl('wallL'),
     style: lay
-  }, wall(-1)), React.createElement("div", {
+  }, fade((a, s) => wall(-1, a, s))), React.createElement("div", {
     ref: setEl('wallR'),
     style: lay
-  }, wall(1)), fx < 1 && React.createElement("div", {
+  }, fade((a, s) => wall(1, a, s))), fx < 1 && React.createElement("div", {
     ref: setEl('spk'),
     style: lay
   }, React.createElement("svg", {
@@ -6313,6 +6354,40 @@ function VictoryFx({
   }
   return null;
 }
+const VicLive = React.memo(function VicLive({
+  type,
+  W,
+  H
+}) {
+  const [t, setT] = React.useState(0);
+  React.useEffect(() => {
+    let r;
+    const t0 = performance.now();
+    const f = n => {
+      r = requestAnimationFrame(f);
+      if (document.hidden) return;
+      ReactDOM.flushSync(() => setT((n - t0) / 1000));
+    };
+    r = requestAnimationFrame(f);
+    return () => cancelAnimationFrame(r);
+  }, []);
+  return React.createElement("svg", {
+    viewBox: `0 0 ${W} ${H}`,
+    preserveAspectRatio: "none",
+    style: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      pointerEvents: 'none',
+      willChange: 'transform'
+    }
+  }, React.createElement(VictoryFx, {
+    type: type,
+    t: t,
+    W: W,
+    H: H
+  }));
+});
 function useClock(ref, speed) {
   const [vis, setVis] = React.useState(true);
   const [w, setW] = React.useState(() => Math.random() * 60);
@@ -12355,13 +12430,15 @@ function Game() {
           vibrate([30, 40, 70]);
         }
         if (g.fertT >= FERT_DUR) endFert();
-        re();
+        ReactDOM.flushSync(re);
         return;
       }
       if (g.phase !== 'playing' || tutoRef.current !== null || landRef.current || pausedRef.current) {
         const m = modalRef.current;
         if (m === 2) return;
-        if (frameRef.current++ % (m === 1 ? 4 : 2) === 0) re();
+        const sc = screenRef.current,
+          every = m === 1 || sc === 'win' || sc === 'dead' ? 4 : 2;
+        if (frameRef.current++ % every === 0) re();
         return;
       }
       watchFps(rawDt);
@@ -12376,7 +12453,7 @@ function Game() {
         g.zoneAnn.t -= dt;
         if (g.zoneAnn.t <= 0) g.zoneAnn = null;
       }
-      if (g.zoneBlend < 1) g.zoneBlend = Math.min(1, g.zoneBlend + dt / 1200);
+      if (g.zoneBlend < 1) g.zoneBlend = Math.min(1, g.zoneBlend + dt / ZONE_FADE);
       const fs = g.slowed > 0 ? 0.07 : 0.17;
       const px0 = g.px;
       g.px += (g.tx - g.px) * fs * (dt / 16);
@@ -12630,7 +12707,7 @@ function Game() {
           }
         }
       }
-      re();
+      ReactDOM.flushSync(re);
     }
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
@@ -12640,8 +12717,11 @@ function Game() {
   const pz = ZONES[g.prevZone || 0] || ZONES[0];
   const fz = clamp(g.tiz / (z.dur === 999 ? 60 : z.dur), 0, 1);
   const totalProg = g.infinite && g.zone === 4 ? 1 : clamp((g.zone + (z.dur === 999 ? 0.99 : fz)) / ZONES.length, 0, 1);
-  const bgl = lerpHex(pz.bg1, z.bg1, g.zoneBlend || 1);
-  const bgd = lerpHex(pz.bg2, z.bg2, g.zoneBlend || 1);
+  const zb = g.zoneBlend === undefined ? 1 : g.zoneBlend,
+    ze = zb * zb * (3 - 2 * zb);
+  const bgl = lerpHex(pz.bg1, z.bg1, ze);
+  const bgd = lerpHex(pz.bg2, z.bg2, ze);
+  const accB = ze >= 1 ? z.acc : lerpHex(pz.acc, z.acc, ze);
   const fxLevel = FX;
   modalRef.current = showShop || showStats || showAch || showDaily || showInfo || showSettings || showQuick || showEarn || showHow || showMode || showStreak ? 2 : 0;
   const hitCss = 'none';
@@ -13094,14 +13174,7 @@ function Game() {
     width: vbW,
     height: vbH,
     fill: screen === 'win' ? 'rgba(14,9,2,0.86)' : screen === 'dead' ? 'rgba(16,2,8,0.86)' : 'rgba(10,2,8,0.5)'
-  }), screen === 'win' && SET.vic !== 'classic' && React.createElement("g", {
-    transform: `translate(${-ox},${-oy})`
-  }, React.createElement(VictoryFx, {
-    type: SET.vic,
-    t: g.pulse / 80,
-    W: vbW,
-    H: vbH
-  })), screen === 'fertil' && React.createElement(FertScene, {
+  }), screen === 'fertil' && React.createElement(FertScene, {
     t: g.fertT || 0,
     W: vbW,
     H: vbH,
@@ -13109,7 +13182,11 @@ function Game() {
     oy: oy,
     skin: getSkin(equipped),
     onSkip: skipFert
-  })), !landscape && !dailyToast && !achToast && screen === 'start' && React.createElement(HomeScreen, {
+  })), screen === 'win' && SET.vic !== 'classic' && React.createElement(VicLive, {
+    type: SET.vic,
+    W: vbW,
+    H: vbH
+  }), !landscape && !dailyToast && !achToast && screen === 'start' && React.createElement(HomeScreen, {
     SAT: SAT,
     SAB: SAB,
     mode: mode,
@@ -13274,8 +13351,8 @@ function Game() {
       top: 0,
       bottom: 0,
       width: `${totalProg * 100}%`,
-      background: `linear-gradient(90deg,${ZONES[0].acc},${z.acc})`,
-      boxShadow: FX < 2 ? `0 0 10px ${z.acc}` : 'none',
+      background: `linear-gradient(90deg,${ZONES[0].acc},${accB})`,
+      boxShadow: FX < 2 ? `0 0 10px ${accB}` : 'none',
       borderRadius: '0 2px 2px 0'
     }
   }), [1, 2, 3, 4].map(k => React.createElement("div", {
